@@ -15,6 +15,10 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({ room, currentPlayerId,
         setMounted(true);
     }, []);
 
+    if (!room || !room.players) {
+        return <div>Error: Invalid room data</div>;
+    }
+
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
             onUploadImage(e.target.files[0]);
@@ -51,8 +55,8 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({ room, currentPlayerId,
                     <button
                         onClick={copyRoomCode}
                         className={`px-5 py-3 rounded-2xl font-bold transition-all jelly-hover ${copied
-                                ? 'bg-green-400 text-white'
-                                : 'bg-gradient-to-r from-cyan-400 to-emerald-400 text-white'
+                            ? 'bg-green-400 text-white'
+                            : 'bg-gradient-to-r from-cyan-400 to-emerald-400 text-white'
                             }`}
                         style={{
                             boxShadow: '0 4px 0 rgba(0, 0, 0, 0.2)'
@@ -83,32 +87,35 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({ room, currentPlayerId,
                         </span>
                     </h3>
                     <div className="space-y-3 stagger-children">
-                        {room.players.map((player, index) => (
-                            <div
-                                key={player.id}
-                                className="flex items-center justify-between p-3 rounded-2xl bg-gradient-to-r from-pink-50 to-purple-50 pop-in"
-                                style={{ animationDelay: `${index * 0.1}s` }}
-                            >
-                                <div className="flex items-center space-x-3">
-                                    <div
-                                        className="w-4 h-4 rounded-full animate-pulse"
-                                        style={{
-                                            backgroundColor: player.color,
-                                            boxShadow: `0 0 10px ${player.color}`
-                                        }}
-                                    />
-                                    <span className={`font-bold text-lg ${player.id === currentPlayerId ? 'text-pink-600' : 'text-gray-700'}`}>
-                                        {player.name}
-                                        {player.id === currentPlayerId && (
-                                            <span className="ml-2 text-sm bg-pink-100 text-pink-500 px-2 py-0.5 rounded-full">
-                                                ⭐ You
-                                            </span>
-                                        )}
-                                    </span>
+                        {Array.isArray(room.players) && room.players.map((player, index) => {
+                            if (!player) return null;
+                            return (
+                                <div
+                                    key={player.id || index}
+                                    className="flex items-center justify-between p-3 rounded-2xl bg-gradient-to-r from-pink-50 to-purple-50 pop-in"
+                                    style={{ animationDelay: `${index * 0.1}s` }}
+                                >
+                                    <div className="flex items-center space-x-3">
+                                        <div
+                                            className="w-4 h-4 rounded-full animate-pulse"
+                                            style={{
+                                                backgroundColor: player.color || '#ccc',
+                                                boxShadow: `0 0 10px ${player.color || '#ccc'}`
+                                            }}
+                                        />
+                                        <span className={`font-bold text-lg ${player.id === currentPlayerId ? 'text-pink-600' : 'text-gray-700'}`}>
+                                            {player.name}
+                                            {player.id === currentPlayerId && (
+                                                <span className="ml-2 text-sm bg-pink-100 text-pink-500 px-2 py-0.5 rounded-full">
+                                                    ⭐ You
+                                                </span>
+                                            )}
+                                        </span>
+                                    </div>
+                                    <div className="text-xl">{index === 0 ? '👑' : '🎮'}</div>
                                 </div>
-                                <div className="text-xl">{index === 0 ? '👑' : '🎮'}</div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 </div>
 

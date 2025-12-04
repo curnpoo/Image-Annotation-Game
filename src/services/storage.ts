@@ -47,18 +47,34 @@ export const StorageService = {
 
     // Subscribe to room changes (real-time)
     subscribeToRoom: (roomCode: string, callback: (room: GameRoom | null) => void): (() => void) => {
+        console.log('Subscribing to room:', roomCode);
         const roomRef = ref(database, `${ROOMS_PATH}/${roomCode}`);
 
         const listener = onValue(roomRef, (snapshot) => {
             if (snapshot.exists()) {
-                callback(snapshot.val() as GameRoom);
+                const data = snapshot.val();
+                // Normalize arrays from Firebase (which can be objects or missing)
+                if (!data.players) data.players = [];
+                else if (!Array.isArray(data.players)) data.players = Object.values(data.players);
+
+                if (!data.annotations) data.annotations = [];
+                else if (!Array.isArray(data.annotations)) data.annotations = Object.values(data.annotations);
+
+                if (!data.turnOrder) data.turnOrder = [];
+                else if (!Array.isArray(data.turnOrder)) data.turnOrder = Object.values(data.turnOrder);
+
+                callback(data as GameRoom);
             } else {
                 callback(null);
             }
+        }, (error) => {
+            console.error('Firebase subscription error:', error);
         });
 
         // Return unsubscribe function
-        return () => off(roomRef, 'value', listener);
+        return () => {
+            off(roomRef, 'value', listener);
+        };
     },
 
     // Player Session (still use localStorage for individual session)
