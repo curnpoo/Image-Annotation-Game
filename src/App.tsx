@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { WelcomeScreen } from './components/screens/WelcomeScreen';
 import { NameEntryScreen } from './components/screens/NameEntryScreen';
 import { RoomSelectionScreen } from './components/screens/RoomSelectionScreen';
@@ -26,6 +26,7 @@ function App() {
   const [player, setPlayer] = useState<Player | null>(null);
   const [roomCode, setRoomCode] = useState<string | null>(null);
   const [toast, setToast] = useState<ToastState | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Game State
   const [brushColor, setBrushColor] = useState('#FF69B4');
@@ -65,7 +66,7 @@ function App() {
     const newPlayer: Player = {
       id: crypto.randomUUID(),
       name,
-      color: '#' + Math.floor(Math.random() * 16777215).toString(16),
+      color: '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0'),
       joinedAt: Date.now(),
       lastSeen: Date.now(),
     };
@@ -74,32 +75,47 @@ function App() {
     setCurrentScreen('room-selection');
   };
 
-  const handleCreateRoom = () => {
+  const handleCreateRoom = async () => {
     if (!player) return;
-    const code = StorageService.generateRoomCode();
-    StorageService.createRoom(code, player);
-    setRoomCode(code);
-    setCurrentScreen('lobby');
-    showToast('Room created! Share the code with friends! 🎉', 'success');
-  };
-
-  const handleJoinRoom = (code: string) => {
-    if (!player) return;
-    const joinedRoom = StorageService.joinRoom(code, player);
-    if (joinedRoom) {
+    setIsLoading(true);
+    try {
+      const code = StorageService.generateRoomCode();
+      await StorageService.createRoom(code, player);
       setRoomCode(code);
       setCurrentScreen('lobby');
-      showToast('Joined room successfully! 🎮', 'success');
-    } else {
-      showToast('Room not found! Check the code and try again 🔍', 'error');
+      showToast('Room created! Share the code with friends! 🎉', 'success');
+    } catch (err) {
+      showToast('Failed to create room. Try again! 😅', 'error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleJoinRoom = async (code: string) => {
+    if (!player) return;
+    setIsLoading(true);
+    try {
+      const joinedRoom = await StorageService.joinRoom(code, player);
+      if (joinedRoom) {
+        setRoomCode(code);
+        setCurrentScreen('lobby');
+        showToast('Joined room successfully! 🎮', 'success');
+      } else {
+        showToast('Room not found! Check the code and try again 🔍', 'error');
+      }
+    } catch (err) {
+      showToast('Failed to join room. Try again! 😅', 'error');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleUploadImage = async (file: File) => {
     if (!roomCode || !player) return;
+    setIsLoading(true);
     try {
       const base64 = await ImageService.processImage(file);
-      StorageService.updateRoom(roomCode, (r) => ({
+      await StorageService.updateRoom(roomCode, (r) => ({
         ...r,
         currentImage: {
           url: base64,
@@ -112,8 +128,11 @@ function App() {
         turnStatus: 'waiting',
         roundStartedAt: Date.now(),
       }));
+      showToast('Image uploaded! Game starting! 🖼️', 'success');
     } catch (err) {
       showToast('Failed to upload image! Try a smaller file 📸', 'error');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -121,7 +140,7 @@ function App() {
     setCurrentScreen('name-entry');
   };
 
-  const handleTimeUp = () => {
+  const handleTimeUp = async () => {
     setIsDrawing(false);
     if (roomCode && player) {
       const newAnnotation = {
@@ -132,13 +151,21 @@ function App() {
         drawingData: strokes,
         submittedAt: Date.now()
       };
-      StorageService.endTurn(roomCode, newAnnotation);
+      try {
+        await StorageService.endTurn(roomCode, newAnnotation);
+      } catch (err) {
+        console.error('Failed to end turn:', err);
+      }
     }
   };
 
-  const handleReady = () => {
+  const handleReady = async () => {
     if (roomCode) {
-      StorageService.startTurn(roomCode);
+      try {
+        await StorageService.startTurn(roomCode);
+      } catch (err) {
+        showToast('Failed to start turn. Try again!', 'error');
+      }
     }
   };
 
@@ -150,15 +177,19 @@ function App() {
     setStrokes([]);
   };
 
-  const handleNextRound = () => {
+  const handleNextRound = async () => {
     if (roomCode) {
-      StorageService.updateRoom(roomCode, (r) => ({
-        ...r,
-        status: 'lobby',
-        currentImage: undefined,
-        roundNumber: r.roundNumber + 1,
-        annotations: [],
-      }));
+      try {
+        await StorageService.updateRoom(roomCode, (r) => ({
+          ...r,
+          status: 'lobby',
+          currentImage: undefined,
+          roundNumber: r.roundNumber + 1,
+          annotations: [],
+        }));
+      } catch (err) {
+        showToast('Failed to start next round. Try again!', 'error');
+      }
     }
   };
 
@@ -189,6 +220,20 @@ function App() {
 
   return (
     <div className="antialiased font-sans">
+      {/* Loading Overlay */}
+      {isLoading && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[200] flex items-center justify-center">
+          <div className="bg-white rounded-2xl p-8 text-center pop-in"
+            style={{
+              boxShadow: '0 10px 0 rgba(155, 89, 182, 0.3)',
+              border: '4px solid #FF69B4'
+            }}>
+            <div className="text-5xl animate-bounce mb-4">⏳</div>
+            <div className="text-xl font-bold text-purple-600">Loading...</div>
+          </div>
+        </div>
+      )}
+
       {/* Toast Notifications */}
       {toast && (
         <Toast

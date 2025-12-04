@@ -8,7 +8,6 @@ interface ToastProps {
 }
 
 export const Toast: React.FC<ToastProps> = ({ message, type = 'error', onClose, duration = 3000 }) => {
-    const [isVisible, setIsVisible] = useState(true);
     const [isLeaving, setIsLeaving] = useState(false);
 
     useEffect(() => {

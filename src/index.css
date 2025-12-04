@@ -2,6 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap');
+
 /* 90s Bubbly Fun Design System */
 :root {
   /* 90s Color Palette - Bright, Fun, Nostalgic */
@@ -21,10 +23,8 @@
   --gradient-candy: linear-gradient(135deg, #FF69B4 0%, #FFE135 50%, #00D9FF 100%);
 
   /* Typography */
-  font-family: 'Comic Sans MS', 'Chalkboard', 'Comic Neue', cursive, sans-serif;
+  font-family: 'Fredoka', 'Comic Sans MS', 'Chalkboard', 'Comic Neue', cursive, sans-serif;
 }
-
-@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap');
 
 body {
   margin: 0;

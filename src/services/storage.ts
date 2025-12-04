@@ -1,11 +1,12 @@
+import { ref, set, get, onValue, off } from 'firebase/database';
+import { database } from '../firebase';
 import type { GameRoom, Player, Annotation } from '../types';
 
-// Simulation of window.storage using localStorage for multi-tab support
-const STORAGE_PREFIX = 'aic_game_';
+const ROOMS_PATH = 'rooms';
 
 export const StorageService = {
     // Room Management
-    createRoom: (roomCode: string, hostPlayer: Player): GameRoom => {
+    createRoom: async (roomCode: string, hostPlayer: Player): Promise<GameRoom> => {
         const room: GameRoom = {
             roomCode,
             status: 'lobby',
@@ -17,42 +18,62 @@ export const StorageService = {
             annotations: [],
             createdAt: Date.now(),
         };
-        StorageService.saveRoom(room);
+
+        const roomRef = ref(database, `${ROOMS_PATH}/${roomCode}`);
+        await set(roomRef, room);
         return room;
     },
 
-    getRoom: (roomCode: string): GameRoom | null => {
-        const data = localStorage.getItem(`${STORAGE_PREFIX}room_${roomCode}`);
-        return data ? JSON.parse(data) : null;
+    getRoom: async (roomCode: string): Promise<GameRoom | null> => {
+        const roomRef = ref(database, `${ROOMS_PATH}/${roomCode}`);
+        const snapshot = await get(roomRef);
+        return snapshot.exists() ? snapshot.val() as GameRoom : null;
     },
 
-    saveRoom: (room: GameRoom) => {
-        localStorage.setItem(`${STORAGE_PREFIX}room_${room.roomCode}`, JSON.stringify(room));
+    saveRoom: async (room: GameRoom): Promise<void> => {
+        const roomRef = ref(database, `${ROOMS_PATH}/${room.roomCode}`);
+        await set(roomRef, room);
     },
 
-    updateRoom: (roomCode: string, updateFn: (room: GameRoom) => GameRoom) => {
-        const room = StorageService.getRoom(roomCode);
+    updateRoom: async (roomCode: string, updateFn: (room: GameRoom) => GameRoom): Promise<GameRoom | null> => {
+        const room = await StorageService.getRoom(roomCode);
         if (room) {
             const updatedRoom = updateFn(room);
-            StorageService.saveRoom(updatedRoom);
+            await StorageService.saveRoom(updatedRoom);
             return updatedRoom;
         }
         return null;
     },
 
-    // Player Session
-    saveSession: (player: Player) => {
-        localStorage.setItem(`${STORAGE_PREFIX}session`, JSON.stringify(player));
+    // Subscribe to room changes (real-time)
+    subscribeToRoom: (roomCode: string, callback: (room: GameRoom | null) => void): (() => void) => {
+        const roomRef = ref(database, `${ROOMS_PATH}/${roomCode}`);
+
+        const listener = onValue(roomRef, (snapshot) => {
+            if (snapshot.exists()) {
+                callback(snapshot.val() as GameRoom);
+            } else {
+                callback(null);
+            }
+        });
+
+        // Return unsubscribe function
+        return () => off(roomRef, 'value', listener);
+    },
+
+    // Player Session (still use localStorage for individual session)
+    saveSession: (player: Player): void => {
+        localStorage.setItem('aic_game_session', JSON.stringify(player));
     },
 
     getSession: (): Player | null => {
-        const data = localStorage.getItem(`${STORAGE_PREFIX}session`);
+        const data = localStorage.getItem('aic_game_session');
         return data ? JSON.parse(data) : null;
     },
 
     // Helpers
     generateRoomCode: (): string => {
-        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // No I, O, 0, 1 to avoid confusion
+        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
         let code = '';
         for (let i = 0; i < 6; i++) {
             code += chars.charAt(Math.floor(Math.random() * chars.length));
@@ -60,8 +81,8 @@ export const StorageService = {
         return code;
     },
 
-    joinRoom: (roomCode: string, player: Player): GameRoom | null => {
-        const room = StorageService.getRoom(roomCode);
+    joinRoom: async (roomCode: string, player: Player): Promise<GameRoom | null> => {
+        const room = await StorageService.getRoom(roomCode);
         if (!room) return null;
 
         // Check if player already in room
@@ -72,12 +93,12 @@ export const StorageService = {
             room.players.push({ ...player, lastSeen: Date.now() });
         }
 
-        StorageService.saveRoom(room);
+        await StorageService.saveRoom(room);
         return room;
     },
 
     // Turn Logic
-    startTurn: (roomCode: string): GameRoom | null => {
+    startTurn: async (roomCode: string): Promise<GameRoom | null> => {
         return StorageService.updateRoom(roomCode, (r) => ({
             ...r,
             turnStatus: 'drawing',
@@ -85,15 +106,15 @@ export const StorageService = {
         }));
     },
 
-    endTurn: (roomCode: string, annotation: Annotation): GameRoom | null => {
+    endTurn: async (roomCode: string, annotation: Annotation): Promise<GameRoom | null> => {
         return StorageService.updateRoom(roomCode, (r) => {
             const nextIndex = r.currentTurnIndex + 1;
             const isRoundOver = nextIndex >= r.turnOrder.length;
 
             return {
                 ...r,
-                annotations: [...r.annotations, annotation],
-                currentTurnIndex: isRoundOver ? 0 : nextIndex, // Loop or end? Prompt says "Review Phase" after round.
+                annotations: [...(r.annotations || []), annotation],
+                currentTurnIndex: isRoundOver ? 0 : nextIndex,
                 turnStatus: 'waiting',
                 status: isRoundOver ? 'reviewing' : 'annotating',
                 turnEndsAt: undefined

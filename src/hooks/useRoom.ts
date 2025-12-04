@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import type { GameRoom } from '../types';
 import { StorageService } from '../services/storage';
 
@@ -6,42 +6,67 @@ export const useRoom = (roomCode: string | null, currentPlayerId: string | null)
     const [room, setRoom] = useState<GameRoom | null>(null);
     const [error, setError] = useState<string | null>(null);
 
-    const fetchRoom = useCallback(() => {
-        if (!roomCode) return;
-        const data = StorageService.getRoom(roomCode);
-        if (data) {
-            setRoom(data);
-            setError(null);
-        } else {
-            setError('Room not found');
+    // Real-time subscription to Firebase
+    useEffect(() => {
+        if (!roomCode) {
             setRoom(null);
+            setError(null);
+            return;
         }
+
+        // Subscribe to real-time updates
+        const unsubscribe = StorageService.subscribeToRoom(roomCode, (roomData) => {
+            if (roomData) {
+                setRoom(roomData);
+                setError(null);
+            } else {
+                setRoom(null);
+                setError('Room not found');
+            }
+        });
+
+        // Cleanup subscription on unmount
+        return () => {
+            unsubscribe();
+        };
     }, [roomCode]);
 
-    // Polling
+    // Update player's lastSeen periodically
     useEffect(() => {
-        if (!roomCode) return;
+        if (!roomCode || !currentPlayerId) return;
 
-        // Initial fetch
-        fetchRoom();
-
-        const intervalId = setInterval(() => {
-            fetchRoom();
-
-            // Update last seen
-            if (currentPlayerId && roomCode) {
-                StorageService.updateRoom(roomCode, (r) => {
+        const updateLastSeen = async () => {
+            try {
+                await StorageService.updateRoom(roomCode, (r) => {
                     const pIndex = r.players.findIndex(p => p.id === currentPlayerId);
                     if (pIndex >= 0) {
                         r.players[pIndex].lastSeen = Date.now();
                     }
                     return r;
                 });
+            } catch (err) {
+                console.error('Failed to update lastSeen:', err);
             }
-        }, 1000); // Poll every second
+        };
+
+        // Update every 30 seconds instead of every second (reduces Firebase writes)
+        const intervalId = setInterval(updateLastSeen, 30000);
 
         return () => clearInterval(intervalId);
-    }, [roomCode, currentPlayerId, fetchRoom]);
+    }, [roomCode, currentPlayerId]);
 
-    return { room, error, refreshRoom: fetchRoom };
+    const refreshRoom = async () => {
+        if (!roomCode) return;
+        try {
+            const data = await StorageService.getRoom(roomCode);
+            if (data) {
+                setRoom(data);
+                setError(null);
+            }
+        } catch (err) {
+            console.error('Failed to refresh room:', err);
+        }
+    };
+
+    return { room, error, refreshRoom };
 };
