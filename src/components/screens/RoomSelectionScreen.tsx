@@ -84,13 +84,13 @@ export const RoomSelectionScreen: React.FC<RoomSelectionScreenProps> = ({
                                 <label className="block text-lg font-bold text-purple-600 text-center">
                                     🔗 Join existing room
                                 </label>
-                                <div className="flex space-x-3">
+                                <div className="flex gap-2 w-full">
                                     <input
                                         type="text"
                                         value={roomCode}
                                         onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
                                         placeholder="ABC123"
-                                        className="input-90s flex-1 text-center uppercase tracking-[0.3em] font-mono border-cyan-300 focus:border-cyan-500"
+                                        className="input-90s flex-1 min-w-0 text-center uppercase tracking-widest font-mono border-cyan-300 focus:border-cyan-500"
                                         style={{
                                             background: 'linear-gradient(to bottom, #fff, #f0f8ff)'
                                         }}
@@ -99,7 +99,7 @@ export const RoomSelectionScreen: React.FC<RoomSelectionScreenProps> = ({
                                     <button
                                         type="submit"
                                         disabled={roomCode.length !== 6}
-                                        className={`px-6 py-3 rounded-2xl font-bold text-lg transition-all ${roomCode.length === 6
+                                        className={`px-4 py-3 rounded-2xl font-bold text-lg transition-all flex-shrink-0 ${roomCode.length === 6
                                                 ? 'btn-90s bg-gradient-to-r from-lime-400 to-emerald-500 text-white'
                                                 : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                                             }`}

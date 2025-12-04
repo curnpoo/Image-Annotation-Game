@@ -80,15 +80,17 @@ function App() {
     setIsLoading(true);
     try {
       const code = StorageService.generateRoomCode();
+      console.log('Creating room with code:', code);
       await StorageService.createRoom(code, player);
+      console.log('Room created successfully');
       setRoomCode(code);
       setCurrentScreen('lobby');
       showToast('Room created! Share the code with friends! 🎉', 'success');
     } catch (err) {
-      showToast('Failed to create room. Try again! 😅', 'error');
-    } finally {
-      setIsLoading(false);
+      console.error('Failed to create room:', err);
+      showToast('Failed to create room. Check console for details 😅', 'error');
     }
+    setIsLoading(false);
   };
 
   const handleJoinRoom = async (code: string) => {
