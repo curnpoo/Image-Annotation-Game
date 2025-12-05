@@ -107,12 +107,14 @@ function App() {
     }
   }, []);
 
+  // Calculated state for dependencies
+  const amWaiting = room?.waitingPlayers?.some(p => p.id === player?.id) || false;
+
   // Sync screen with room status
   useEffect(() => {
     if (room && !isLoading && !isBrowsing) {
       const status = room.status;
       const round = room.roundNumber;
-      const amWaiting = room.waitingPlayers?.some(p => p.id === player?.id) || false;
 
       const statusChanged = status !== lastStatusRef.current;
       const roundChanged = round !== lastRoundRef.current;
@@ -184,7 +186,7 @@ function App() {
 
       return () => clearTimeout(timer);
     }
-  }, [room?.status, room?.roundNumber, isLoading, currentScreen, isBrowsing, room?.waitingPlayers]);
+  }, [room?.status, room?.roundNumber, isLoading, currentScreen, isBrowsing, amWaiting]);
 
   // Effect: Kicked / Removed check
   useEffect(() => {
