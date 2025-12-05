@@ -52,28 +52,24 @@ export const Toast: React.FC<ToastProps> = ({ message, type = 'error', onClose, 
 
     return (
         <div
-            className={`fixed left-1/2 transform -translate-x-1/2 z-[100] transition-all duration-300 ${isLeaving ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'
+            className={`fixed top-0 left-0 right-0 z-[200] transition-transform duration-300 ${isLeaving ? '-translate-y-full' : 'translate-y-0'
                 }`}
-            style={{
-                bottom: 'max(1rem, env(safe-area-inset-bottom) + 1rem)',
-                animation: isLeaving ? '' : 'pop-in 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55)'
-            }}
         >
             <div
-                className={`bg-gradient-to-r ${styles.bg} text-white px-6 py-3 rounded-2xl flex items-center gap-3 font-bold text-sm shadow-xl max-w-[90vw]`}
+                className={`bg-gradient-to-r ${styles.bg} text-white px-4 py-1 flex items-center justify-center gap-2 font-bold text-xs shadow-md`}
                 style={{
-                    boxShadow: `0 8px 0 rgba(0, 0, 0, 0.2), 0 12px 30px rgba(0, 0, 0, 0.3)`,
-                    border: `3px solid ${styles.border}`,
+                    paddingTop: 'max(0.5rem, env(safe-area-inset-top))',
+                    paddingBottom: '0.5rem'
                 }}
             >
-                <span className="text-xl bounce-scale flex-shrink-0">{styles.emoji}</span>
-                <span className="truncate">{message}</span>
+                <span className="text-sm bounce-scale flex-shrink-0">{styles.emoji}</span>
+                <span className="truncate max-w-[80vw]">{message}</span>
                 <button
                     onClick={() => {
                         setIsLeaving(true);
                         setTimeout(onClose, 300);
                     }}
-                    className="ml-2 hover:scale-110 transition-transform text-lg flex-shrink-0"
+                    className="ml-2 hover:scale-110 transition-transform text-sm flex-shrink-0 opacity-80 hover:opacity-100"
                 >
                     ✕
                 </button>
