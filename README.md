@@ -71,4 +71,4 @@ Building "Fill in the Blank" was an iterative process of refining both the user 
 
 ---
 
-*Built with ❤️ and a lot of ☕ by the Antigravity Team.*
+*Built with ❤️ and a lot of ☕ by the Antigravity Team. and Curren*
