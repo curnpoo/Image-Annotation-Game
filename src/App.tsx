@@ -63,14 +63,7 @@ function App() {
     const session = StorageService.getSession();
     if (session) {
       setPlayer(session);
-
-      // Check for active room
-      const lastRoomCode = StorageService.getRoomCode();
-      if (lastRoomCode) {
-        setRoomCode(lastRoomCode);
-      } else {
-        setCurrentScreen('room-selection');
-      }
+      setCurrentScreen('room-selection');
     }
   }, []);
 
@@ -446,7 +439,7 @@ function App() {
             {/* Top Bar */}
             <div className="flex-shrink-0 flex items-center justify-between gap-2 mb-4 z-20">
               {/* Progress */}
-              <div className="bg-white/95 backdrop-blur-sm px-4 py-2 rounded-xl pop-in"
+              <div className="bg-white/95 backdrop-blur-sm px-4 py-2 rounded-xl pop-in ml-16"
                 style={{ boxShadow: '0 4px 0 rgba(155, 89, 182, 0.3)', border: '3px solid #9B59B6' }}>
                 <span className="font-bold text-purple-600">
                   Round {room.roundNumber}/{room.settings.totalRounds}
@@ -465,14 +458,7 @@ function App() {
                 <div className="scale-75 origin-right">
                   <Timer endsAt={timerEndsAt} onTimeUp={handleTimeUp} />
                 </div>
-              ) : (
-                <button
-                  onClick={handleReady}
-                  className="btn-90s bg-gradient-to-r from-lime-400 to-emerald-500 text-white px-6 py-3 rounded-xl font-bold jelly-hover"
-                >
-                  I'm Ready! 🎨
-                </button>
-              )}
+              ) : null}
             </div>
 
             {/* Image Container */}
@@ -521,10 +507,17 @@ function App() {
 
                 {/* Show "waiting" overlay if not ready */}
                 {!isMyTimerRunning && !hasSubmitted && (
-                  <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                    <div className="bg-white rounded-2xl p-6 text-center">
-                      <div className="text-4xl mb-2">🎨</div>
-                      <p className="font-bold text-purple-600">Click "I'm Ready!" to start drawing</p>
+                  <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-30">
+                    <div className="bg-white rounded-3xl p-8 text-center max-w-sm mx-4 shadow-2xl pop-in border-4 border-purple-500">
+                      <div className="text-6xl mb-4 animate-bounce">🎨</div>
+                      <h3 className="text-2xl font-bold text-purple-600 mb-2">It's Drawing Time!</h3>
+                      <p className="text-gray-500 mb-6">You have {room.settings.timerDuration} seconds to draw.</p>
+                      <button
+                        onClick={handleReady}
+                        className="w-full btn-90s bg-gradient-to-r from-lime-400 to-emerald-500 text-white px-8 py-4 rounded-xl font-bold text-xl jelly-hover shadow-lg"
+                      >
+                        I'M READY! 🚀
+                      </button>
                     </div>
                   </div>
                 )}

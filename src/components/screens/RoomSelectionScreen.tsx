@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { StorageService } from '../../services/storage';
+import type { GameRoom } from '../../types';
 
 interface RoomSelectionScreenProps {
     playerName: string;
@@ -15,10 +17,27 @@ export const RoomSelectionScreen: React.FC<RoomSelectionScreenProps> = ({
 }) => {
     const [roomCode, setRoomCode] = useState('');
     const [mounted, setMounted] = useState(false);
+    const [lastRoom, setLastRoom] = useState<GameRoom | null>(null);
 
     useEffect(() => {
         setMounted(true);
+
+        const checkLastRoom = async () => {
+            const code = StorageService.getRoomCode();
+            if (code) {
+                const room = await StorageService.getRoom(code);
+                if (room) {
+                    setLastRoom(room);
+                }
+            }
+        };
+        checkLastRoom();
     }, []);
+
+    const handleDismissLastRoom = () => {
+        setLastRoom(null);
+        StorageService.leaveRoom(); // Clear from storage
+    };
 
     const handleJoin = (e: React.FormEvent) => {
         e.preventDefault();
@@ -112,6 +131,37 @@ export const RoomSelectionScreen: React.FC<RoomSelectionScreenProps> = ({
                     </div>
                 </div>
             </div>
+
+            {/* Quick Join Popup */}
+            {lastRoom && (
+                <div className="fixed bottom-0 left-0 right-0 p-4 z-50 slide-up">
+                    <div className="max-w-md mx-auto bg-white rounded-2xl shadow-2xl border-4 border-purple-500 p-4 flex items-center justify-between gap-4">
+                        <div className="flex-1">
+                            <h3 className="font-bold text-purple-600 text-sm uppercase tracking-wider">Found previous game!</h3>
+                            <div className="flex items-baseline gap-2">
+                                <span className="text-2xl font-black">{lastRoom.roomCode}</span>
+                                <span className="text-sm text-gray-500">
+                                    Round {lastRoom.roundNumber + 1} • {lastRoom.players.length} Players
+                                </span>
+                            </div>
+                        </div>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={handleDismissLastRoom}
+                                className="p-3 rounded-xl bg-gray-100 text-gray-500 hover:bg-gray-200 font-bold"
+                            >
+                                ✕
+                            </button>
+                            <button
+                                onClick={() => onJoinRoom(lastRoom.roomCode)}
+                                className="px-6 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold shadow-lg hover:scale-105 transition-transform"
+                            >
+                                Rejoin 🚀
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
