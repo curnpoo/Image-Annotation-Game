@@ -1,9 +1,9 @@
 export const ImageService = {
     processImage: (file: File): Promise<string> => {
         return new Promise((resolve, reject) => {
-            // Check size (max 5MB)
-            if (file.size > 5 * 1024 * 1024) {
-                reject(new Error('Image too large (max 5MB)'));
+            // Check size (max 20MB)
+            if (file.size > 20 * 1024 * 1024) {
+                reject(new Error('Image too large (max 20MB)'));
                 return;
             }
 
