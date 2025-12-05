@@ -600,5 +600,40 @@ export const StorageService = {
             room.chatEvents = newEvents;
             return room;
         });
+    },
+
+    // --- Join Active Game ---
+    joinCurrentGame: async (roomCode: string, playerId: string): Promise<void> => {
+        const roomRef = ref(database, `${ROOMS_PATH}/${roomCode}`);
+        await runTransaction(roomRef, (room) => {
+            if (!room) return null;
+
+            // Find player in waiting list
+            const waitingIndex = room.waitingPlayers?.findIndex((p: Player) => p.id === playerId);
+            if (waitingIndex === undefined || waitingIndex === -1) return room; // Not in waiting
+
+            const player = room.waitingPlayers[waitingIndex];
+
+            // Remove from waiting
+            room.waitingPlayers.splice(waitingIndex, 1);
+
+            // Add to players
+            if (!room.players) room.players = [];
+            room.players.push(player);
+
+            // Initialize State based on status
+            if (!room.playerStates) room.playerStates = {};
+
+            if (room.status === 'drawing' || room.status === 'uploading') {
+                // Determine timer state logic? 
+                // Mostly just need to set them as 'waiting' so they see the Ready screen
+                room.playerStates[playerId] = { status: 'waiting' };
+            }
+
+            if (!room.scores) room.scores = {};
+            if (room.scores[playerId] === undefined) room.scores[playerId] = 0;
+
+            return room;
+        });
     }
 };

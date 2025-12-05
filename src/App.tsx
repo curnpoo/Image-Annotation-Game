@@ -561,6 +561,16 @@ function App() {
         <WaitingRoomScreen
           room={room}
           currentPlayerId={player.id}
+          onJoinGame={async () => {
+            if (!roomCode || !player) return;
+            try {
+              await StorageService.joinCurrentGame(roomCode, player.id);
+              showToast('Joined the round! 🚀', 'success');
+            } catch (err) {
+              console.error(err);
+              showToast('Failed to join round', 'error');
+            }
+          }}
         />
       )}
 

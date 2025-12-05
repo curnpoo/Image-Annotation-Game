@@ -5,11 +5,13 @@ import { AvatarDisplay } from '../common/AvatarDisplay';
 interface WaitingRoomScreenProps {
     room: GameRoom;
     currentPlayerId: string;
+    onJoinGame: () => void;
 }
 
 export const WaitingRoomScreen: React.FC<WaitingRoomScreenProps> = ({
     room,
-    currentPlayerId
+    currentPlayerId,
+    onJoinGame
 }) => {
     const [mounted, setMounted] = useState(false);
 
@@ -93,10 +95,23 @@ export const WaitingRoomScreen: React.FC<WaitingRoomScreenProps> = ({
                     </div>
                 )}
 
-                <div className="mt-8 pt-6 border-t-2 border-gray-100">
+                <div className="mt-8 pt-6 border-t-2 border-gray-100 space-y-4">
                     <p className="text-gray-400 text-sm">
                         Sit tight! You've been added to the queue.
+                        <br />
+                        You'll join automatically in the next round.
                     </p>
+
+                    {/* Join Now Button */}
+                    {(room.status === 'drawing' || room.status === 'uploading') && (
+                        <button
+                            onClick={onJoinGame}
+                            className="w-full bg-gradient-to-r from-cyan-400 to-blue-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:scale-105 active:scale-95 transition-transform flex items-center justify-center gap-2"
+                        >
+                            <span>🚀</span>
+                            <span>Join Current Round</span>
+                        </button>
+                    )}
                 </div>
             </div>
         </div>
