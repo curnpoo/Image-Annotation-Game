@@ -44,7 +44,16 @@ function App() {
   const [isEraser, setIsEraser] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [isLoadingTransition, setIsLoadingTransition] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
   const lastStatusRef = useRef<string | null>(null);
+
+  // Initial 3s loading
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsInitialLoading(false);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Keep ref in sync with state
   useEffect(() => {
@@ -388,12 +397,8 @@ function App() {
   const submittedCount = room ? Object.values(room.playerStates || {}).filter(s => s.status === 'submitted').length : 0;
   const totalPlayers = room?.players?.length || 0;
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-90s-animated flex items-center justify-center">
-        <div className="text-4xl animate-bounce">⏳ Loading...</div>
-      </div>
-    );
+  if (isLoading || isInitialLoading) {
+    return <LoadingScreen />;
   }
 
   if (isLoadingTransition) {

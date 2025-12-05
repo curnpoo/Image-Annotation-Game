@@ -119,6 +119,6 @@ export interface RoomHistoryEntry {
     winnerName?: string;
     playerCount?: number;
     roundNumber?: number;
-    endReason?: 'finished' | 'early' | 'cancelled';
+    endReason?: 'finished' | 'early' | 'cancelled' | 'left';
     leaderName?: string;
 }

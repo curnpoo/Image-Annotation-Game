@@ -76,6 +76,14 @@ export const RoomSelectionScreen: React.FC<RoomSelectionScreenProps> = ({
         }
     };
 
+    const getInactiveStatusText = (room: RoomHistoryEntry) => {
+        if (room.endReason === 'cancelled') return 'Cancelled 🚫';
+        if (room.endReason === 'early') return 'Ended Early 🛑';
+        if (room.endReason === 'left') return 'Left Game 🏃‍♂️';
+        if (room.winnerName) return 'Ended 🏁';
+        return 'Ended 🏁';
+    };
+
     return (
         <div className="min-h-screen bg-90s-animated flex flex-col items-center justify-center p-4 relative overflow-hidden">
             {/* Decorative elements */}
@@ -187,7 +195,7 @@ export const RoomSelectionScreen: React.FC<RoomSelectionScreenProps> = ({
                                                     </span>
                                                 ) : (
                                                     <span className="bg-gray-100 text-gray-500 text-xs px-2 py-1 rounded-full font-bold">
-                                                        ● {game.endReason === 'cancelled' ? 'Cancelled' : 'Ended'}
+                                                        ● {getInactiveStatusText(game)}
                                                     </span>
                                                 )}
                                             </div>

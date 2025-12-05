@@ -118,6 +118,15 @@ export const StorageService = {
         }
     },
 
+    updateHistoryStatus: (roomCode: string, status: 'left') => {
+        const history = StorageService.getHistory();
+        const index = history.findIndex(h => h.roomCode === roomCode);
+        if (index >= 0) {
+            history[index].endReason = status;
+            localStorage.setItem('aic_room_history', JSON.stringify(history));
+        }
+    },
+
     closeRoom: async (roomCode: string): Promise<void> => {
         const roomRef = ref(database, `${ROOMS_PATH}/${roomCode}`);
         await remove(roomRef);

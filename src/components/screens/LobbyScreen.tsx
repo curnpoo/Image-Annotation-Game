@@ -47,9 +47,12 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
     };
 
     return (
-        <div className="min-h-screen bg-90s-animated p-4 flex flex-col items-center relative overflow-hidden">
-            {/* Decorative bubbles */}
-            <div className="absolute top-10 left-5 text-4xl bubble-float">🎈</div>
+        <div className="min-h-screen bg-90s-animated flex flex-col p-4 pt-12 relative overflow-hidden">
+            {/* Header */}
+            <div className="flex justify-between items-center mb-6 relative z-10">
+                {/* Decorative bubbles */}
+                <div className="absolute top-10 left-5 text-4xl bubble-float">🎈</div>
+            </div>
             <div className="absolute top-32 right-8 text-5xl bubble-float" style={{ animationDelay: '0.5s' }}>🎪</div>
             <div className="absolute bottom-40 left-10 text-4xl bubble-float" style={{ animationDelay: '1s' }}>🎯</div>
 
@@ -157,10 +160,10 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                                         </div>
                                     </div>
                                     <div className={`px-3 py-1 rounded-full text-sm font-bold ${room.playerStates && room.playerStates[p.id]?.status === 'ready'
-                                            ? 'bg-green-100 text-green-600'
-                                            : isIdle(p.lastSeen)
-                                                ? 'bg-gray-100 text-gray-400'
-                                                : 'bg-yellow-100 text-yellow-600'
+                                        ? 'bg-green-100 text-green-600'
+                                        : isIdle(p.lastSeen)
+                                            ? 'bg-gray-100 text-gray-400'
+                                            : 'bg-yellow-100 text-yellow-600'
                                         }`}>
                                         {room.playerStates && room.playerStates[p.id]?.status === 'ready'
                                             ? 'READY!'
