@@ -15,8 +15,7 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
     room,
     currentPlayerId,
     onStartGame,
-    onSettingsChange,
-    onLeave
+    onSettingsChange
 }) => {
     const [mounted, setMounted] = useState(false);
     const [copied, setCopied] = useState(false);
@@ -68,13 +67,6 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                         backgroundClip: 'padding-box, border-box'
                     }}>
                     <div className="flex items-center gap-3">
-                        <button
-                            onClick={onLeave}
-                            className="w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-xl transition-colors"
-                            title="Back to Home"
-                        >
-                            🏠
-                        </button>
                         <div>
                             <div className="text-sm text-cyan-500 uppercase tracking-wider font-bold">Room Code</div>
                             <div className="text-3xl font-mono font-bold rainbow-text">{room.roomCode}</div>

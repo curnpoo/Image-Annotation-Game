@@ -45,6 +45,7 @@ function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [isLoadingTransition, setIsLoadingTransition] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [isBrowsing, setIsBrowsing] = useState(false);
   const lastStatusRef = useRef<string | null>(null);
 
   // Initial 3s loading
@@ -105,7 +106,7 @@ function App() {
 
   // Sync screen with room status
   useEffect(() => {
-    if (room && !isLoading) {
+    if (room && !isLoading && !isBrowsing) {
       const status = room.status;
 
       // Initial load or same status - no transition
@@ -139,7 +140,7 @@ function App() {
 
       return () => clearTimeout(timer);
     }
-  }, [room?.status, isLoading, currentScreen]);
+  }, [room?.status, isLoading, currentScreen, isBrowsing]);
 
 
   // Heartbeat
@@ -191,6 +192,7 @@ function App() {
     try {
       const code = await StorageService.createRoom(player);
       setRoomCode(code);
+      setIsBrowsing(false);
       setCurrentScreen('lobby');
       showToast('Room created! Share the code! 🎉', 'success');
     } catch (err) {
@@ -207,6 +209,7 @@ function App() {
       const room = await StorageService.joinRoom(code.toUpperCase(), player);
       if (room) {
         setRoomCode(code.toUpperCase());
+        setIsBrowsing(false);
         setCurrentScreen('lobby');
         showToast('Joined room! 🎮', 'success');
       } else {
@@ -246,9 +249,9 @@ function App() {
       const imageUrl = await ImageService.processImage(file);
       await StorageService.startRound(roomCode, imageUrl, player.id);
       showToast('Round started! 🎨', 'success');
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to start round:', err);
-      showToast('Failed to start round 😅', 'error');
+      showToast(err.message || 'Failed to start round 😅', 'error');
     }
     setIsLoading(false);
   };
@@ -386,8 +389,14 @@ function App() {
   };
 
   const handleGoHome = () => {
+    setIsBrowsing(true);
     setCurrentScreen('room-selection');
     setShowSettings(false);
+  };
+
+  const handleSafeReset = () => {
+    StorageService.leaveRoom(); // Clear local session to prevent auto-rejoin
+    window.location.reload();
   };
 
   // Get my player state
@@ -402,11 +411,11 @@ function App() {
   const totalPlayers = room?.players?.length || 0;
 
   if (isLoading || isInitialLoading) {
-    return <LoadingScreen />;
+    return <LoadingScreen onGoHome={handleSafeReset} />;
   }
 
   if (isLoadingTransition) {
-    return <LoadingScreen />;
+    return <LoadingScreen onGoHome={handleSafeReset} />;
   }
 
   return (

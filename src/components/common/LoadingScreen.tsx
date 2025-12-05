@@ -11,11 +11,23 @@ const TIPS = [
     "💡 Tip: You can rejoin a game if you accidentally close the tab."
 ];
 
-export const LoadingScreen: React.FC = () => {
+interface LoadingScreenProps {
+    onGoHome?: () => void;
+}
+
+export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onGoHome }) => {
     const [tip, setTip] = useState('');
+    const [showStuckButton, setShowStuckButton] = useState(false);
 
     useEffect(() => {
         setTip(TIPS[Math.floor(Math.random() * TIPS.length)]);
+
+        // Show stuck button after 5 seconds
+        const timer = setTimeout(() => {
+            setShowStuckButton(true);
+        }, 5000);
+
+        return () => clearTimeout(timer);
     }, []);
 
     return (
@@ -26,9 +38,21 @@ export const LoadingScreen: React.FC = () => {
                 <div className="h-2 bg-gray-200 rounded-full overflow-hidden mb-6">
                     <div className="h-full bg-gradient-to-r from-purple-500 to-pink-500 animate-loading-bar" />
                 </div>
-                <p className="text-gray-600 font-bold text-lg italic">
+                <p className="text-gray-600 font-bold text-lg italic mb-4">
                     {tip}
                 </p>
+
+                {showStuckButton && onGoHome && (
+                    <div className="animate-fade-in pt-4 border-t border-gray-200 mt-4">
+                        <p className="text-sm text-gray-500 mb-2">Taking a while?</p>
+                        <button
+                            onClick={onGoHome}
+                            className="text-sm font-bold text-purple-500 hover:text-purple-700 underline"
+                        >
+                            Stuck? Reset App 🔄
+                        </button>
+                    </div>
+                )}
             </div>
         </div>
     );

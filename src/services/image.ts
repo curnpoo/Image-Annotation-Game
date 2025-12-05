@@ -7,6 +7,12 @@ export const ImageService = {
                 return;
             }
 
+            // Check file type
+            if (!file.type.match(/^image\/(jpeg|png|webp|gif)$/)) {
+                reject(new Error('Invalid file format. Use JPG, PNG, GIF or WebP'));
+                return;
+            }
+
             const reader = new FileReader();
             reader.onload = (e) => {
                 const result = e.target?.result as string;
