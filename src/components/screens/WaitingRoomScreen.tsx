@@ -74,6 +74,25 @@ export const WaitingRoomScreen: React.FC<WaitingRoomScreenProps> = ({
                     </div>
                 </div>
 
+                {/* Show who hasn't finished yet */}
+                {room.status === 'drawing' && (
+                    <div className="mt-4">
+                        <div className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2">
+                            Still Drawing ({room.players.filter(p => room.playerStates?.[p.id]?.status !== 'submitted').length})
+                        </div>
+                        <div className="flex flex-wrap justify-center gap-2 max-h-32 overflow-y-auto custom-scrollbar">
+                            {room.players
+                                .filter(p => room.playerStates?.[p.id]?.status !== 'submitted')
+                                .map(p => (
+                                    <div key={p.id} className="flex items-center gap-1 bg-white border border-gray-200 px-2 py-1 rounded-lg shadow-sm animate-pulse">
+                                        <span className="text-xs">{p.avatar || '👤'}</span>
+                                        <span className="text-xs font-semibold text-gray-600 truncate max-w-[80px]">{p.name}</span>
+                                    </div>
+                                ))}
+                        </div>
+                    </div>
+                )}
+
                 <div className="mt-8 pt-6 border-t-2 border-gray-100">
                     <p className="text-gray-400 text-sm">
                         Sit tight! You've been added to the queue.

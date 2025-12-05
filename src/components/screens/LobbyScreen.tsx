@@ -10,13 +10,15 @@ interface LobbyScreenProps {
     onStartGame: () => void;
     onSettingsChange: (settings: Partial<GameSettings>) => void;
     onLeave: () => void;
+    onKick: (playerId: string) => void;
 }
 
 export const LobbyScreen: React.FC<LobbyScreenProps> = ({
     room,
     currentPlayerId,
     onStartGame,
-    onSettingsChange
+    onSettingsChange,
+    onKick
 }) => {
     const [mounted, setMounted] = useState(false);
     const [copied, setCopied] = useState(false);
@@ -166,6 +168,22 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                                                 ? 'IDLE 💤'
                                                 : 'WAITING...'}
                                     </div>
+
+                                    {/* Kick Button (Host Only, can't kick self) */}
+                                    {isHost && p.id !== currentPlayerId && (
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                if (window.confirm(`Kick ${p.name}?`)) {
+                                                    onKick(p.id);
+                                                }
+                                            }}
+                                            className="ml-2 bg-red-100 text-red-500 w-8 h-8 rounded-full hover:bg-red-500 hover:text-white transition-colors flex items-center justify-center font-bold shadow-sm"
+                                            title="Kick Player"
+                                        >
+                                            ✕
+                                        </button>
+                                    )}
                                 </div>
                             );
                         })}

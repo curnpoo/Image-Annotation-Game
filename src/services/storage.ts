@@ -77,6 +77,26 @@ export const StorageService = {
         localStorage.removeItem('lastRoomCode');
     },
 
+    // --- Moderation ---
+    kickPlayer: async (roomCode: string, playerId: string): Promise<void> => {
+        const roomRef = ref(database, `${ROOMS_PATH}/${roomCode}`);
+        await runTransaction(roomRef, (room) => {
+            if (!room) return null;
+
+            if (room.players) {
+                room.players = room.players.filter((p: Player) => p.id !== playerId);
+            }
+            if (room.waitingPlayers) {
+                room.waitingPlayers = room.waitingPlayers.filter((p: Player) => p.id !== playerId);
+            }
+            // Also remove their state if exists
+            if (room.playerStates && room.playerStates[playerId]) {
+                delete room.playerStates[playerId];
+            }
+            return room;
+        });
+    },
+
     // --- History ---
     saveRoomToHistory: (room: GameRoom) => {
         const history = StorageService.getHistory();

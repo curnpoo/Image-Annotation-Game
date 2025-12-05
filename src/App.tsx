@@ -138,21 +138,46 @@ function App() {
 
       const timer = setTimeout(() => {
         setIsLoadingTransition(false);
+
+        // Routing Logic
+        const amWaiting = room.waitingPlayers?.some(p => p.id === player?.id);
+
         if (status === 'lobby') setCurrentScreen('lobby');
-        else if (status === 'uploading') setCurrentScreen('uploading');
+        else if (status === 'uploading') setCurrentScreen(amWaiting ? 'waiting' : 'uploading');
         else if (status === 'drawing') {
-          setCurrentScreen('drawing');
-          setStrokes([]);
-          setIsMyTimerRunning(false);
+          if (amWaiting) {
+            setCurrentScreen('waiting');
+          } else {
+            setCurrentScreen('drawing');
+            setStrokes([]);
+            setIsMyTimerRunning(false);
+          }
         }
-        else if (status === 'voting') setCurrentScreen('voting');
+        else if (status === 'voting') setCurrentScreen(amWaiting ? 'waiting' : 'voting');
         else if (status === 'results') setCurrentScreen('results');
         else if (status === 'final') setCurrentScreen('final');
       }, 1500);
 
       return () => clearTimeout(timer);
     }
-  }, [room?.status, room?.roundNumber, isLoading, currentScreen, isBrowsing]);
+  }, [room?.status, room?.roundNumber, isLoading, currentScreen, isBrowsing, room?.waitingPlayers]);
+
+  // Effect: Kicked / Removed check
+  useEffect(() => {
+    if (roomCode && room && player && !isLoading && !isInitialLoading) {
+      const amInPlayers = room.players.some(p => p.id === player.id);
+      const amInWaiting = room.waitingPlayers?.some(p => p.id === player.id);
+
+      if (!amInPlayers && !amInWaiting) {
+        // I was kicked or room data glitch
+        // Add simple debounce or check if room just fully closed
+        showToast('You were removed from the room 👢', 'info');
+        setRoomCode(null);
+        StorageService.leaveRoom();
+        setCurrentScreen('room-selection');
+      }
+    }
+  }, [room, player, roomCode]);
 
 
   // Heartbeat
@@ -519,6 +544,16 @@ function App() {
           onStartGame={handleStartGame}
           onSettingsChange={handleSettingsChange}
           onLeave={handleLeaveGame}
+          onKick={async (playerId) => {
+            if (!roomCode) return;
+            try {
+              await StorageService.kickPlayer(roomCode, playerId);
+              showToast('Player kicked 👢', 'info');
+            } catch (err) {
+              console.error(err);
+              showToast('Failed to kick player', 'error');
+            }
+          }}
         />
       )}
 
