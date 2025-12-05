@@ -368,9 +368,9 @@ function App() {
               )}
             </div>
 
-            {/* Image Container - Takes remaining space */}
-            <div className="flex-1 min-h-0 flex items-center justify-center">
-              <div className="relative w-full h-full max-w-4xl"
+            {/* Image Container - Square aspect, takes remaining space */}
+            <div className="flex-1 min-h-0 flex items-center justify-center p-2">
+              <div className="relative aspect-square w-full max-w-[min(100%,calc(100vh-200px))]"
                 style={{
                   borderRadius: '1.5rem',
                   overflow: 'hidden',
