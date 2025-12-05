@@ -351,13 +351,22 @@ function App() {
         />
       )}
 
-      {currentScreen === 'lobby' && room && player && (
-        <LobbyScreen
-          room={room}
-          currentPlayerId={player.id}
-          onUploadImage={handleUploadImage}
-          onSettingsChange={handleSettingsChange}
-        />
+      {currentScreen === 'lobby' && (
+        room && player ? (
+          <LobbyScreen
+            room={room}
+            currentPlayerId={player.id}
+            onUploadImage={handleUploadImage}
+            onSettingsChange={handleSettingsChange}
+          />
+        ) : (
+          <div className="fixed inset-0 bg-90s-animated flex items-center justify-center">
+            <div className="text-center space-y-4">
+              <div className="text-6xl animate-bounce">⏳</div>
+              <div className="text-2xl font-bold text-white drop-shadow-md">Loading Room...</div>
+            </div>
+          </div>
+        )
       )}
 
       {/* Drawing Screen */}
