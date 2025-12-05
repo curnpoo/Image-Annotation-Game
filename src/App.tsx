@@ -113,6 +113,14 @@ function App() {
         break;
       case 'final':
         setCurrentScreen('final');
+        // Update history with winner
+        if (room.scores) {
+          const winnerId = Object.entries(room.scores).sort(([, a], [, b]) => b - a)[0]?.[0];
+          const winner = room.players.find(p => p.id === winnerId);
+          if (winner) {
+            StorageService.updateHistoryWinner(room.roomCode, winner.name);
+          }
+        }
         break;
     }
   }, [room?.status, currentScreen, room?.waitingPlayers, player?.id]);

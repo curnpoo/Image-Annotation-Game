@@ -112,3 +112,10 @@ export interface Annotation {
     drawingData: DrawingStroke[];
     submittedAt: number;
 }
+export interface RoomHistoryEntry {
+    roomCode: string;
+    lastSeen: number;
+    winnerName?: string;
+    playerCount?: number;
+    roundNumber?: number;
+}

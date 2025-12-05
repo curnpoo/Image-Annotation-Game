@@ -59,29 +59,51 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
 
         // Draw all completed strokes (convert from percentage to pixels)
         strokes.forEach(stroke => {
-            if (stroke.points.length < 2) return;
+            if (stroke.points.length === 0) return;
+
             ctx.beginPath();
             ctx.strokeStyle = stroke.color;
+            ctx.fillStyle = stroke.color;
             ctx.lineWidth = stroke.size;
             ctx.globalCompositeOperation = stroke.isEraser ? 'destination-out' : 'source-over';
-            ctx.moveTo(stroke.points[0].x / 100 * width, stroke.points[0].y / 100 * height);
-            for (let i = 1; i < stroke.points.length; i++) {
-                ctx.lineTo(stroke.points[i].x / 100 * width, stroke.points[i].y / 100 * height);
+
+            if (stroke.points.length === 1) {
+                // Draw dot
+                const x = stroke.points[0].x / 100 * width;
+                const y = stroke.points[0].y / 100 * height;
+                ctx.arc(x, y, stroke.size / 2, 0, Math.PI * 2);
+                ctx.fill();
+            } else {
+                // Draw line
+                ctx.moveTo(stroke.points[0].x / 100 * width, stroke.points[0].y / 100 * height);
+                for (let i = 1; i < stroke.points.length; i++) {
+                    ctx.lineTo(stroke.points[i].x / 100 * width, stroke.points[i].y / 100 * height);
+                }
+                ctx.stroke();
             }
-            ctx.stroke();
         });
 
         // Draw current stroke
-        if (currentStroke && currentStroke.points.length >= 2) {
+        if (currentStroke && currentStroke.points.length > 0) {
             ctx.beginPath();
             ctx.strokeStyle = currentStroke.color;
+            ctx.fillStyle = currentStroke.color;
             ctx.lineWidth = currentStroke.size;
             ctx.globalCompositeOperation = currentStroke.isEraser ? 'destination-out' : 'source-over';
-            ctx.moveTo(currentStroke.points[0].x / 100 * width, currentStroke.points[0].y / 100 * height);
-            for (let i = 1; i < currentStroke.points.length; i++) {
-                ctx.lineTo(currentStroke.points[i].x / 100 * width, currentStroke.points[i].y / 100 * height);
+
+            if (currentStroke.points.length === 1) {
+                // Draw dot
+                const x = currentStroke.points[0].x / 100 * width;
+                const y = currentStroke.points[0].y / 100 * height;
+                ctx.arc(x, y, currentStroke.size / 2, 0, Math.PI * 2);
+                ctx.fill();
+            } else {
+                ctx.moveTo(currentStroke.points[0].x / 100 * width, currentStroke.points[0].y / 100 * height);
+                for (let i = 1; i < currentStroke.points.length; i++) {
+                    ctx.lineTo(currentStroke.points[i].x / 100 * width, currentStroke.points[i].y / 100 * height);
+                }
+                ctx.stroke();
             }
-            ctx.stroke();
         }
 
         // Reset composite operation

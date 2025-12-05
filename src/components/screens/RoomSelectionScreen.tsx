@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { StorageService } from '../../services/storage';
-import type { GameRoom } from '../../types';
+import type { RoomHistoryEntry } from '../../types';
 
 interface RoomSelectionScreenProps {
     playerName: string;
@@ -17,27 +17,21 @@ export const RoomSelectionScreen: React.FC<RoomSelectionScreenProps> = ({
 }) => {
     const [roomCode, setRoomCode] = useState('');
     const [mounted, setMounted] = useState(false);
-    const [lastRoom, setLastRoom] = useState<GameRoom | null>(null);
+    const [history, setHistory] = useState<(RoomHistoryEntry & { isActive: boolean })[]>([]);
 
     useEffect(() => {
         setMounted(true);
 
-        const checkLastRoom = async () => {
-            const code = StorageService.getRoomCode();
-            if (code) {
-                const room = await StorageService.getRoom(code);
-                if (room) {
-                    setLastRoom(room);
-                }
-            }
+        const loadHistory = async () => {
+            const savedHistory = StorageService.getHistory();
+            const historyWithStatus = await Promise.all(savedHistory.map(async (entry) => {
+                const room = await StorageService.getRoom(entry.roomCode);
+                return { ...entry, isActive: !!room };
+            }));
+            setHistory(historyWithStatus);
         };
-        checkLastRoom();
+        loadHistory();
     }, []);
-
-    const handleDismissLastRoom = () => {
-        setLastRoom(null);
-        StorageService.leaveRoom(); // Clear from storage
-    };
 
     const handleJoin = (e: React.FormEvent) => {
         e.preventDefault();
@@ -132,32 +126,60 @@ export const RoomSelectionScreen: React.FC<RoomSelectionScreenProps> = ({
                 </div>
             </div>
 
-            {/* Quick Join Popup */}
-            {lastRoom && (
-                <div className="fixed bottom-0 left-0 right-0 p-4 z-50 slide-up">
-                    <div className="max-w-md mx-auto bg-white rounded-2xl shadow-2xl border-4 border-purple-500 p-4 flex items-center justify-between gap-4">
-                        <div className="flex-1">
-                            <h3 className="font-bold text-purple-600 text-sm uppercase tracking-wider">Found previous game!</h3>
-                            <div className="flex items-baseline gap-2">
-                                <span className="text-2xl font-black">{lastRoom.roomCode}</span>
-                                <span className="text-sm text-gray-500">
-                                    Round {lastRoom.roundNumber + 1} • {lastRoom.players.length} Players
-                                </span>
-                            </div>
-                        </div>
-                        <div className="flex gap-2">
-                            <button
-                                onClick={handleDismissLastRoom}
-                                className="p-3 rounded-xl bg-gray-100 text-gray-500 hover:bg-gray-200 font-bold"
-                            >
-                                ✕
-                            </button>
-                            <button
-                                onClick={() => onJoinRoom(lastRoom.roomCode)}
-                                className="px-6 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold shadow-lg hover:scale-105 transition-transform"
-                            >
-                                Rejoin 🚀
-                            </button>
+            {/* Recent Games List */}
+            {history.length > 0 && (
+                <div className="w-full max-w-md mt-8 relative z-10 slide-up" style={{ animationDelay: '0.2s' }}>
+                    <div className="bg-white/90 backdrop-blur-sm rounded-[2rem] p-6 shadow-xl border-4 border-white">
+                        <h3 className="text-xl font-bold text-purple-600 mb-4 flex items-center gap-2">
+                            🕒 Recent Games
+                        </h3>
+                        <div className="space-y-3">
+                            {history.map((game) => (
+                                <div key={game.roomCode}
+                                    className={`p-4 rounded-xl border-2 transition-all ${game.isActive
+                                        ? 'bg-white border-purple-200 hover:border-purple-400 shadow-sm'
+                                        : 'bg-gray-50 border-gray-100 opacity-75'
+                                        }`}
+                                >
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-2xl font-black text-gray-800">{game.roomCode}</span>
+                                                {game.isActive ? (
+                                                    <span className="bg-green-100 text-green-600 text-xs px-2 py-1 rounded-full font-bold">
+                                                        ● Active
+                                                    </span>
+                                                ) : (
+                                                    <span className="bg-gray-100 text-gray-500 text-xs px-2 py-1 rounded-full font-bold">
+                                                        ● Ended
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <div className="text-sm text-gray-500 mt-1">
+                                                {game.playerCount} Players • Round {game.roundNumber}
+                                            </div>
+                                            {game.winnerName && (
+                                                <div className="text-sm font-bold text-amber-500 mt-1">
+                                                    🏆 Winner: {game.winnerName}
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {game.isActive ? (
+                                            <button
+                                                onClick={() => onJoinRoom(game.roomCode)}
+                                                className="px-4 py-2 rounded-lg bg-purple-500 text-white font-bold hover:bg-purple-600 transition-colors shadow-md"
+                                            >
+                                                Join
+                                            </button>
+                                        ) : (
+                                            <button disabled className="px-4 py-2 rounded-lg bg-gray-200 text-gray-400 font-bold cursor-not-allowed">
+                                                Closed
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 </div>

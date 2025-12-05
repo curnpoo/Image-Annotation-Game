@@ -1,6 +1,6 @@
 import { ref, set, get, onValue, runTransaction } from 'firebase/database';
 import { database } from '../firebase';
-import type { GameRoom, Player, GameSettings, BlockInfo, PlayerState, PlayerDrawing, RoundResult } from '../types';
+import type { GameRoom, Player, GameSettings, BlockInfo, PlayerState, PlayerDrawing, RoundResult, RoomHistoryEntry } from '../types';
 
 const ROOMS_PATH = 'rooms';
 
@@ -73,6 +73,38 @@ export const StorageService = {
         localStorage.removeItem('lastRoomCode');
     },
 
+    // --- History ---
+    saveRoomToHistory: (room: GameRoom) => {
+        const history = StorageService.getHistory();
+        const newEntry: RoomHistoryEntry = {
+            roomCode: room.roomCode,
+            lastSeen: Date.now(),
+            playerCount: room.players.length,
+            roundNumber: room.roundNumber
+        };
+
+        // Remove existing entry for this room
+        const filtered = history.filter(h => h.roomCode !== room.roomCode);
+
+        // Add to top, limit to 5
+        const newHistory = [newEntry, ...filtered].slice(0, 5);
+        localStorage.setItem('aic_room_history', JSON.stringify(newHistory));
+    },
+
+    getHistory: (): RoomHistoryEntry[] => {
+        const data = localStorage.getItem('aic_room_history');
+        return data ? JSON.parse(data) : [];
+    },
+
+    updateHistoryWinner: (roomCode: string, winnerName: string) => {
+        const history = StorageService.getHistory();
+        const index = history.findIndex(h => h.roomCode === roomCode);
+        if (index >= 0) {
+            history[index].winnerName = winnerName;
+            localStorage.setItem('aic_room_history', JSON.stringify(history));
+        }
+    },
+
     // --- Room Management ---
     createRoom: async (hostPlayer: Player): Promise<string> => {
         const roomCode = StorageService.generateRoomCode();
@@ -98,7 +130,9 @@ export const StorageService = {
         };
 
         await set(roomRef, newRoom);
+        await set(roomRef, newRoom);
         StorageService.saveRoomCode(roomCode); // Save for persistence
+        StorageService.saveRoomToHistory(newRoom);
         return roomCode;
     },
 
@@ -203,6 +237,7 @@ export const StorageService = {
         if (existingPlayerIndex >= 0) {
             room.players[existingPlayerIndex] = { ...player, lastSeen: Date.now() };
             await StorageService.saveRoom(room);
+            StorageService.saveRoomToHistory(room);
             return room;
         }
 
@@ -211,6 +246,7 @@ export const StorageService = {
         if (existingWaitingIndex >= 0 && room.waitingPlayers) {
             room.waitingPlayers[existingWaitingIndex] = { ...player, lastSeen: Date.now() };
             await StorageService.saveRoom(room);
+            StorageService.saveRoomToHistory(room);
             return room;
         }
 
@@ -231,6 +267,7 @@ export const StorageService = {
         }
 
         await StorageService.saveRoom(room);
+        StorageService.saveRoomToHistory(room);
         return room;
     },
 

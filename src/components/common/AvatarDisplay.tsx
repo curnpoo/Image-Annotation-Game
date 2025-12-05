@@ -50,7 +50,21 @@ export const AvatarDisplay: React.FC<AvatarDisplayProps> = ({
                 style={{ color: color }}
             >
                 {strokes.map((stroke, i) => {
-                    if (!stroke || !stroke.points || stroke.points.length < 2) return null;
+                    if (!stroke || !stroke.points || stroke.points.length === 0) return null;
+
+                    if (stroke.points.length === 1) {
+                        const p = stroke.points[0];
+                        return (
+                            <circle
+                                key={i}
+                                cx={p.x}
+                                cy={p.y}
+                                r={(stroke.size / 3) / 2}
+                                fill={stroke.color}
+                            />
+                        );
+                    }
+
                     return (
                         <path
                             key={i}

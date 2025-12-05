@@ -119,7 +119,21 @@ export const VotingScreen: React.FC<VotingScreenProps> = ({
                     {/* Drawing overlay - use viewBox for percentage coordinates */}
                     <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
                         {currentDrawing.drawing.strokes && Array.isArray(currentDrawing.drawing.strokes) && currentDrawing.drawing.strokes.map((stroke, i) => {
-                            if (!stroke || !stroke.points || !Array.isArray(stroke.points) || stroke.points.length < 2) return null;
+                            if (!stroke || !stroke.points || !Array.isArray(stroke.points) || stroke.points.length === 0) return null;
+
+                            if (stroke.points.length === 1) {
+                                const p = stroke.points[0];
+                                return (
+                                    <circle
+                                        key={i}
+                                        cx={p.x}
+                                        cy={p.y}
+                                        r={(stroke.size / 3) / 2}
+                                        fill={stroke.color}
+                                    />
+                                );
+                            }
+
                             return (
                                 <path
                                     key={i}
