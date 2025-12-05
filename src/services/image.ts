@@ -35,8 +35,8 @@ export const ImageService = {
                     const offsetX = (img.width - size) / 2;
                     const offsetY = (img.height - size) / 2;
 
-                    // Set canvas to a reasonable max size (e.g., 1024x1024)
-                    const maxSize = 1024;
+                    // Set canvas to a reasonable max size (e.g., 600x600 for storage optimization)
+                    const maxSize = 600;
                     const outputSize = Math.min(size, maxSize);
                     canvas.width = outputSize;
                     canvas.height = outputSize;
@@ -48,8 +48,13 @@ export const ImageService = {
                         0, 0, outputSize, outputSize    // Dest: fill canvas
                     );
 
-                    // Convert to base64 with compression (0.85 quality for JPEG)
-                    const squareBase64 = canvas.toDataURL('image/jpeg', 0.85);
+                    // Convert to base64 with compression (0.7 quality for JPEG)
+                    const squareBase64 = canvas.toDataURL('image/jpeg', 0.7);
+
+                    // Log size for verification
+                    const sizeInBytes = Math.ceil((squareBase64.length * 3) / 4);
+                    console.log(`Image processed: ${outputSize}x${outputSize}, Quality: 0.7, Size: ${(sizeInBytes / 1024).toFixed(2)}KB`);
+
                     resolve(squareBase64);
                 };
 
