@@ -317,7 +317,7 @@ function App() {
       )}
 
       {currentScreen === 'game' && room && room.currentImage && (
-        <div className="fixed inset-0 bg-90s-animated flex flex-row md:flex-col">
+        <div className="fixed inset-0 bg-90s-animated flex flex-col">
           {/* Main Game Area */}
           <div className="flex-1 relative flex flex-col items-center justify-center p-4 overflow-hidden">
 
@@ -392,8 +392,8 @@ function App() {
             </div>
           </div>
 
-          {/* Toolbar Area - Side on mobile, Bottom on desktop */}
-          <div className="p-4 safe-area-bottom md:w-full w-auto flex-shrink-0 flex items-center justify-center z-30">
+          {/* Toolbar Area - Bottom on all devices */}
+          <div className="p-4 safe-area-bottom w-full flex-shrink-0 flex items-center justify-center z-30">
             <Toolbar
               brushColor={brushColor}
               brushSize={brushSize}

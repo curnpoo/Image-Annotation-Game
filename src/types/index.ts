@@ -34,7 +34,7 @@ export interface GameRoom {
     turnOrder: string[]; // Array of player IDs
     currentTurnIndex: number;
     turnStatus: 'waiting' | 'drawing'; // 'waiting' for ready, 'drawing' with timer
-    turnEndsAt?: number;
+    turnEndsAt?: number | null;
     players: Player[];
     annotations: Annotation[];
     roundStartedAt?: number;

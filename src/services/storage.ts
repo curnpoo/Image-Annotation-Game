@@ -155,7 +155,7 @@ export const StorageService = {
                 currentTurnIndex: isRoundOver ? 0 : nextIndex,
                 turnStatus: 'waiting',
                 status: isRoundOver ? 'reviewing' : 'annotating',
-                turnEndsAt: undefined
+                turnEndsAt: null // Firebase doesn't accept undefined, use null to clear
             };
         });
     }
