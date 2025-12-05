@@ -317,52 +317,49 @@ function App() {
       )}
 
       {currentScreen === 'game' && room && room.currentImage && (
-        <div className="fixed inset-0 bg-90s-animated flex flex-col">
-          {/* Main Game Area */}
-          <div className="flex-1 relative flex flex-col items-center justify-center p-4 overflow-hidden">
+        <div className="fixed inset-0 bg-90s-animated overflow-hidden">
+          {/* Container with safe padding */}
+          <div className="h-full w-full flex flex-col p-4 pb-0">
 
-            {/* Top Bar with Turn Info, Timer, and Ready Button */}
-            <div className="w-full max-w-4xl flex justify-between items-center mb-4 px-4 z-20 gap-4">
+            {/* Top Bar - Turn Info & Timer */}
+            <div className="flex-shrink-0 flex items-center justify-between gap-2 mb-4 z-20">
               {/* Turn Info / Ready Status */}
-              <div className="bg-white/95 backdrop-blur-sm px-5 py-3 rounded-2xl pop-in flex items-center gap-4"
+              <div className="bg-white/95 backdrop-blur-sm px-3 py-2 sm:px-5 sm:py-3 rounded-xl sm:rounded-2xl pop-in flex items-center gap-2 sm:gap-4"
                 style={{
-                  boxShadow: '0 6px 0 rgba(155, 89, 182, 0.3), 0 12px 24px rgba(0, 0, 0, 0.15)',
+                  boxShadow: '0 4px 0 rgba(155, 89, 182, 0.3)',
                   border: '3px solid #FF69B4'
                 }}>
-
                 {isMyTurn && room.turnStatus === 'waiting' ? (
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl animate-bounce">🎨</span>
-                    <div className="flex flex-col">
-                      <span className="text-sm text-pink-400 font-bold">Your Turn!</span>
-                      <span className="font-bold text-lg bg-clip-text text-transparent bg-gradient-to-r from-green-500 to-blue-500">
-                        Ready to Draw?
-                      </span>
-                    </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl animate-bounce">🎨</span>
+                    <span className="text-sm font-bold bg-clip-text text-transparent bg-gradient-to-r from-green-500 to-blue-500">
+                      Ready?
+                    </span>
                     <button
                       onClick={handleReady}
-                      className="ml-2 btn-90s bg-gradient-to-r from-lime-400 to-emerald-500 text-white font-bold px-4 py-2 rounded-xl text-sm jelly-hover"
+                      className="btn-90s bg-gradient-to-r from-lime-400 to-emerald-500 text-white font-bold px-3 py-1.5 rounded-lg text-sm jelly-hover"
                     >
-                      I'm Ready! 🚀
+                      Go! 🚀
                     </button>
                   </div>
                 ) : (
-                  <>
-                    <div className="text-sm text-pink-400 font-bold">🎮 Current Turn</div>
-                    <div className="font-bold text-xl ml-2"
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm">🎮</span>
+                    <span className="font-bold text-sm sm:text-base"
                       style={{
                         background: 'linear-gradient(135deg, #FF69B4, #9B59B6)',
                         WebkitBackgroundClip: 'text',
                         WebkitTextFillColor: 'transparent'
                       }}>
-                      {isMyTurn ? "✨ It's your turn! ✨" : `${currentPlayerName}'s turn`}
-                    </div>
-                  </>
+                      {isMyTurn ? "Your turn!" : `${currentPlayerName}'s turn`}
+                    </span>
+                  </div>
                 )}
               </div>
 
+              {/* Timer */}
               {isMyTurn && room.turnStatus === 'drawing' && (
-                <div className="scale-90 origin-right">
+                <div className="scale-75 sm:scale-90 origin-right flex-shrink-0">
                   <Timer
                     endsAt={room.turnEndsAt || Date.now() + 10000}
                     onTimeUp={handleTimeUp}
@@ -371,37 +368,39 @@ function App() {
               )}
             </div>
 
-            {/* Image Container */}
-            <div className="relative w-full max-w-4xl aspect-[4/3] max-h-[70vh]"
-              style={{
-                borderRadius: '2rem',
-                overflow: 'hidden',
-                boxShadow: '0 15px 0 rgba(155, 89, 182, 0.4), 0 30px 60px rgba(0, 0, 0, 0.3)',
-                border: '6px solid transparent',
-                backgroundImage: 'linear-gradient(white, white), linear-gradient(135deg, #FF69B4, #9B59B6, #00D9FF)',
-                backgroundOrigin: 'border-box',
-                backgroundClip: 'padding-box, border-box'
-              }}>
-              <GameCanvas
-                imageUrl={room.currentImage.url}
+            {/* Image Container - Takes remaining space */}
+            <div className="flex-1 min-h-0 flex items-center justify-center">
+              <div className="relative w-full h-full max-w-4xl"
+                style={{
+                  borderRadius: '1.5rem',
+                  overflow: 'hidden',
+                  boxShadow: '0 10px 0 rgba(155, 89, 182, 0.4), 0 20px 40px rgba(0, 0, 0, 0.3)',
+                  border: '5px solid transparent',
+                  backgroundImage: 'linear-gradient(white, white), linear-gradient(135deg, #FF69B4, #9B59B6, #00D9FF)',
+                  backgroundOrigin: 'border-box',
+                  backgroundClip: 'padding-box, border-box'
+                }}>
+                <GameCanvas
+                  imageUrl={room.currentImage.url}
+                  brushColor={brushColor}
+                  brushSize={brushSize}
+                  isDrawingEnabled={isDrawing}
+                  onStrokesChange={setStrokes}
+                />
+              </div>
+            </div>
+
+            {/* Toolbar - Fixed at bottom */}
+            <div className="flex-shrink-0 py-3 safe-area-bottom flex justify-center">
+              <Toolbar
                 brushColor={brushColor}
                 brushSize={brushSize}
-                isDrawingEnabled={isDrawing}
-                onStrokesChange={setStrokes}
+                onColorChange={setBrushColor}
+                onSizeChange={setBrushSize}
+                onUndo={handleUndo}
+                onClear={handleClear}
               />
             </div>
-          </div>
-
-          {/* Toolbar Area - Bottom on all devices */}
-          <div className="p-4 safe-area-bottom w-full flex-shrink-0 flex items-center justify-center z-30">
-            <Toolbar
-              brushColor={brushColor}
-              brushSize={brushSize}
-              onColorChange={setBrushColor}
-              onSizeChange={setBrushSize}
-              onUndo={handleUndo}
-              onClear={handleClear}
-            />
           </div>
         </div>
       )}
