@@ -47,7 +47,8 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
     };
 
     return (
-        <div className="min-h-screen bg-90s-animated flex flex-col p-4 pt-12 relative overflow-hidden">
+        <div className="min-h-screen bg-90s-animated flex flex-col p-4 relative overflow-hidden"
+            style={{ paddingTop: 'max(1rem, env(safe-area-inset-top) + 1rem)' }}>
             {/* Header */}
             <div className="flex justify-between items-center mb-6 relative z-10">
                 {/* Decorative bubbles */}

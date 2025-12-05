@@ -52,27 +52,28 @@ export const Toast: React.FC<ToastProps> = ({ message, type = 'error', onClose, 
 
     return (
         <div
-            className={`fixed top-4 left-1/2 transform -translate-x-1/2 z-[100] transition-all duration-300 ${isLeaving ? 'opacity-0 -translate-y-4' : 'opacity-100 translate-y-0'
+            className={`fixed left-1/2 transform -translate-x-1/2 z-[100] transition-all duration-300 ${isLeaving ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'
                 }`}
             style={{
+                bottom: 'max(1rem, env(safe-area-inset-bottom) + 1rem)',
                 animation: isLeaving ? '' : 'pop-in 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55)'
             }}
         >
             <div
-                className={`bg-gradient-to-r ${styles.bg} text-white px-6 py-4 rounded-2xl flex items-center gap-3 font-bold text-lg shadow-xl`}
+                className={`bg-gradient-to-r ${styles.bg} text-white px-6 py-3 rounded-2xl flex items-center gap-3 font-bold text-sm shadow-xl max-w-[90vw]`}
                 style={{
                     boxShadow: `0 8px 0 rgba(0, 0, 0, 0.2), 0 12px 30px rgba(0, 0, 0, 0.3)`,
-                    border: `4px solid ${styles.border}`,
+                    border: `3px solid ${styles.border}`,
                 }}
             >
-                <span className="text-2xl bounce-scale">{styles.emoji}</span>
-                <span>{message}</span>
+                <span className="text-xl bounce-scale flex-shrink-0">{styles.emoji}</span>
+                <span className="truncate">{message}</span>
                 <button
                     onClick={() => {
                         setIsLeaving(true);
                         setTimeout(onClose, 300);
                     }}
-                    className="ml-2 hover:scale-110 transition-transform text-xl"
+                    className="ml-2 hover:scale-110 transition-transform text-lg flex-shrink-0"
                 >
                     ✕
                 </button>

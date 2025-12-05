@@ -114,6 +114,7 @@ function App() {
         // Update screen immediately if needed (e.g. initial load)
         if (currentScreen === 'room-selection' || currentScreen === 'welcome' || currentScreen === 'name-entry') {
           if (status === 'lobby') setCurrentScreen('lobby');
+          else if (status === 'uploading') setCurrentScreen('uploading');
           else if (status === 'drawing') setCurrentScreen('drawing');
           else if (status === 'voting') setCurrentScreen('voting');
           else if (status === 'results') setCurrentScreen('results');
@@ -129,6 +130,7 @@ function App() {
       const timer = setTimeout(() => {
         setIsLoadingTransition(false);
         if (status === 'lobby') setCurrentScreen('lobby');
+        else if (status === 'uploading') setCurrentScreen('uploading');
         else if (status === 'drawing') setCurrentScreen('drawing');
         else if (status === 'voting') setCurrentScreen('voting');
         else if (status === 'results') setCurrentScreen('results');
@@ -338,6 +340,8 @@ function App() {
       StorageService.leaveRoom(); // Clears local storage
       setRoomCode(null);
       setCurrentScreen('room-selection');
+      setIsLoading(false);
+      setIsLoadingTransition(false);
       showToast('Left game 👋', 'info');
     } catch (err) {
       console.error('Failed to leave game:', err);
