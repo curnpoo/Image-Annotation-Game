@@ -22,7 +22,7 @@ export const RoomSelectionScreen: React.FC<RoomSelectionScreenProps> = ({
 
     const handleJoin = (e: React.FormEvent) => {
         e.preventDefault();
-        if (roomCode.length === 6) {
+        if (roomCode.length >= 4) {
             onJoinRoom(roomCode.toUpperCase());
         }
     };
@@ -89,7 +89,7 @@ export const RoomSelectionScreen: React.FC<RoomSelectionScreenProps> = ({
                                         type="text"
                                         value={roomCode}
                                         onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
-                                        placeholder="ABC123"
+                                        placeholder="ABCD"
                                         className="input-90s flex-1 min-w-0 text-center uppercase tracking-widest font-mono border-cyan-300 focus:border-cyan-500"
                                         style={{
                                             background: 'linear-gradient(to bottom, #fff, #f0f8ff)'
@@ -98,10 +98,10 @@ export const RoomSelectionScreen: React.FC<RoomSelectionScreenProps> = ({
                                     />
                                     <button
                                         type="submit"
-                                        disabled={roomCode.length !== 6}
-                                        className={`px-4 py-3 rounded-2xl font-bold text-lg transition-all flex-shrink-0 ${roomCode.length === 6
-                                                ? 'btn-90s bg-gradient-to-r from-lime-400 to-emerald-500 text-white'
-                                                : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                        disabled={roomCode.length < 4}
+                                        className={`px-4 py-3 rounded-2xl font-bold text-lg transition-all flex-shrink-0 ${roomCode.length >= 4
+                                            ? 'btn-90s bg-gradient-to-r from-lime-400 to-emerald-500 text-white'
+                                            : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                                             }`}
                                     >
                                         Go!
