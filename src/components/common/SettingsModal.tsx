@@ -62,7 +62,23 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto border-4 border-purple-500 pop-in flex flex-col">
                 <div className="p-6 border-b border-gray-100 flex justify-between items-center sticky top-0 bg-white z-10">
-                    <h2 className="text-2xl font-bold text-purple-600">Settings ⚙️</h2>
+                    <div className="flex items-center gap-2">
+                        {onLeaveGame && (
+                            <button
+                                onClick={() => {
+                                    if (confirm('Go back to home? This will leave the current game.')) {
+                                        onLeaveGame();
+                                        onClose();
+                                    }
+                                }}
+                                className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-lg transition-colors"
+                                title="Back to Home"
+                            >
+                                🏠
+                            </button>
+                        )}
+                        <h2 className="text-2xl font-bold text-purple-600">Settings ⚙️</h2>
+                    </div>
                     <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl">✕</button>
                 </div>
 

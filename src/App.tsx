@@ -63,7 +63,33 @@ function App() {
     const session = StorageService.getSession();
     if (session) {
       setPlayer(session);
-      setCurrentScreen('room-selection');
+
+      // Check for auto-rejoin
+      const lastRoomCode = StorageService.getRoomCode();
+      const lastActive = StorageService.getLastLocalActivity();
+      const isRecent = Date.now() - lastActive < 10 * 60 * 1000; // 10 minutes
+
+      if (lastRoomCode && isRecent) {
+        // Auto-join if recent
+        setRoomCode(lastRoomCode);
+        StorageService.joinRoom(lastRoomCode, session).then(room => {
+          if (room) {
+            // Determine screen based on room status
+            if (room.status === 'lobby') setCurrentScreen('lobby');
+            else if (room.status === 'drawing') setCurrentScreen('drawing');
+            else if (room.status === 'voting') setCurrentScreen('voting');
+            else if (room.status === 'results') setCurrentScreen('results');
+            else if (room.status === 'final') setCurrentScreen('final');
+          } else {
+            // Room invalid/closed
+            StorageService.leaveRoom();
+            setCurrentScreen('room-selection');
+          }
+        });
+      } else {
+        // Too old or no room -> Room Selection
+        setCurrentScreen('room-selection');
+      }
     }
   }, []);
 
@@ -124,6 +150,17 @@ function App() {
         break;
     }
   }, [room?.status, currentScreen, room?.waitingPlayers, player?.id]);
+
+  // Heartbeat
+  useEffect(() => {
+    if (!roomCode || !player) return;
+
+    const interval = setInterval(() => {
+      StorageService.heartbeat(roomCode, player.id);
+    }, 5000); // Every 5 seconds
+
+    return () => clearInterval(interval);
+  }, [roomCode, player?.id]);
 
   const handlePlayNow = () => {
     if (player) {
@@ -438,6 +475,7 @@ function App() {
             currentPlayerId={player.id}
             onStartGame={handleStartGame}
             onSettingsChange={handleSettingsChange}
+            onLeave={handleLeaveGame}
           />
         ) : (
           <div className="fixed inset-0 bg-90s-animated flex items-center justify-center">

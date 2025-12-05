@@ -22,15 +22,51 @@ export const RoomSelectionScreen: React.FC<RoomSelectionScreenProps> = ({
     useEffect(() => {
         setMounted(true);
 
-        const loadHistory = async () => {
-            const savedHistory = StorageService.getHistory();
-            const historyWithStatus = await Promise.all(savedHistory.map(async (entry) => {
-                const room = await StorageService.getRoom(entry.roomCode);
-                return { ...entry, isActive: !!room };
-            }));
-            setHistory(historyWithStatus);
+        const savedHistory = StorageService.getHistory();
+        // Initialize with saved data, assuming inactive until verified
+        setHistory(savedHistory.map(h => ({ ...h, isActive: false })));
+
+        // Subscribe to each room for live updates
+        const unsubscribes = savedHistory.map(entry => {
+            return StorageService.subscribeToRoom(entry.roomCode, (room) => {
+                setHistory(prev => {
+                    return prev.map(h => {
+                        if (h.roomCode !== entry.roomCode) return h;
+
+                        if (!room) {
+                            // Room does not exist (ended/closed)
+                            return { ...h, isActive: false };
+                        }
+
+                        // Room exists (active)
+                        // Check for winner if final
+                        let winnerName = h.winnerName;
+                        let endReason = h.endReason;
+
+                        if (room.status === 'final' && room.scores) {
+                            const winnerId = Object.entries(room.scores).sort(([, a], [, b]) => b - a)[0]?.[0];
+                            const winner = room.players.find(p => p.id === winnerId);
+                            if (winner) winnerName = winner.name;
+                            endReason = 'finished';
+                        }
+
+                        return {
+                            ...h,
+                            isActive: true,
+                            playerCount: room.players.length,
+                            roundNumber: room.roundNumber,
+                            hostName: room.players.find(p => p.id === room.hostId)?.name || h.hostName,
+                            winnerName,
+                            endReason
+                        };
+                    });
+                });
+            });
+        });
+
+        return () => {
+            unsubscribes.forEach(unsub => unsub());
         };
-        loadHistory();
     }, []);
 
     const handleJoin = (e: React.FormEvent) => {

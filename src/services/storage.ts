@@ -313,6 +313,43 @@ export const StorageService = {
         });
     },
 
+    // Heartbeat to update lastSeen
+    heartbeat: async (roomCode: string, playerId: string): Promise<void> => {
+        StorageService.updateLocalActivity(); // Keep local session alive
+        const roomRef = ref(database, `${ROOMS_PATH}/${roomCode}`);
+        await runTransaction(roomRef, (room) => {
+            if (!room) return null;
+
+            // Update in players list
+            if (room.players) {
+                const pIndex = room.players.findIndex((p: any) => p.id === playerId);
+                if (pIndex >= 0) {
+                    room.players[pIndex].lastSeen = Date.now();
+                }
+            }
+
+            // Update in waiting list
+            if (room.waitingPlayers) {
+                const wIndex = room.waitingPlayers.findIndex((p: any) => p.id === playerId);
+                if (wIndex >= 0) {
+                    room.waitingPlayers[wIndex].lastSeen = Date.now();
+                }
+            }
+
+            return room;
+        });
+    },
+
+    // Local Activity Tracking
+    updateLocalActivity: () => {
+        localStorage.setItem('aic_last_active', Date.now().toString());
+    },
+
+    getLastLocalActivity: (): number => {
+        const val = localStorage.getItem('aic_last_active');
+        return val ? parseInt(val, 10) : 0;
+    },
+
     // Game Settings
     updateSettings: async (roomCode: string, settings: Partial<GameSettings>): Promise<GameRoom | null> => {
         return StorageService.updateRoom(roomCode, (r) => ({

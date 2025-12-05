@@ -8,19 +8,25 @@ interface LobbyScreenProps {
     currentPlayerId: string;
     onStartGame: () => void;
     onSettingsChange: (settings: Partial<GameSettings>) => void;
+    onLeave: () => void;
 }
 
 export const LobbyScreen: React.FC<LobbyScreenProps> = ({
     room,
     currentPlayerId,
     onStartGame,
-    onSettingsChange
+    onSettingsChange,
+    onLeave
 }) => {
     const [mounted, setMounted] = useState(false);
     const [copied, setCopied] = useState(false);
+    const [, setTick] = useState(0); // Force update for idle timer
 
     useEffect(() => {
         setMounted(true);
+        // Force update every second to check idle status
+        const interval = setInterval(() => setTick(t => t + 1), 1000);
+        return () => clearInterval(interval);
     }, []);
 
     if (!room || !room.players) {
@@ -33,6 +39,11 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
         navigator.clipboard.writeText(room.roomCode);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
+    };
+
+    const isIdle = (lastSeen?: number) => {
+        if (!lastSeen) return true;
+        return Date.now() - lastSeen > 10000; // 10 seconds
     };
 
     return (
@@ -52,9 +63,18 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                         backgroundOrigin: 'border-box',
                         backgroundClip: 'padding-box, border-box'
                     }}>
-                    <div>
-                        <div className="text-sm text-cyan-500 uppercase tracking-wider font-bold">🏠 Room Code</div>
-                        <div className="text-3xl font-mono font-bold rainbow-text">{room.roomCode}</div>
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={onLeave}
+                            className="w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-xl transition-colors"
+                            title="Back to Home"
+                        >
+                            🏠
+                        </button>
+                        <div>
+                            <div className="text-sm text-cyan-500 uppercase tracking-wider font-bold">Room Code</div>
+                            <div className="text-3xl font-mono font-bold rainbow-text">{room.roomCode}</div>
+                        </div>
                     </div>
                     <button
                         onClick={copyRoomCode}
@@ -137,10 +157,16 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                                         </div>
                                     </div>
                                     <div className={`px-3 py-1 rounded-full text-sm font-bold ${room.playerStates && room.playerStates[p.id]?.status === 'ready'
-                                        ? 'bg-green-100 text-green-600'
-                                        : 'bg-yellow-100 text-yellow-600'
+                                            ? 'bg-green-100 text-green-600'
+                                            : isIdle(p.lastSeen)
+                                                ? 'bg-gray-100 text-gray-400'
+                                                : 'bg-yellow-100 text-yellow-600'
                                         }`}>
-                                        {room.playerStates && room.playerStates[p.id]?.status === 'ready' ? 'READY!' : 'WAITING...'}
+                                        {room.playerStates && room.playerStates[p.id]?.status === 'ready'
+                                            ? 'READY!'
+                                            : isIdle(p.lastSeen)
+                                                ? 'IDLE 💤'
+                                                : 'WAITING...'}
                                     </div>
                                 </div>
                             );
