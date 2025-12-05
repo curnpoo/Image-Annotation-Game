@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import type { ChatMessage, Player } from '../../types';
 import { StorageService } from '../../services/storage';
+import { generateId } from '../../utils/id';
 
 interface FloatingChatProps {
     roomCode: string;
