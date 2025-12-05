@@ -605,32 +605,37 @@ export const StorageService = {
     // --- Join Active Game ---
     joinCurrentGame: async (roomCode: string, playerId: string): Promise<void> => {
         const roomRef = ref(database, `${ROOMS_PATH}/${roomCode}`);
-        await runTransaction(roomRef, (room) => {
+        const result = await runTransaction(roomRef, (room) => {
             if (!room) return null;
 
-            // Find player in waiting list
-            const waitingIndex = room.waitingPlayers?.findIndex((p: Player) => p.id === playerId);
-            if (waitingIndex === undefined || waitingIndex === -1) return room; // Not in waiting
+            // Ensure waitingPlayers is handled correctly (convert to array if needed for processing)
+            let waitingPlayers = room.waitingPlayers || [];
+            if (!Array.isArray(waitingPlayers)) waitingPlayers = Object.values(waitingPlayers);
 
-            const player = room.waitingPlayers[waitingIndex];
+            const waitingIndex = waitingPlayers.findIndex((p: Player) => p.id === playerId);
+            if (waitingIndex === -1) return undefined; // Abort transaction if not found
 
-            // Remove from waiting
-            room.waitingPlayers.splice(waitingIndex, 1);
+            const player = waitingPlayers[waitingIndex];
+
+            // Remove from waiting (create new array to be safe)
+            const newWaitingPlayers = waitingPlayers.filter((p: Player) => p.id !== playerId);
+            room.waitingPlayers = newWaitingPlayers;
 
             // Add to players
             if (!room.players) room.players = [];
-            room.players.push(player);
+            else if (!Array.isArray(room.players)) room.players = Object.values(room.players);
+
+            // Check if already in players to avoid dups
+            if (!room.players.some((p: Player) => p.id === playerId)) {
+                room.players.push(player);
+            }
 
             // Initialize State based on status
             if (!room.playerStates) room.playerStates = {};
 
-            // If joining during drawing/uploading, set as waiting so screens don't error
-            // If joining during voting, they need to vote to proceed, so they are just a voter
             if (room.status === 'drawing' || room.status === 'uploading') {
                 room.playerStates[playerId] = { status: 'waiting' };
             } else if (room.status === 'voting') {
-                // They join as a voter. No drawing.
-                // Status doesn't strictly matter for VotingScreen but good to be consistent
                 room.playerStates[playerId] = { status: 'waiting' };
             }
 
@@ -639,5 +644,9 @@ export const StorageService = {
 
             return room;
         });
+
+        if (!result.committed) {
+            throw new Error("Could not join game (player not in waiting list or conflict)");
+        }
     }
 };
