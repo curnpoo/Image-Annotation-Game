@@ -214,19 +214,19 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                 {isHost ? (
                     <button
                         onClick={onStartGame}
-                        disabled={room.players.length < 2}
-                        className={`w-full rounded-[2rem] p-6 text-center relative transition-transform group ${room.players.length < 2
+                        disabled={room.players.length < 3}
+                        className={`w-full rounded-[2rem] p-6 text-center relative transition-transform group ${room.players.length < 3
                             ? 'opacity-75 cursor-not-allowed grayscale bg-gray-100'
                             : 'bg-white cursor-pointer hover:scale-[1.02]'
                             }`}
                         style={{
-                            boxShadow: room.players.length < 2
+                            boxShadow: room.players.length < 3
                                 ? '0 4px 0 rgba(150, 150, 150, 0.2)'
                                 : '0 10px 0 rgba(255, 140, 0, 0.3), 0 20px 40px rgba(0, 0, 0, 0.15)',
-                            border: room.players.length < 2
+                            border: room.players.length < 3
                                 ? '4px solid #ccc'
                                 : '4px solid #FF8C00',
-                            background: room.players.length < 2
+                            background: room.players.length < 3
                                 ? '#f5f5f5'
                                 : 'linear-gradient(135deg, #fff7ed, #fffbeb)'
                         }}>
@@ -235,7 +235,7 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                             <div>
                                 <h3 className="text-2xl font-bold"
                                     style={{
-                                        background: room.players.length < 2
+                                        background: room.players.length < 3
                                             ? '#999'
                                             : 'linear-gradient(135deg, #FF8C00, #FF69B4)',
                                         WebkitBackgroundClip: 'text',
@@ -243,8 +243,8 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                                     }}>
                                     Start Game!
                                 </h3>
-                                <p className={`font-medium mt-1 text-sm ${room.players.length < 2 ? 'text-gray-500' : 'text-orange-400'}`}>
-                                    {room.players.length < 2 ? '⚠️ Need at least 2 players' : 'Click to begin Round 1'}
+                                <p className={`font-medium mt-1 text-sm ${room.players.length < 3 ? 'text-gray-500' : 'text-orange-400'}`}>
+                                    {room.players.length < 3 ? '⚠️ Need at least 3 players' : 'Click to begin Round 1'}
                                 </p>
                             </div>
                         </div>

@@ -50,9 +50,39 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onGoHome }) => {
             <div className="bg-white/90 backdrop-blur-sm p-8 rounded-[2rem] shadow-2xl max-w-md w-full border-4 border-purple-500 animate-bounce-in">
                 <div className="text-6xl mb-6 animate-spin-slow">🎡</div>
                 <h2 className="text-4xl font-black text-purple-600 mb-4 animate-pulse tracking-wider">LOADING...</h2>
-                <div className="h-2 bg-gray-200 rounded-full overflow-hidden mb-6">
-                    <div className="h-full bg-gradient-to-r from-purple-500 to-pink-500 animate-loading-bar" />
+                <div className="h-4 bg-gray-100 rounded-full overflow-hidden mb-6 border-2 border-gray-200 shadow-inner relative">
+                    {/* Progress Bar with CSS animation */}
+                    <div
+                        className="h-full bg-gradient-to-r from-purple-500 via-pink-500 to-red-500 rounded-full"
+                        style={{
+                            width: '100%',
+                            transition: 'width 2s ease-in-out',
+                            animation: 'fillBar 2s ease-out forwards'
+                        }}
+                    />
+
+                    {/* Sparkle effect moving across */}
+                    <div
+                        className="absolute top-0 bottom-0 w-full animate-shimmer"
+                        style={{
+                            background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent)',
+                            transform: 'skewX(-20deg)'
+                        }}
+                    />
                 </div>
+                <style>{`
+                    @keyframes fillBar {
+                        0% { width: 0%; }
+                        100% { width: 100%; }
+                    }
+                    @keyframes shimmer {
+                        0% { transform: translateX(-100%) skewX(-20deg); }
+                        100% { transform: translateX(200%) skewX(-20deg); }
+                    }
+                    .animate-shimmer {
+                        animation: shimmer 1.5s infinite;
+                    }
+                `}</style>
                 <p className="text-gray-600 font-bold text-lg italic mb-4">
                     {tip}
                 </p>

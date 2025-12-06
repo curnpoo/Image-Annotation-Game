@@ -63,11 +63,11 @@ function App() {
   const [isReadying, setIsReadying] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
 
-  // Initial 3s loading
+  // Initial 2s loading
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsInitialLoading(false);
-    }, 3000);
+    }, 2000);
     return () => clearTimeout(timer);
   }, []);
 
