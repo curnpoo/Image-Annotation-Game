@@ -9,6 +9,7 @@ import { SettingsModal } from './components/common/SettingsModal';
 import { VotingScreen } from './components/screens/VotingScreen';
 import { ResultsScreen } from './components/screens/ResultsScreen';
 import { FinalResultsScreen } from './components/screens/FinalResultsScreen';
+import { CasinoScreen } from './components/screens/CasinoScreen';
 import { StorageService } from './services/storage';
 import { ImageService } from './services/image';
 import { useRoom } from './hooks/useRoom';
@@ -57,6 +58,7 @@ function App() {
   const [isEraser, setIsEraser] = useState(false);
   const [isEyedropper, setIsEyedropper] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showCasino, setShowCasino] = useState(false);
   const [isLoadingTransition, setIsLoadingTransition] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [isBrowsing, setIsBrowsing] = useState(false);
@@ -731,14 +733,27 @@ function App() {
 
       {/* Settings Button - Show on all screens except welcome/name-entry */}
       {player && currentScreen !== 'welcome' && currentScreen !== 'name-entry' && (
-        <button
-          onClick={() => setShowSettings(true)}
-          className="fixed left-4 z-50 bg-white/90 backdrop-blur-sm p-3 rounded-xl shadow-lg border-2 border-purple-200 hover:border-purple-500 transition-all hover:scale-110"
-          style={{ top: 'max(1rem, env(safe-area-inset-top) + 1rem)' }}
-          title="Settings"
-        >
-          ⚙️
-        </button>
+        <div className="fixed left-4 z-50 flex items-center gap-2" style={{ top: 'max(1rem, env(safe-area-inset-top) + 1rem)' }}>
+          <button
+            onClick={() => setShowSettings(true)}
+            className="bg-white/90 backdrop-blur-sm p-3 rounded-xl shadow-lg border-2 border-purple-200 hover:border-purple-500 transition-all hover:scale-110"
+            title="Settings"
+          >
+            ⚙️
+          </button>
+          <button
+            onClick={() => setShowCasino(true)}
+            className="bg-yellow-400/90 backdrop-blur-sm p-3 rounded-xl shadow-lg border-2 border-yellow-500 hover:border-yellow-600 transition-all hover:scale-110"
+            title="Casino"
+          >
+            🎰
+          </button>
+        </div>
+      )}
+
+      {/* Casino Screen */}
+      {showCasino && (
+        <CasinoScreen onClose={() => setShowCasino(false)} />
       )}
 
       {/* Settings Modal */}

@@ -4,6 +4,7 @@ export interface PlayerCosmetics {
     badges: string[];
     activeBrush?: string;
     activeColor?: string;
+    purchasedItems?: string[]; // Items bought with currency
 }
 
 export interface Player {
@@ -14,6 +15,7 @@ export interface Player {
     avatarStrokes?: DrawingStroke[]; // Drawn avatar
     frame: string; // frame id
     score?: number;
+    currency?: number; // $ earned from games
     isHost?: boolean;
     joinedAt: number;
     lastSeen: number; // timestamp for heartbeat
