@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import type { PlayerStats } from '../../types';
 import { StatsService } from '../../services/stats';
+import { AuthService } from '../../services/auth';
 import { XPService } from '../../services/xp';
 import { CurrencyService, formatCurrency } from '../../services/currency';
 
@@ -9,9 +10,22 @@ interface StatsModalProps {
 }
 
 export const StatsModal: React.FC<StatsModalProps> = ({ onClose }) => {
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const stats: PlayerStats = StatsService.getStats();
     const level = XPService.getLevel();
     const currency = CurrencyService.getCurrency();
+
+    const handleDeleteAccount = async () => {
+        try {
+            await AuthService.deleteAccount();
+            StatsService.resetGuestStats();
+            // Force reload to reset app state
+            window.location.reload();
+        } catch (error) {
+            console.error('Failed to delete account:', error);
+            alert('Failed to delete account. Please try again.');
+        }
+    };
 
     const statItems = [
         { label: 'Games Played', value: stats.gamesPlayed, emoji: '🎮' },
@@ -77,12 +91,46 @@ export const StatsModal: React.FC<StatsModalProps> = ({ onClose }) => {
                 </div>
 
                 {/* Close Button */}
-                <button
-                    onClick={onClose}
-                    className="w-full mt-6 bg-gradient-to-r from-purple-500 to-blue-500 text-white font-bold py-3 rounded-xl hover:scale-[1.02] active:scale-95 transition-all"
-                >
-                    Close
-                </button>
+                {!showDeleteConfirm ? (
+                    <>
+                        <button
+                            onClick={onClose}
+                            className="w-full mt-6 bg-gradient-to-r from-purple-500 to-blue-500 text-white font-bold py-3 rounded-xl hover:scale-[1.02] active:scale-95 transition-all shadow-lg"
+                        >
+                            Close
+                        </button>
+
+                        <button
+                            onClick={() => setShowDeleteConfirm(true)}
+                            className="w-full mt-3 bg-red-50 text-red-500 font-bold py-3 rounded-xl hover:bg-red-100 active:scale-95 transition-all text-sm"
+                        >
+                            Reset / Delete Account
+                        </button>
+                    </>
+                ) : (
+                    <div className="mt-6 bg-red-50 p-4 rounded-xl border-2 border-red-100 animate-fade-in">
+                        <div className="text-red-600 font-bold mb-2 text-center">⚠️ Delete Account?</div>
+                        <p className="text-red-500 text-xs text-center mb-4 leading-relaxed">
+                            This will permanently delete your stats{AuthService.isLoggedIn() ? ', account,' : ''} and progress.
+                            <br />
+                            <span className="font-bold">This cannot be undone.</span>
+                        </p>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => setShowDeleteConfirm(false)}
+                                className="flex-1 bg-white text-gray-600 font-bold py-2 rounded-lg border border-gray-200 hover:bg-gray-50 active:scale-95 transition-all text-sm"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleDeleteAccount}
+                                className="flex-1 bg-gradient-to-r from-red-500 to-orange-500 text-white font-bold py-2 rounded-lg hover:shadow-lg active:scale-95 transition-all text-sm shadow-red-500/30"
+                            >
+                                Confirm Delete
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

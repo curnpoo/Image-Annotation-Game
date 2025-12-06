@@ -89,5 +89,10 @@ export const StatsService = {
                 localStorage.setItem(LOCAL_STATS_KEY, JSON.stringify(stats));
             }
         }
+    },
+
+    // Reset guest stats
+    resetGuestStats(): void {
+        localStorage.removeItem(LOCAL_STATS_KEY);
     }
 };

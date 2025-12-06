@@ -212,5 +212,17 @@ export const AuthService = {
             console.error('Failed to sync user:', error);
         }
         return local;
+    },
+
+    // Delete account
+    async deleteAccount(): Promise<void> {
+        const user = this.getCurrentUser();
+        if (user) {
+            // Remove from Firebase
+            const userRef = ref(database, `${USERS_PATH}/${user.id}`);
+            await set(userRef, null);
+        }
+        // Remove from local storage
+        localStorage.removeItem(LOCAL_USER_KEY);
     }
 };
