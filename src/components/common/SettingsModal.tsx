@@ -54,7 +54,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
     useEffect(() => {
         if ('Notification' in window) {
-            setNotificationsEnabled(Notification.permission === 'granted');
+            const isDisabledByUser = localStorage.getItem('notificationsDisabled') === 'true';
+            setNotificationsEnabled(Notification.permission === 'granted' && !isDisabledByUser);
         }
     }, []);
 
@@ -122,15 +123,26 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                                 <div className="font-bold text-gray-700">Notifications</div>
                                 <div className="text-xs text-gray-500">Get alerted when it's your turn</div>
                             </div>
+                            {/* iOS-style toggle switch */}
                             <button
-                                onClick={requestNotifications}
-                                disabled={notificationsEnabled}
-                                className={`px-4 py-2 rounded-lg font-bold text-sm transition-all ${notificationsEnabled
-                                    ? 'bg-green-100 text-green-600'
-                                    : 'bg-purple-500 text-white hover:bg-purple-600 shadow-md'
+                                onClick={async () => {
+                                    if (notificationsEnabled) {
+                                        // Turn off - just update UI state (can't revoke browser permission)
+                                        setNotificationsEnabled(false);
+                                        localStorage.setItem('notificationsDisabled', 'true');
+                                    } else {
+                                        // Turn on - request FCM permission
+                                        localStorage.removeItem('notificationsDisabled');
+                                        await requestNotifications();
+                                    }
+                                }}
+                                className={`relative w-14 h-8 rounded-full transition-colors duration-300 ${notificationsEnabled ? 'bg-green-500' : 'bg-gray-300'
                                     }`}
                             >
-                                {notificationsEnabled ? '✓ Enabled' : 'Enable'}
+                                <div
+                                    className={`absolute top-1 w-6 h-6 bg-white rounded-full shadow-md transition-transform duration-300 ${notificationsEnabled ? 'translate-x-7' : 'translate-x-1'
+                                        }`}
+                                />
                             </button>
                         </div>
                     )}
