@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import type { Player, DrawingStroke } from '../../types';
 import { AvatarDisplay } from '../common/AvatarDisplay';
 import { CurrencyService, formatCurrency } from '../../services/currency';
+import { StatsModal } from '../common/StatsModal';
 
 interface ProfileScreenProps {
     player: Player;
@@ -19,6 +20,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
     const [name, setName] = useState(player.name);
     const [strokes] = useState<DrawingStroke[]>(player.avatarStrokes || []);
     const [color, setColor] = useState(player.color);
+    const [showStats, setShowStats] = useState(false);
 
     const balance = CurrencyService.getCurrency();
 
@@ -57,8 +59,16 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-2 mb-2">
                 <h1 className="text-2xl font-black text-white drop-shadow-lg">👤 PROFILE</h1>
-                <div className="bg-green-500 text-white px-4 py-2 rounded-xl font-bold">
-                    {formatCurrency(balance)}
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => setShowStats(true)}
+                        className="bg-white/20 text-white px-3 py-2 rounded-xl font-bold hover:bg-white/30 transition-all"
+                    >
+                        📊 Stats
+                    </button>
+                    <div className="bg-green-500 text-white px-4 py-2 rounded-xl font-bold">
+                        {formatCurrency(balance)}
+                    </div>
                 </div>
             </div>
 
@@ -137,6 +147,9 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                     ✓ SAVE CHANGES
                 </button>
             </div>
+
+            {/* Stats Modal */}
+            {showStats && <StatsModal onClose={() => setShowStats(false)} />}
         </div>
     );
 };

@@ -1,3 +1,30 @@
+// Player lifetime stats
+export interface PlayerStats {
+    gamesPlayed: number;
+    gamesWon: number;
+    roundsWon: number;
+    roundsLost: number;
+    timesSabotaged: number;
+    timesSaboteur: number;
+    totalCurrencyEarned: number;
+    totalXPEarned: number;
+    highestLevel: number;
+}
+
+// User account for login system
+export interface UserAccount {
+    id: string;
+    username: string;
+    pinHash: string; // Hashed PIN for security
+    createdAt: number;
+    lastLoginAt: number;
+    stats: PlayerStats;
+    currency: number;
+    xp: number;
+    purchasedItems: string[];
+    cosmetics: PlayerCosmetics;
+}
+
 export interface PlayerCosmetics {
     brushesUnlocked: string[];
     colorsUnlocked: string[];
