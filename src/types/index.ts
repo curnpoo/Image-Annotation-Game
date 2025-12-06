@@ -1,12 +1,23 @@
+export interface PlayerCosmetics {
+    brushesUnlocked: string[];
+    colorsUnlocked: string[];
+    badges: string[];
+    activeBrush?: string;
+    activeColor?: string;
+}
+
 export interface Player {
     id: string;
     name: string;
-    color: string;
-    avatar?: string; // Emoji (legacy/fallback)
+    color: string; // Avatar background color
+    avatar?: string; // emoji
     avatarStrokes?: DrawingStroke[]; // Drawn avatar
-    frame: string; // CSS class for frame effect
+    frame: string; // frame id
+    score?: number;
+    isHost?: boolean;
     joinedAt: number;
-    lastSeen: number;
+    lastSeen: number; // timestamp for heartbeat
+    cosmetics?: PlayerCosmetics;
 }
 
 export interface DrawingStroke {

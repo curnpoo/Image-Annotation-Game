@@ -1,6 +1,6 @@
 import { ref, set, get, onValue, runTransaction, remove } from 'firebase/database';
 import { database } from '../firebase';
-import type { GameRoom, Player, GameSettings, BlockInfo, PlayerState, PlayerDrawing, RoundResult, RoomHistoryEntry, ChatMessage } from '../types';
+import type { GameRoom, Player, GameSettings, BlockInfo, PlayerState, PlayerDrawing, RoundResult, RoomHistoryEntry, ChatMessage, PlayerCosmetics } from '../types';
 import { generateId } from '../utils/id';
 
 const ROOMS_PATH = 'rooms';
@@ -8,6 +8,14 @@ const ROOMS_PATH = 'rooms';
 const DEFAULT_SETTINGS: GameSettings = {
     timerDuration: 20,
     totalRounds: 3
+};
+
+const DEFAULT_COSMETICS: PlayerCosmetics = {
+    brushesUnlocked: ['default'],
+    colorsUnlocked: ['#000000', '#ffffff', '#FF0000', '#00FF00', '#0000FF'], // Basic starting colors
+    badges: [],
+    activeBrush: 'default',
+    activeColor: '#000000'
 };
 
 export const StorageService = {
@@ -234,7 +242,7 @@ export const StorageService = {
         const newRoom: GameRoom = {
             roomCode: roomCode,
             hostId: hostPlayer.id,
-            players: [hostPlayer],
+            players: [{ ...hostPlayer, cosmetics: hostPlayer.cosmetics || DEFAULT_COSMETICS }],
             waitingPlayers: [],
             currentUploaderId: hostPlayer.id,
             status: 'lobby',
@@ -373,7 +381,7 @@ export const StorageService = {
 
         // New player
         if (room.status === 'lobby') {
-            room.players.push({ ...player, lastSeen: Date.now() });
+            room.players.push({ ...player, lastSeen: Date.now(), cosmetics: player.cosmetics || DEFAULT_COSMETICS });
             // Init state/score
             if (!room.playerStates[player.id]) {
                 room.playerStates[player.id] = { status: 'waiting' };
@@ -384,7 +392,7 @@ export const StorageService = {
         } else {
             // Game in progress -> Waiting Room
             if (!room.waitingPlayers) room.waitingPlayers = [];
-            room.waitingPlayers.push({ ...player, lastSeen: Date.now() });
+            room.waitingPlayers.push({ ...player, lastSeen: Date.now(), cosmetics: player.cosmetics || DEFAULT_COSMETICS });
         }
 
         await StorageService.saveRoom(room);
@@ -512,6 +520,29 @@ export const StorageService = {
                 }
             }
         }));
+    },
+
+    updatePlayerCosmetics: async (roomCode: string, playerId: string, updates: Partial<PlayerCosmetics>): Promise<GameRoom | null> => {
+        return StorageService.updateRoom(roomCode, (r) => {
+            const playerIndex = r.players.findIndex(p => p.id === playerId);
+            if (playerIndex === -1) return r;
+
+            const updatedPlayers = [...r.players];
+            const currentPlayer = updatedPlayers[playerIndex];
+
+            updatedPlayers[playerIndex] = {
+                ...currentPlayer,
+                cosmetics: {
+                    ...currentPlayer.cosmetics,
+                    ...updates
+                } as PlayerCosmetics
+            };
+
+            return {
+                ...r,
+                players: updatedPlayers
+            };
+        });
     },
 
     // Submit drawing

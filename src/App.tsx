@@ -785,6 +785,7 @@ function App() {
               showToast('Failed to join round', 'error');
             }
           }}
+          onBack={handleLeaveGame}
         />
       )}
 
@@ -871,8 +872,10 @@ function App() {
 
             {/* Image Container */}
             <div className="flex-1 min-h-0 flex items-center justify-center p-2">
-              <div className="relative aspect-square w-full max-w-[min(100%,calc(100vh-200px))]"
+              <div className="relative w-full h-full max-w-lg mx-auto"
                 style={{
+                  aspectRatio: '1 / 1',
+                  maxHeight: 'calc(100vh - 280px)',
                   borderRadius: '1.5rem',
                   overflow: 'hidden',
                   boxShadow: '0 10px 0 rgba(155, 89, 182, 0.4)',
@@ -967,31 +970,29 @@ function App() {
                   </div>
                 )}
               </div>
-
-              {/* Chat - Removed */}
-
-              {/* Toolbar - Only show when drawing is enabled */}
-              {isMyTimerRunning && !hasSubmitted && (
-                <div className="flex-shrink-0 z-30 pb-4 pop-in">
-                  <Toolbar
-                    brushColor={brushColor}
-                    brushSize={brushSize}
-                    isEraser={isEraser}
-                    onColorChange={(color) => {
-                      setBrushColor(color);
-                      setIsEraser(false);
-                      setIsEyedropper(false);
-                    }}
-                    onSizeChange={setBrushSize}
-                    onEraserToggle={handleEraserToggle}
-                    onUndo={handleUndo}
-                    onClear={handleClear}
-                    isEyedropper={isEyedropper}
-                    onEyedropperToggle={handleEyedropperToggle}
-                  />
-                </div>
-              )}
             </div>
+
+            {/* Toolbar - BELOW the image, only show when drawing is enabled */}
+            {isMyTimerRunning && !hasSubmitted && (
+              <div className="flex-shrink-0 z-30 pb-4 px-2 pop-in">
+                <Toolbar
+                  brushColor={brushColor}
+                  brushSize={brushSize}
+                  isEraser={isEraser}
+                  onColorChange={(color) => {
+                    setBrushColor(color);
+                    setIsEraser(false);
+                    setIsEyedropper(false);
+                  }}
+                  onSizeChange={setBrushSize}
+                  onEraserToggle={handleEraserToggle}
+                  onUndo={handleUndo}
+                  onClear={handleClear}
+                  isEyedropper={isEyedropper}
+                  onEyedropperToggle={handleEyedropperToggle}
+                />
+              </div>
+            )}
           </div>
         </div>
       )}

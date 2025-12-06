@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import type { GameRoom, GameSettings } from '../../types';
-import { GameSettingsPanel } from '../game/GameSettingsPanel';
+import { SettingsModal } from '../common/SettingsModal';
+import { PlayerCosmeticsPanel } from '../common/PlayerCosmeticsPanel';
 import { AvatarDisplay } from '../common/AvatarDisplay';
 import { vibrate, HapticPatterns } from '../../utils/haptics';
+import { StorageService } from '../../services/storage';
 
 interface LobbyScreenProps {
     room: GameRoom;
@@ -12,22 +14,24 @@ interface LobbyScreenProps {
     onLeave: () => void;
     onKick: (playerId: string) => void;
     onJoinGame: () => void;
+    onBack: () => void;
 }
 
 export const LobbyScreen: React.FC<LobbyScreenProps> = ({
     room,
     currentPlayerId,
     onStartGame,
-    onSettingsChange,
+    // onSettingsChange, // Currently unused, but kept in interface for future use
     onKick,
-    onJoinGame
+    onJoinGame,
+    onBack
 }) => {
-    const [mounted, setMounted] = useState(false);
+    const [showSettings, setShowSettings] = useState(false);
+    const [showCosmetics, setShowCosmetics] = useState(false);
     const [copied, setCopied] = useState(false);
     const [, setTick] = useState(0); // Force update for idle timer
 
     useEffect(() => {
-        setMounted(true);
         // Force update every second to check idle status
         const interval = setInterval(() => setTick(t => t + 1), 1000);
         return () => clearInterval(interval);
@@ -38,6 +42,7 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
     }
 
     const isHost = room.hostId === currentPlayerId;
+    const currentPlayer = room.players.find(p => p.id === currentPlayerId);
 
     const copyRoomCode = () => {
         vibrate(HapticPatterns.success);
@@ -49,6 +54,12 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
     const isIdle = (lastSeen?: number) => {
         if (!lastSeen) return true;
         return Date.now() - lastSeen > 10000; // 10 seconds
+    };
+
+    const handleUpdateCosmetics = async (type: 'brush' | 'color', id: string) => {
+        if (!currentPlayer) return;
+        const updates = type === 'brush' ? { activeBrush: id } : { activeColor: id };
+        await StorageService.updatePlayerCosmetics(room.roomCode, currentPlayer.id, updates);
     };
 
     // If somehow we are in LobbyScreen but the game is active, show Rejoin
@@ -70,17 +81,33 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
     }
 
     return (
-        <div className="min-h-screen bg-90s-animated flex flex-col p-4 relative overflow-hidden"
-            style={{ paddingTop: 'max(5rem, env(safe-area-inset-top) + 5rem)' }}>
-            {/* Header */}
-            <div className="flex justify-between items-center mb-6 relative z-10">
-                {/* Decorative bubbles */}
-                <div className="absolute top-10 left-5 text-4xl bubble-float">🎈</div>
+        <div className="min-h-screen bg-90s-animated flex flex-col pt-[max(5rem,env(safe-area-inset-top)+5rem)] pb-safe px-4 overflow-y-auto">
+            {/* Top Bar */}
+            <div className="fixed top-0 left-0 w-full p-4 flex justify-between items-start z-20 pointer-events-none bg-gradient-to-b from-white/90 to-transparent">
+                <button
+                    onClick={onBack}
+                    className="bg-white p-3 rounded-2xl shadow-lg border-2 border-purple-100 hover:scale-105 active:scale-95 transition-all w-12 h-12 flex items-center justify-center pointer-events-auto text-xl"
+                >
+                    🚪
+                </button>
+                <div className="flex gap-2">
+                    <button
+                        onClick={() => setShowCosmetics(true)}
+                        className="bg-white p-3 rounded-2xl shadow-lg border-2 border-purple-100 hover:scale-105 active:scale-95 transition-all w-12 h-12 flex items-center justify-center pointer-events-auto text-xl relative"
+                    >
+                        🎨
+                        {/* New Unlock Indicator could go here */}
+                    </button>
+                    <button
+                        onClick={() => setShowSettings(true)}
+                        className="bg-white p-3 rounded-2xl shadow-lg border-2 border-purple-100 hover:scale-105 active:scale-95 transition-all w-12 h-12 flex items-center justify-center pointer-events-auto text-xl"
+                    >
+                        ⚙️
+                    </button>
+                </div>
             </div>
-            <div className="absolute top-32 right-8 text-5xl bubble-float" style={{ animationDelay: '0.5s' }}>🎪</div>
-            <div className="absolute bottom-40 left-10 text-4xl bubble-float" style={{ animationDelay: '1s' }}>🎯</div>
 
-            <div className={`w-full max-w-md space-y-5 relative z-10 py-6 ${mounted ? 'slide-up' : 'opacity-0'}`}>
+            <div className="w-full max-w-md mx-auto space-y-5 relative z-10 py-6">
                 {/* Room Header */}
                 <div className="bg-white rounded-[2rem] p-5 flex justify-between items-center"
                     style={{
@@ -98,10 +125,10 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                     </div>
                     <button
                         onClick={copyRoomCode}
-                        className={`px-4 py-2 rounded-xl font-bold transition-all jelly-hover text-sm ${copied
+                        className={`px - 4 py - 2 rounded - xl font - bold transition - all jelly - hover text - sm ${copied
                             ? 'bg-green-400 text-white'
                             : 'bg-gradient-to-r from-cyan-400 to-emerald-400 text-white'
-                            }`}
+                            } `}
                         style={{
                             boxShadow: '0 4px 0 rgba(0, 0, 0, 0.2)'
                         }}
@@ -122,13 +149,6 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                         </span>
                     )}
                 </div>
-
-                {/* Game Settings */}
-                <GameSettingsPanel
-                    settings={room.settings}
-                    onSettingsChange={onSettingsChange}
-                    isHost={isHost}
-                />
 
                 {/* Players List */}
                 <div className="bg-white rounded-[2rem] p-5 space-y-3"
@@ -157,7 +177,7 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                                 <div
                                     key={p.id}
                                     className="bg-white/50 backdrop-blur-sm p-4 rounded-xl flex items-center justify-between animate-slide-in"
-                                    style={{ animationDelay: `${index * 0.1}s` }}
+                                    style={{ animationDelay: `${index * 0.1} s` }}
                                 >
                                     <div className="flex items-center gap-4">
                                         <AvatarDisplay
@@ -176,12 +196,12 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                                             )}
                                         </div>
                                     </div>
-                                    <div className={`px-3 py-1 rounded-full text-sm font-bold ${room.playerStates && room.playerStates[p.id]?.status === 'ready'
+                                    <div className={`px - 3 py - 1 rounded - full text - sm font - bold ${room.playerStates && room.playerStates[p.id]?.status === 'ready'
                                         ? 'bg-green-100 text-green-600'
                                         : isIdle(p.lastSeen)
                                             ? 'bg-gray-100 text-gray-400'
                                             : 'bg-yellow-100 text-yellow-600'
-                                        }`}>
+                                        } `}>
                                         {room.playerStates && room.playerStates[p.id]?.status === 'ready'
                                             ? 'READY!'
                                             : isIdle(p.lastSeen)
@@ -215,10 +235,10 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                     <button
                         onClick={onStartGame}
                         disabled={room.players.length < 3}
-                        className={`w-full rounded-[2rem] p-6 text-center relative transition-transform group ${room.players.length < 3
+                        className={`w - full rounded - [2rem] p - 6 text - center relative transition - transform group ${room.players.length < 3
                             ? 'opacity-75 cursor-not-allowed grayscale bg-gray-100'
                             : 'bg-white cursor-pointer hover:scale-[1.02]'
-                            }`}
+                            } `}
                         style={{
                             boxShadow: room.players.length < 3
                                 ? '0 4px 0 rgba(150, 150, 150, 0.2)'
@@ -243,7 +263,7 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                                     }}>
                                     Start Game!
                                 </h3>
-                                <p className={`font-medium mt-1 text-sm ${room.players.length < 3 ? 'text-gray-500' : 'text-orange-400'}`}>
+                                <p className={`font - medium mt - 1 text - sm ${room.players.length < 3 ? 'text-gray-500' : 'text-orange-400'} `}>
                                     {room.players.length < 3 ? '⚠️ Need at least 3 players' : 'Click to begin Round 1'}
                                 </p>
                             </div>
@@ -263,6 +283,29 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                     ✨ Fill in the blank and vote for the best drawing! ✨
                 </div>
             </div>
+
+            {showSettings && currentPlayer && (
+                <SettingsModal
+                    player={currentPlayer}
+                    roomCode={room.roomCode}
+                    players={room.players}
+                    isHost={isHost}
+                    onClose={() => setShowSettings(false)}
+                    onUpdateProfile={() => { /* Profile updates handled internally */ }}
+                    onLeaveGame={onBack}
+                    onGoHome={onBack}
+                    onEndGame={isHost ? () => StorageService.closeRoom(room.roomCode) : undefined}
+                    onKick={isHost ? (playerId: string) => StorageService.kickPlayer(room.roomCode, playerId) : undefined}
+                />
+            )}
+
+            {showCosmetics && currentPlayer && (
+                <PlayerCosmeticsPanel
+                    player={currentPlayer}
+                    onUpdateCosmetics={handleUpdateCosmetics}
+                    onClose={() => setShowCosmetics(false)}
+                />
+            )}
         </div>
     );
 };
