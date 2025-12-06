@@ -32,11 +32,9 @@ export const StoreScreen: React.FC<StoreScreenProps> = ({ onBack, onEquip }) => 
                 vibrate(HapticPatterns.light);
                 setPurchaseMessage(`🎨 Equipped ${item.name}!`);
                 setTimeout(() => setPurchaseMessage(null), 1500);
-                if (onBack) {
-                    // Refresh parent state implicity or explicity via onEquip if provided,
-                    // but for now we just want the visual transition trigger.
-                    onEquip?.();
-                }
+
+                // Trigger transition if handler provided
+                onEquip?.();
             }
             return;
         }
