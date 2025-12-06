@@ -82,7 +82,7 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
     }
 
     return (
-        <div className="min-h-screen bg-90s-animated flex flex-col pb-safe overflow-y-auto"
+        <div className="min-h-screen flex flex-col pb-safe overflow-y-auto"
             style={{ paddingTop: 'max(1.5rem, env(safe-area-inset-top) + 1rem)' }}>
 
             <div className="w-full max-w-md mx-auto space-y-4 px-4 pb-8">

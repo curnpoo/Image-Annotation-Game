@@ -93,7 +93,7 @@ export const FinalResultsScreen: React.FC<FinalResultsScreenProps> = ({
 
     return (
         <div
-            className={`min-h-screen bg-90s-animated flex flex-col items-center p-4 relative overflow-hidden ${mounted ? 'pop-in' : 'opacity-0'}`}
+            className={`min-h-screen flex flex-col items-center p-4 relative overflow-hidden ${mounted ? 'pop-in' : 'opacity-0'}`}
             style={{ paddingTop: 'max(1.5rem, env(safe-area-inset-top) + 1rem)' }}
         >
             {/* Confetti Effect */}

@@ -76,3 +76,20 @@ export const getThemeContainerStyle = (themeId: string = 'default') => {
         ...styles
     };
 };
+
+export const getThemeClass = (themeId: string = 'default'): string => {
+    switch (themeId) {
+        case 'dark':
+            return 'theme-bg-dark';
+        case 'cardboard':
+            return 'theme-bg-cardboard';
+        case 'neon':
+            return 'theme-bg-neon';
+        case 'gold':
+            return 'theme-bg-gold';
+        case 'galaxy':
+            return 'theme-bg-galaxy';
+        default:
+            return 'theme-bg-default';
+    }
+};

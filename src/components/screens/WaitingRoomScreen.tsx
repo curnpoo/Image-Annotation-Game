@@ -24,7 +24,7 @@ export const WaitingRoomScreen: React.FC<WaitingRoomScreenProps> = ({
     const me = room.waitingPlayers?.find(p => p.id === currentPlayerId) || room.players.find(p => p.id === currentPlayerId);
 
     return (
-        <div className="min-h-screen bg-90s-animated flex flex-col items-center justify-center p-4 relative overflow-hidden">
+        <div className="min-h-screen flex flex-col items-center justify-center p-4 relative overflow-hidden">
             {/* Decorative elements */}
             <div className="absolute top-10 left-10 text-6xl animate-bounce">⏳</div>
             <div className="absolute bottom-10 right-10 text-6xl animate-pulse">🎮</div>

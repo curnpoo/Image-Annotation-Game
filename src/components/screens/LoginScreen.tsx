@@ -49,7 +49,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
     if (mode === 'choose') {
         return (
             <div
-                className="min-h-screen bg-90s-animated flex flex-col items-center justify-center p-6"
+                className="min-h-screen flex flex-col items-center justify-center p-6"
                 style={{ paddingTop: 'max(2rem, env(safe-area-inset-top) + 1rem)' }}
             >
                 <div className="text-center mb-8">
@@ -95,7 +95,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
     // Login/Register form
     return (
         <div
-            className="min-h-screen bg-90s-animated flex flex-col items-center justify-center p-6"
+            className="min-h-screen flex flex-col items-center justify-center p-6"
             style={{ paddingTop: 'max(2rem, env(safe-area-inset-top) + 1rem)' }}
         >
             <div className="w-full max-w-sm">

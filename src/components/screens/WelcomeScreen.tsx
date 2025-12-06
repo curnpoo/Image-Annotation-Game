@@ -44,7 +44,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onPlay }) => {
     ];
 
     return (
-        <div className="min-h-screen bg-90s-animated flex flex-col items-center justify-center p-4 text-white relative overflow-hidden">
+        <div className="fixed inset-0 flex flex-col items-center justify-center z-50 p-8 text-center relative overflow-hidden">
             {/* Floating Bubbles Background */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
                 {bubbles.map((bubble, i) => (

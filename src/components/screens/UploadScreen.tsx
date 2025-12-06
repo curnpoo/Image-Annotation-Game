@@ -25,7 +25,7 @@ export const UploadScreen: React.FC<UploadScreenProps> = ({
     };
 
     return (
-        <div className="min-h-screen bg-90s-animated p-4 flex flex-col items-center justify-center relative overflow-hidden">
+        <div className="min-h-screen p-4 flex flex-col items-center justify-center relative overflow-hidden">
             {/* Decorative elements */}
             <div className="absolute top-10 left-10 text-6xl animate-bounce">📸</div>
             <div className="absolute bottom-10 right-10 text-6xl animate-bounce" style={{ animationDelay: '0.5s' }}>🖼️</div>

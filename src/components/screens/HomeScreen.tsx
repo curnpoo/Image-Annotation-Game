@@ -77,7 +77,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
     return (
         <div
-            className="min-h-screen bg-90s-animated flex flex-col p-4"
+            className="min-h-screen flex flex-col p-4"
             style={{
                 paddingTop: 'max(1.5rem, env(safe-area-inset-top) + 1rem)',
                 paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom) + 1rem)'

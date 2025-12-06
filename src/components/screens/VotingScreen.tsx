@@ -78,7 +78,7 @@ export const VotingScreen: React.FC<VotingScreenProps> = ({
 
     return (
         <div
-            className={`fixed inset-0 bg-90s-animated flex flex-col p-4 ${mounted ? 'pop-in' : 'opacity-0'} overflow-hidden touch-none`}
+            className={`fixed inset-0 flex flex-col p-4 ${mounted ? 'pop-in' : 'opacity-0'} overflow-hidden touch-none`}
             style={{
                 paddingTop: 'max(1rem, env(safe-area-inset-top) + 1rem)',
                 paddingBottom: 'max(1rem, env(safe-area-inset-bottom) + 1rem)'

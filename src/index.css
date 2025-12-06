@@ -36,13 +36,56 @@ body {
   overflow-x: hidden;
 }
 
-/* Animated Background Gradient */
-.bg-90s-animated {
+/* Theme Backgrounds */
+.theme-bg-default {
   background: linear-gradient(-45deg, #FF69B4, #9B59B6, #00D9FF, #32CD32, #FFE135, #FF8C00);
   background-size: 400% 400%;
   animation: gradient-flow 15s ease infinite;
+  color: #1f2937; /* Gray-800 default text */
 }
 
+.theme-bg-dark {
+  background: #0f172a; /* Slate 900 */
+  background-image: 
+    radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%), 
+    radial-gradient(at 50% 0%, hsla(225,39%,30%,1) 0, transparent 50%), 
+    radial-gradient(at 100% 0%, hsla(339,49%,30%,1) 0, transparent 50%);
+  color: #f8fafc; /* Slate 50 text */
+}
+
+.theme-bg-cardboard {
+  background-color: #d2b48c;
+  background-image: url("data:image/svg+xml,%3Csvg width='42' height='44' viewBox='0 0 42 44' xmlns='http://www.w3.org/2000/svg'%3E%3Cg id='Page-1' fill='none' fill-rule='evenodd'%3E%3Cg id='brick-wall' fill='%239c6644' fill-opacity='0.1'%3E%3Cpath d='M0 0h42v44H0V0zm1 1h40v20H1V1zM0 22h20v20H0V22zm22 0h20v20H22V22z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  color: #451a03; /* Amber 900 */
+}
+
+.theme-bg-neon {
+  background-color: #000000;
+  background-image: 
+    linear-gradient(rgba(0, 255, 0, 0.2) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 255, 0, 0.2) 1px, transparent 1px);
+  background-size: 50px 50px;
+  color: #00ff00;
+}
+
+.theme-bg-gold {
+  background: radial-gradient(ellipse at center, #fceabb 0%,#fccd4d 50%,#f8b500 51%,#fbdf93 100%);
+  color: #422006;
+}
+
+.theme-bg-galaxy {
+  background: #090a0f;
+  background-image: 
+    radial-gradient(white, rgba(255,255,255,.2) 2px, transparent 40px),
+    radial-gradient(white, rgba(255,255,255,.15) 1px, transparent 30px),
+    radial-gradient(white, rgba(255,255,255,.1) 2px, transparent 40px),
+    radial-gradient(rgba(255,255,255,.4), rgba(255,255,255,.1) 2px, transparent 30px);
+  background-size: 550px 550px, 350px 350px, 250px 250px, 150px 150px;
+  background-position: 0 0, 40px 60px, 130px 270px, 70px 100px;
+  color: #e0e7ff;
+}
+
+/* Animations */
 @keyframes gradient-flow {
   0% {
     background-position: 0% 50%;

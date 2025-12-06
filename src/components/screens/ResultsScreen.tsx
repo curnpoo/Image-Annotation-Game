@@ -170,7 +170,7 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
     const getPlayer = (playerId: string) => room.players.find(p => p.id === playerId);
 
     return (
-        <div className={`min-h-screen bg-90s-animated flex flex-col items-center justify-start pt-16 sm:pt-20 p-4 ${mounted ? 'pop-in' : 'opacity-0'}`}
+        <div className={`min-h-screen flex flex-col items-center justify-start pt-16 sm:pt-20 p-4 ${mounted ? 'pop-in' : 'opacity-0'}`}
             style={{ paddingTop: 'max(4rem, env(safe-area-inset-top))' }}>
             {/* Confetti! */}
             {showConfetti && <Confetti />}

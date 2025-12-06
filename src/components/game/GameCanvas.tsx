@@ -27,9 +27,11 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
 }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
+    const wrapperRef = useRef<HTMLDivElement>(null); // New wrapper ref
     const imageCanvasRef = useRef<HTMLCanvasElement | null>(null);
     const [isDrawing, setIsDrawing] = useState(false);
     const [currentStroke, setCurrentStroke] = useState<DrawingStroke | null>(null);
+    const [canvasSize, setCanvasSize] = useState(300); // Default start size
 
     // Initialize hidden image canvas
     useEffect(() => {
@@ -53,25 +55,39 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
     useEffect(() => {
         const canvas = canvasRef.current;
         const container = containerRef.current;
-        if (!canvas || !container) return;
+        if (!canvas || !container) return; // wrapperRef not needed for calculation
 
         const resizeCanvas = () => {
             // Force square aspect ratio based on width, but max out at height
             const width = container.clientWidth;
-            const size = Math.min(width, container.clientHeight);
+            const height = container.clientHeight;
 
-            canvas.width = size;
-            canvas.height = size;
+            // Subtract padding/safe area
+            const safeHeight = height - 100; // Buffer for UI elements
+            const size = Math.min(width - 32, safeHeight); // -32 for horizontal padding
 
-            // Redraw everything after resize
-            drawAll();
+            // Update State (triggers re-render with correct style)
+            setCanvasSize(size);
+
+            // Set Canvas Resolution (needs to match display size for 1:1 strokes)
+            // We set this imperatively because it clears the canvas if we rely on props only? 
+            // Actually, setting width/height on canvas clears it. 
+            // We should only do this if size CHANGED significantly.
+            if (canvas.width !== size || canvas.height !== size) {
+                canvas.width = size;
+                canvas.height = size;
+                // We need to request a redraw after this update propagates
+                // But the drawAll effect depends on 'strokes' or implicit mounting.
+                // We can call drawAll() immediately, but if width changed, it clears.
+                requestAnimationFrame(drawAll);
+            }
         };
 
         window.addEventListener('resize', resizeCanvas);
         resizeCanvas();
 
         return () => window.removeEventListener('resize', resizeCanvas);
-    }, [imageUrl]);
+    }, [imageUrl, drawAll]); // added drawAll to dep array for safety
 
     const drawAll = useCallback(() => {
         const canvas = canvasRef.current;
@@ -244,23 +260,46 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
                 WebkitTapHighlightColor: 'transparent',
                 userSelect: 'none',
                 paddingTop: 'max(env(safe-area-inset-top), 2rem)', // Safe area + padding
+                paddingBottom: 'max(env(safe-area-inset-bottom), 1rem)',
+                paddingLeft: '1rem',
+                paddingRight: '1rem',
                 display: 'flex',
                 justifyContent: 'center',
                 alignItems: 'center'
             }}
         >
-            {/* Drawing Layer - transparent canvas on top */}
-            <canvas
-                ref={canvasRef}
-                className={`absolute inset-0 w-full h-full touch-none ${isEyedropper ? 'cursor-cell' : 'cursor-crosshair'}`}
-                onMouseDown={startDrawing}
-                onMouseMove={draw}
-                onMouseUp={stopDrawing}
-                onMouseLeave={stopDrawing}
-                onTouchStart={startDrawing}
-                onTouchMove={draw}
-                onTouchEnd={stopDrawing}
-            />
+            {/* Image Layer - Visible Image */}
+            <div
+                ref={wrapperRef}
+                className="relative shadow-2xl overflow-hidden bg-gray-100 transition-all duration-200"
+                style={{
+                    width: canvasSize,
+                    height: canvasSize,
+                    borderRadius: '20px',
+                    flexShrink: 0
+                }}
+            >
+                {imageUrl && (
+                    <img
+                        src={imageUrl}
+                        alt="Game target"
+                        className="absolute inset-0 w-full h-full object-contain pointer-events-none select-none"
+                    />
+                )}
+
+                {/* Drawing Layer - Strict Square Canvas */}
+                <canvas
+                    ref={canvasRef}
+                    className={`absolute inset-0 w-full h-full touch-none ${isEyedropper ? 'cursor-cell' : 'cursor-crosshair'}`}
+                    onMouseDown={startDrawing}
+                    onMouseMove={draw}
+                    onMouseUp={stopDrawing}
+                    onMouseLeave={stopDrawing}
+                    onTouchStart={startDrawing}
+                    onTouchMove={draw}
+                    onTouchEnd={stopDrawing}
+                />
+            </div>
         </div>
     );
 };

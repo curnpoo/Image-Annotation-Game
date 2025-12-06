@@ -86,7 +86,7 @@ export const RoomSelectionScreen: React.FC<RoomSelectionScreenProps> = ({
 
     return (
         <div
-            className="min-h-screen bg-90s-animated flex flex-col items-center justify-start p-4 relative overflow-y-auto overflow-x-hidden"
+            className="min-h-screen flex flex-col items-center justify-start p-4 relative overflow-y-auto overflow-x-hidden"
             style={{ paddingTop: 'max(2rem, env(safe-area-inset-top) + 1rem)' }}
         >
             <div className={`w-full max-w-md relative z-10 flex flex-col gap-4 ${mounted ? 'slide-up' : 'opacity-0'}`}>

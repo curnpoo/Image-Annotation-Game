@@ -38,6 +38,7 @@ import {
   notifyResultsReady,
   notifyFinalResults
 } from './utils/notifications';
+import { getThemeClass } from './utils/themes';
 import { requestPushPermission, storePushToken, isPushSupported } from './services/pushNotifications';
 
 import type { Player, DrawingStroke, GameSettings, PlayerDrawing, GameRoom } from './types';
@@ -163,6 +164,17 @@ function App() {
     };
     initSession();
   }, []);
+
+  // Theme Effect: Apply global theme class to body
+  useEffect(() => {
+    const theme = player?.cosmetics?.activeTheme || 'default';
+    const themeClass = getThemeClass(theme);
+    document.body.className = themeClass; // Replaces existing classes
+    // If you need to keep other body classes, use classList.
+    // But currently body only has user agent styles usually.
+    // Let's be safer:
+    document.body.className = `${themeClass} overflow-x-hidden`;
+  }, [player?.cosmetics?.activeTheme]);
 
   // Calculated state for dependencies
   const amWaiting = room?.waitingPlayers?.some(p => p.id === player?.id) || false;

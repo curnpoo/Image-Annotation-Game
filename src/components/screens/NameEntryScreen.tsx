@@ -22,7 +22,7 @@ export const NameEntryScreen: React.FC<NameEntryScreenProps> = ({ onContinue }) 
     };
 
     return (
-        <div className="min-h-screen bg-90s-animated flex flex-col items-center justify-center p-4 relative overflow-hidden">
+        <div className="min-h-screen flex flex-col items-center justify-center p-4 relative overflow-hidden">
             {/* Decorative elements */}
             <div className="absolute top-10 left-10 text-5xl bubble-float">🎭</div>
             <div className="absolute top-20 right-10 text-4xl bubble-float" style={{ animationDelay: '1s' }}>🎪</div>
@@ -76,8 +76,8 @@ export const NameEntryScreen: React.FC<NameEntryScreenProps> = ({ onContinue }) 
                             type="submit"
                             disabled={!isValid}
                             className={`w-full py-4 rounded-full font-bold text-xl transition-all ${isValid
-                                    ? 'btn-90s bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-500 text-white jelly-hover'
-                                    : 'bg-gray-200 text-gray-400 cursor-not-allowed rounded-full'
+                                ? 'btn-90s bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-500 text-white jelly-hover'
+                                : 'bg-gray-200 text-gray-400 cursor-not-allowed rounded-full'
                                 }`}
                         >
                             {isValid ? '🎉 Let\'s Go! →' : '✍️ Type your name...'}
