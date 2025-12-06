@@ -60,7 +60,11 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                             style={{
                                 backgroundColor: color,
                                 border: color === '#FFFFFF' ? '2px solid #ccc' : '2px solid rgba(0,0,0,0.1)',
-                                boxShadow: !isEraser && brushColor === color ? '0 0 10px rgba(155, 89, 182, 0.5)' : 'none'
+                                boxShadow: !isEraser && brushColor === color ? '0 0 10px rgba(155, 89, 182, 0.5)' : 'none',
+                                width: '32px',
+                                height: '32px',
+                                minWidth: '32px',
+                                minHeight: '32px'
                             }}
                         />
                     ))}

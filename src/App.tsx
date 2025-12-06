@@ -18,7 +18,7 @@ import { Timer } from './components/game/Timer';
 import { HowToPlayModal } from './components/game/HowToPlayModal';
 import { Toast } from './components/common/Toast';
 import { LoadingScreen } from './components/common/LoadingScreen';
-// import { FloatingChat } from './components/game/FloatingChat';
+import { NotificationPromptModal } from './components/common/NotificationPromptModal';
 import type { Player, DrawingStroke, GameSettings, PlayerDrawing } from './types';
 
 type Screen = 'welcome' | 'name-entry' | 'room-selection' | 'lobby' | 'waiting' | 'uploading' | 'drawing' | 'voting' | 'results' | 'final';
@@ -50,6 +50,8 @@ function App() {
   const lastStatusRef = useRef<string | null>(null);
   const lastRoundRef = useRef<number | null>(null);
   const lastWaitingRef = useRef<boolean>(false);
+
+  const [showNotificationPrompt, setShowNotificationPrompt] = useState(false);
 
   // Initial 3s loading
   useEffect(() => {
@@ -206,7 +208,24 @@ function App() {
   }, [room, player, roomCode]);
 
 
-  // Notification Effect
+  // Notification Effect & Prompt
+  useEffect(() => {
+    // Check for prompt
+    if (roomCode && player && 'Notification' in window) {
+      const permission = Notification.permission;
+      const hasSeenPrompt = sessionStorage.getItem('seenNotificationPrompt');
+
+      if (permission === 'default' && !hasSeenPrompt) {
+        // Delay slightly to not overwhelm
+        const timer = setTimeout(() => {
+          setShowNotificationPrompt(true);
+        }, 2000);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [roomCode, player]);
+
+  // Game Status Notification
   useEffect(() => {
     if (room && room.roundNumber !== lastRoundRef.current && room.status === 'drawing') {
       // New round started
@@ -520,6 +539,22 @@ function App() {
         />
       )}
 
+      {/* Notification Prompt */}
+      <NotificationPromptModal
+        isOpen={showNotificationPrompt}
+        onEnable={async () => {
+          if ('Notification' in window) {
+            await Notification.requestPermission();
+          }
+          setShowNotificationPrompt(false);
+          sessionStorage.setItem('seenNotificationPrompt', 'true');
+        }}
+        onLater={() => {
+          setShowNotificationPrompt(false);
+          sessionStorage.setItem('seenNotificationPrompt', 'true');
+        }}
+      />
+
       {/* Settings Button - Show on all screens except welcome/name-entry */}
       {player && currentScreen !== 'welcome' && currentScreen !== 'name-entry' && (
         <button
@@ -784,11 +819,6 @@ function App() {
             </div>
 
             {/* Chat - Removed */}
-            {/* <FloatingChat
-              roomCode={roomCode || ''}
-              player={player}
-              messages={room.chatEvents || []}
-            /> */}
 
             {/* Toolbar - Only when timer running */}
             {isMyTimerRunning && !hasSubmitted && (
