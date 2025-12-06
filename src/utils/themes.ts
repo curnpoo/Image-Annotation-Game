@@ -1,67 +1,77 @@
 // CARD_THEMES removed
 
 
-export const getThemeStyles = (themeId: string = 'default') => {
+export const getThemeVariables = (themeId: string = 'default') => {
     switch (themeId) {
-        case 'cardboard':
-            return {
-                background: '#d2b48c',
-                border: '4px dashed #8b4513',
-                color: '#5d4037'
-            };
         case 'dark':
             return {
-                background: '#1a1a2e',
-                border: '4px solid #16213e',
-                color: '#e94560'
+                '--theme-bg': '#0f172a',
+                '--theme-bg-secondary': '#1e293b',
+                '--theme-text': '#f8fafc',
+                '--theme-text-secondary': '#94a3b8',
+                '--theme-accent': '#e94560',
+                '--theme-border': '#334155',
+                '--theme-button-bg': '#e94560',
+                '--theme-button-text': '#ffffff',
+                '--theme-card-bg': 'rgba(30, 41, 59, 0.8)',
             };
-        case 'gradient':
+        case 'cardboard':
             return {
-                backgroundImage: 'linear-gradient(135deg, #FF9A9E 0%, #FECFEF 99%, #FECFEF 100%)',
-                border: '4px solid #fff',
-                color: '#555'
+                '--theme-bg': '#d2b48c',
+                '--theme-bg-secondary': '#e6ccb2',
+                '--theme-text': '#5d4037',
+                '--theme-text-secondary': '#8d6e63',
+                '--theme-accent': '#8b4513',
+                '--theme-border': '#8b4513',
+                '--theme-button-bg': '#8b4513',
+                '--theme-button-text': '#d2b48c',
+                '--theme-card-bg': '#faeedd',
             };
         case 'neon':
             return {
-                background: '#000',
-                border: '4px solid #0ff',
-                boxShadow: '0 0 10px #0ff, inset 0 0 10px #0ff',
-                color: '#0ff',
-                textShadow: '0 0 5px #0ff'
+                '--theme-bg': '#000000',
+                '--theme-bg-secondary': '#111111',
+                '--theme-text': '#00ff00',
+                '--theme-text-secondary': '#00cc00',
+                '--theme-accent': '#00ff00',
+                '--theme-border': '#00ff00',
+                '--theme-button-bg': '#000000',
+                '--theme-button-text': '#00ff00',
+                '--theme-card-bg': 'rgba(0, 0, 0, 0.9)',
             };
-        case 'gold':
+        case 'retro':
             return {
-                background: 'linear-gradient(135deg, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c)',
-                border: '4px solid #daa520',
-                color: '#5c4013'
-            };
-        case 'holographic':
-            return {
-                backgroundImage: 'linear-gradient(45deg, #ff9a9e 0%, #fecfef 20%, #a6c0fe 40%, #f68084 60%, #a6c0fe 80%, #fecfef 100%)',
-                backgroundSize: '200% 200%',
-                animation: 'gradient 3s ease infinite',
-                border: '4px solid rgba(255,255,255,0.5)',
-                color: '#fff'
-            };
-        case 'galaxy':
-            return {
-                backgroundColor: '#000',
-                backgroundImage: 'url("https://www.transparenttextures.com/patterns/stardust.png")', // Fallback or use CSS radial gradients
-                background: 'radial-gradient(ellipse at bottom, #1B2735 0%, #090A0F 100%)',
-                border: '4px solid #4B0082',
-                color: '#E6E6FA'
+                '--theme-bg': '#ff00ff',
+                '--theme-bg-secondary': '#00ffff',
+                '--theme-text': '#ffff00',
+                '--theme-text-secondary': '#00ff00',
+                '--theme-accent': '#ffff00',
+                '--theme-border': '#000000',
+                '--theme-button-bg': '#ffffff',
+                '--theme-button-text': '#000000',
+                '--theme-card-bg': '#ffffff',
             };
         case 'default':
         default:
             return {
-                background: 'white',
-                border: '4px solid transparent',
-                backgroundImage: 'linear-gradient(white, white), linear-gradient(135deg, #00D9FF, #32CD32)',
-                backgroundOrigin: 'border-box',
-                backgroundClip: 'padding-box, border-box'
+                '--theme-bg': 'linear-gradient(-45deg, #FF69B4, #9B59B6, #00D9FF, #32CD32, #FFE135, #FF8C00)',
+                '--theme-bg-secondary': '#ffffff',
+                '--theme-text': '#1f2937',
+                '--theme-text-secondary': '#6b7280',
+                '--theme-accent': '#9B59B6',
+                '--theme-border': 'transparent',
+                '--theme-button-bg': 'linear-gradient(to right, #00D9FF, #9B59B6)',
+                '--theme-button-text': '#ffffff',
+                '--theme-card-bg': 'rgba(255, 255, 255, 0.9)',
             };
     }
 };
+
+// Deprecated: kept for backward compatibility if needed, but should point to variables
+export const getThemeStyles = (_themeId: string = 'default') => {
+    return {}; // Handled via CSS variables now
+};
+
 
 export const getThemeContainerStyle = (themeId: string = 'default') => {
     // Returns styles for the container (gradient borders etc)

@@ -171,6 +171,8 @@ export const AuthService = {
         // Clear XP data to prevent visual glitches for next user
         localStorage.removeItem('player_xp');
         localStorage.removeItem('player_level');
+        localStorage.removeItem('player_currency');
+        localStorage.removeItem('player_purchased_items');
         localStorage.removeItem('aic_game_session');
     },
 
@@ -254,6 +256,8 @@ export const AuthService = {
         localStorage.removeItem(LOCAL_USER_KEY);
         localStorage.removeItem('player_xp');
         localStorage.removeItem('player_level');
+        localStorage.removeItem('player_currency');
+        localStorage.removeItem('player_purchased_items');
         localStorage.removeItem('aic_game_session');
     }
 };

@@ -38,7 +38,7 @@ import {
   notifyResultsReady,
   notifyFinalResults
 } from './utils/notifications';
-import { getThemeClass } from './utils/themes';
+import { getThemeClass, getThemeVariables } from './utils/themes';
 import { requestPushPermission, storePushToken, isPushSupported } from './services/pushNotifications';
 
 import type { Player, DrawingStroke, GameSettings, PlayerDrawing, GameRoom } from './types';
@@ -199,15 +199,19 @@ function App() {
     initSession();
   }, []);
 
-  // Theme Effect: Apply global theme class to body
+  // Theme Effect: Apply global theme class AND variables to body
   useEffect(() => {
     const theme = player?.cosmetics?.activeTheme || 'default';
+
+    // Apply Class (for legacy or specific overrides)
     const themeClass = getThemeClass(theme);
-    document.body.className = themeClass; // Replaces existing classes
-    // If you need to keep other body classes, use classList.
-    // But currently body only has user agent styles usually.
-    // Let's be safer:
     document.body.className = `${themeClass} overflow-x-hidden`;
+
+    // Apply Deep Variables
+    const variables = getThemeVariables(theme);
+    Object.entries(variables).forEach(([key, value]) => {
+      document.documentElement.style.setProperty(key, value);
+    });
   }, [player?.cosmetics?.activeTheme]);
 
   // Calculated state for dependencies
