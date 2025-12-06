@@ -85,14 +85,8 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
         <div className="min-h-screen bg-90s-animated flex flex-col pb-safe overflow-y-auto"
             style={{ paddingTop: 'max(6rem, env(safe-area-inset-top) + 4rem)' }}>
             {/* Top Bar - Fixed with safe area */}
-            <div className="fixed top-0 left-0 w-full flex justify-between items-center z-20 pointer-events-none px-4"
+            <div className="fixed top-0 left-0 w-full flex justify-end items-center z-20 pointer-events-none px-4"
                 style={{ paddingTop: 'max(1rem, env(safe-area-inset-top) + 0.5rem)' }}>
-                <button
-                    onClick={onBack}
-                    className="bg-white p-3 rounded-2xl shadow-lg border-2 border-purple-100 hover:scale-105 active:scale-95 transition-all w-12 h-12 flex items-center justify-center pointer-events-auto text-xl"
-                >
-                    🚪
-                </button>
                 <div className="flex gap-2">
                     <button
                         onClick={() => setShowCosmetics(true)}
@@ -133,6 +127,15 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                         {copied ? '✓ Copied!' : '📋 Copy'}
                     </button>
                 </div>
+
+                {/* Game Settings - Host Only */}
+                {isHost && (
+                    <GameSettingsPanel
+                        settings={room.settings}
+                        onSettingsChange={(settings) => StorageService.updateSettings(room.roomCode, settings)}
+                        isHost={isHost}
+                    />
+                )}
 
                 {/* Players List */}
                 <div className="bg-white rounded-3xl p-5 shadow-xl"
@@ -211,15 +214,6 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                         })}
                     </div>
                 </div>
-
-                {/* Game Settings - Host Only */}
-                {isHost && (
-                    <GameSettingsPanel
-                        settings={room.settings}
-                        onSettingsChange={(settings) => StorageService.updateSettings(room.roomCode, settings)}
-                        isHost={isHost}
-                    />
-                )}
 
                 {/* Start Game Area - Only host can start */}
                 {isHost ? (
