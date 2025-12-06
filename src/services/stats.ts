@@ -14,7 +14,7 @@ const defaultStats: PlayerStats = {
     timesSaboteur: 0,
     totalCurrencyEarned: 0,
     totalXPEarned: 0,
-    highestLevel: 1
+    highestLevel: 0
 };
 
 export const StatsService = {

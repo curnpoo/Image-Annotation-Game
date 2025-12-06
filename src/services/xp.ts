@@ -15,7 +15,7 @@ export const XPService = {
 
     // Get current level (calculated from XP)
     getLevel(): number {
-        return Math.floor(this.getXP() / XP_PER_LEVEL) + 1;
+        return Math.floor(this.getXP() / XP_PER_LEVEL);
     },
 
     // Get XP progress within current level (0-99)
@@ -31,7 +31,7 @@ export const XPService = {
 
         localStorage.setItem(XP_KEY, newXP.toString());
 
-        const newLevel = Math.floor(newXP / XP_PER_LEVEL) + 1;
+        const newLevel = Math.floor(newXP / XP_PER_LEVEL);
         const leveledUp = newLevel > oldLevel;
 
         if (leveledUp) {
