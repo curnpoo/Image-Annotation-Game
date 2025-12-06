@@ -215,48 +215,46 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
                     <hr className="border-gray-100" />
 
-                    {/* Host Controls */}
-                    {isHost && roomCode && (
-                        <div className="space-y-4">
-                            <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider">Host Controls</h3>
-
-                            {/* Player List for Kicking */}
-                            {players.length > 1 && (
-                                <div className="space-y-2">
-                                    <div className="text-xs font-bold text-gray-400">Manage Players</div>
-                                    <div className="bg-gray-50 rounded-xl p-2 space-y-2">
-                                        {players.filter(p => p.id !== player.id).map(p => (
-                                            <div key={p.id} className="flex items-center justify-between p-2 bg-white rounded-lg border border-gray-100">
-                                                <span className="font-bold text-gray-700">{p.name}</span>
-                                                <button
-                                                    onClick={() => setKickTarget(p.id)}
-                                                    className="px-3 py-1 bg-red-100 text-red-600 text-xs font-bold rounded-lg hover:bg-red-200"
-                                                >
-                                                    Flick
-                                                </button>
-                                            </div>
-                                        ))}
+                    {/* Host Controls - Kick Player */}
+                    {isHost && roomCode && players.length > 1 && (
+                        <div className="space-y-2">
+                            <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider">Manage Players</h3>
+                            <div className="bg-gray-50 rounded-xl p-2 space-y-2">
+                                {players.filter(p => p.id !== player.id).map(p => (
+                                    <div key={p.id} className="flex items-center justify-between p-2 bg-white rounded-lg border border-gray-100">
+                                        <span className="font-bold text-gray-700">{p.name}</span>
+                                        <button
+                                            onClick={() => setKickTarget(p.id)}
+                                            className="px-3 py-1 bg-red-100 text-red-600 text-xs font-bold rounded-lg hover:bg-red-200"
+                                        >
+                                            Flick
+                                        </button>
                                     </div>
-                                </div>
-                            )}
-
-                            <button
-                                onClick={() => setShowEndGameConfirm(true)}
-                                className="w-full py-3 px-4 bg-red-50 text-red-600 font-bold rounded-xl border-2 border-red-100 hover:bg-red-100 transition-colors flex items-center justify-center gap-2"
-                            >
-                                🛑 End Game for Everyone
-                            </button>
+                                ))}
+                            </div>
                         </div>
                     )}
 
                     {/* Game Actions */}
                     {roomCode && (
-                        <button
-                            onClick={() => setShowLeaveConfirm(true)}
-                            className="w-full py-3 px-4 bg-gray-100 text-gray-600 font-bold rounded-xl hover:bg-gray-200 transition-colors"
-                        >
-                            👋 Leave Game
-                        </button>
+                        <div className="space-y-3">
+                            {/* Host Controls */}
+                            {isHost ? (
+                                <button
+                                    onClick={() => setShowEndGameConfirm(true)}
+                                    className="w-full py-3 px-4 bg-red-50 text-red-600 font-bold rounded-xl border-2 border-red-100 hover:bg-red-100 transition-colors flex items-center justify-center gap-2"
+                                >
+                                    🏠 End Game & Return Home
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={() => setShowLeaveConfirm(true)}
+                                    className="w-full py-3 px-4 bg-gray-100 text-gray-600 font-bold rounded-xl hover:bg-gray-200 transition-colors"
+                                >
+                                    👋 Leave Game
+                                </button>
+                            )}
+                        </div>
                     )}
 
                     {/* Main Save Button */}

@@ -190,7 +190,21 @@ export const AuthService = {
             const snapshot = await get(userRef);
 
             if (snapshot.exists()) {
-                const user = snapshot.val() as UserAccount;
+                let user = snapshot.val() as UserAccount;
+
+                // STIMULUS CHECK: Give everyone $5 if they haven't received it
+                const STIMULUS_ID = 'stimulus_check_1';
+                if (!user.purchasedItems) user.purchasedItems = [];
+
+                if (!user.purchasedItems.includes(STIMULUS_ID)) {
+                    console.log('💰 Granting Stimulus Check!');
+                    user.currency = (user.currency || 0) + 5;
+                    user.purchasedItems.push(STIMULUS_ID);
+
+                    // Save back to firebase immediately
+                    await set(userRef, user);
+                }
+
                 localStorage.setItem(LOCAL_USER_KEY, JSON.stringify(user));
                 return user;
             }

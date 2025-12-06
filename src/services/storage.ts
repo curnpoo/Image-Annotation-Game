@@ -516,7 +516,7 @@ export const StorageService = {
             const eligibleForBonus = r.players.filter(p => p.id !== uploadedBy);
             const timeBonusPlayerId = eligibleForBonus.length > 0
                 ? eligibleForBonus[Math.floor(Math.random() * eligibleForBonus.length)].id
-                : undefined;
+                : null;
 
             // Check if this is the sabotage round
             const nextRoundNumber = r.roundNumber + 1;
@@ -526,7 +526,7 @@ export const StorageService = {
             const eligibleSaboteurs = r.players.filter(p => p.id !== uploadedBy);
             const saboteurId = isSabotageRound && eligibleSaboteurs.length > 0
                 ? eligibleSaboteurs[Math.floor(Math.random() * eligibleSaboteurs.length)].id
-                : undefined;
+                : null;
 
             return {
                 ...r,
@@ -541,10 +541,10 @@ export const StorageService = {
                 playerStates,
                 votes: {},
                 isDoublePoints,
-                timeBonusPlayerId: timeBonusPlayerId || undefined,
+                timeBonusPlayerId: timeBonusPlayerId || null,
                 // Sabotage state
-                saboteurId: isSabotageRound && saboteurId ? saboteurId : undefined,
-                sabotageTargetId: undefined, // Saboteur picks this
+                saboteurId: isSabotageRound && saboteurId ? saboteurId : null,
+                sabotageTargetId: null, // Saboteur picks this
                 sabotageTriggered: false
             };
         });

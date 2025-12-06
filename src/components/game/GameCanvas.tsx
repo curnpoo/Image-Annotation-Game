@@ -56,8 +56,13 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         if (!canvas || !container) return;
 
         const resizeCanvas = () => {
-            canvas.width = container.clientWidth;
-            canvas.height = container.clientHeight;
+            // Force square aspect ratio based on width, but max out at height
+            const width = container.clientWidth;
+            const size = Math.min(width, container.clientHeight);
+
+            canvas.width = size;
+            canvas.height = size;
+
             // Redraw everything after resize
             drawAll();
         };
@@ -237,7 +242,11 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
                 WebkitUserSelect: 'none',
                 WebkitTouchCallout: 'none',
                 WebkitTapHighlightColor: 'transparent',
-                userSelect: 'none'
+                userSelect: 'none',
+                paddingTop: 'max(env(safe-area-inset-top), 2rem)', // Safe area + padding
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center'
             }}
         >
             {/* Drawing Layer - transparent canvas on top */}
