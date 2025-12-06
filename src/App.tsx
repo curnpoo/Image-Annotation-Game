@@ -220,7 +220,7 @@ function App() {
 
   // Effect: Game Ended Countdown
   useEffect(() => {
-    let timer: NodeJS.Timeout;
+    let timer: ReturnType<typeof setTimeout>;
     if (showGameEnded) {
       if (endGameCountdown > 0) {
         timer = setTimeout(() => setEndGameCountdown(prev => prev - 1), 1000);
