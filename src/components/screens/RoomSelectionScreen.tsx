@@ -238,11 +238,8 @@ export const RoomSelectionScreen: React.FC<RoomSelectionScreenProps> = ({
                             </div>
                         </div>
                     </div>
-                    </div>
+                )}
+            </div>
         </div>
-    )
-}
-            </div >
-        </div >
     );
 };
