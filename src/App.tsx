@@ -1282,13 +1282,12 @@ function App() {
               players={room.players}
               currentPlayerId={player.id}
               uploaderId={room.currentUploaderId || room.hostId}
-              onSelectTarget={async (targetId) => {
-                if (roomCode) {
-                  await StorageService.setSabotageTarget(roomCode, targetId);
-                }
-              }}
-              selectedTargetId={room.sabotageTargetId}
-            />
+              const targetId= room.saboteurId; // or whatever logic needed
+                  }
+                }}
+          selectedTargetId={room.sabotageTargetId || null}
+              />
+            )}
           )}
 
           {/* Sabotage Overlay - shown when player is being sabotaged and has started drawing */}

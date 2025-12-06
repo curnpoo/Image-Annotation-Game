@@ -1,4 +1,5 @@
-import { CARD_THEMES } from '../constants/cosmetics';
+// CARD_THEMES removed
+
 
 export const getThemeStyles = (themeId: string = 'default') => {
     switch (themeId) {

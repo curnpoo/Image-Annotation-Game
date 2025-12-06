@@ -5,6 +5,7 @@ import { GameSettingsPanel } from '../game/GameSettingsPanel';
 import { AvatarDisplay } from '../common/AvatarDisplay';
 import { vibrate, HapticPatterns } from '../../utils/haptics';
 import { AuthService } from '../../services/auth';
+import { StorageService } from '../../services/storage';
 import { getThemeContainerStyle } from '../../utils/themes';
 
 interface LobbyScreenProps {
