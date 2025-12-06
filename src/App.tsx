@@ -39,6 +39,7 @@ import {
   notifyFinalResults
 } from './utils/notifications';
 import { getThemeClass, getThemeVariables } from './utils/themes';
+import { ThemeTransition } from './components/common/ThemeTransition';
 import { requestPushPermission, storePushToken, isPushSupported } from './services/pushNotifications';
 
 import type { Player, DrawingStroke, GameSettings, PlayerDrawing, GameRoom } from './types';
@@ -57,6 +58,11 @@ function App() {
   const [toast, setToast] = useState<ToastState | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Theme Transition Handler
+  const handleTransitionComplete = () => {
+    setIsTransitionActive(false);
+  };
+
   // Drawing State
   const [brushColor, setBrushColor] = useState('#FF69B4');
   const [brushSize, setBrushSize] = useState(12);
@@ -69,6 +75,7 @@ function App() {
   const [isEyedropper, setIsEyedropper] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showCasino, setShowCasino] = useState(false);
+  const [isTransitionActive, setIsTransitionActive] = useState(false); // New state for theme transition
   const [isLoadingTransition, setIsLoadingTransition] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [isBrowsing, setIsBrowsing] = useState(false);
@@ -226,7 +233,11 @@ function App() {
   }, [player?.cosmetics?.activeTheme]);
 
   // Calculated state for dependencies
-  const amWaiting = room?.waitingPlayers?.some(p => p.id === player?.id) || false;
+  const amWaiting = room?.playerStates?.[player?.id || '']?.status === 'waiting' || false;
+
+  const handleEquipTheme = () => {
+    setIsTransitionActive(true);
+  };
 
   // Derived State
   // Derived State (Memoized)
@@ -1035,15 +1046,14 @@ function App() {
             if (freshUser && player) {
               const updatedSession = { ...player, cosmetics: freshUser.cosmetics };
               setPlayer(updatedSession);
-              // Force theme update if needed
-              if (freshUser.cosmetics?.activeTheme !== player.cosmetics?.activeTheme) {
-                window.location.reload(); // Simplest way to ensure all CSS vars re-bind if hot-swap fails
-              }
             }
             setCurrentScreen('home');
           }}
+          onEquip={handleEquipTheme}
         />
       )}
+      <ThemeTransition isActive={isTransitionActive} onComplete={handleTransitionComplete} />
+
       {/* Profile Screen */}
       {currentScreen === 'profile' && player && (
         <ProfileScreen

@@ -38,15 +38,16 @@ body {
 
 /* Semantic Theme Variables */
 :root {
-  --bg-primary: var(--theme-bg, #ffffff);
+  --bg-primary: var(--theme-bg, #0f766e);
   --bg-secondary: var(--theme-bg-secondary, #f3f4f6);
-  --text-primary: var(--theme-text, #1f2937);
+  --text-primary: var(--theme-text, #ffffff);
   --text-secondary: var(--theme-text-secondary, #6b7280);
   --accent-color: var(--theme-accent, #9B59B6);
   --border-color: var(--theme-border, transparent);
   --button-bg: var(--theme-button-bg, #9B59B6);
   --button-text: var(--theme-button-text, #ffffff);
   --card-bg: var(--theme-card-bg, rgba(255, 255, 255, 0.9));
+  --card-text: var(--theme-card-text, var(--text-primary));
   --font-main: var(--theme-font, 'Inter', sans-serif);
   --radius-main: var(--theme-radius, 1.5rem);
 }
@@ -69,7 +70,7 @@ body {
 /* Base Card Style Override */
 .bg-white {
   background-color: var(--card-bg) !important;
-  color: var(--text-primary);
+  color: var(--card-text);
   border-color: var(--border-color);
   border-radius: var(--radius-main);
 }

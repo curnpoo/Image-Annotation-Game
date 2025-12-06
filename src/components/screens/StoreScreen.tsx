@@ -6,11 +6,12 @@ import { vibrate, HapticPatterns } from '../../utils/haptics';
 
 interface StoreScreenProps {
     onBack: () => void;
+    onEquip?: () => void;
 }
 
 type Tab = 'brushes' | 'powerups' | 'themes';
 
-export const StoreScreen: React.FC<StoreScreenProps> = ({ onBack }) => {
+export const StoreScreen: React.FC<StoreScreenProps> = ({ onBack, onEquip }) => {
     const [balance, setBalance] = useState(CurrencyService.getCurrency());
     const [activeTab, setActiveTab] = useState<Tab>('brushes');
     const [purchaseMessage, setPurchaseMessage] = useState<string | null>(null);
@@ -31,6 +32,11 @@ export const StoreScreen: React.FC<StoreScreenProps> = ({ onBack }) => {
                 vibrate(HapticPatterns.light);
                 setPurchaseMessage(`🎨 Equipped ${item.name}!`);
                 setTimeout(() => setPurchaseMessage(null), 1500);
+                if (onBack) {
+                    // Refresh parent state implicity or explicity via onEquip if provided,
+                    // but for now we just want the visual transition trigger.
+                    onEquip?.();
+                }
             }
             return;
         }

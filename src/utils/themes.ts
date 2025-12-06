@@ -16,6 +16,7 @@ export const getThemeVariables = (themeId: string = 'default') => {
                 '--theme-card-bg': 'rgba(30, 41, 59, 0.95)',
                 '--theme-font': "'Inter', sans-serif",
                 '--theme-radius': '0.75rem',
+                '--theme-card-text': '#f8fafc', // Light text on dark card
             };
         case 'cardboard':
             return {
@@ -30,6 +31,7 @@ export const getThemeVariables = (themeId: string = 'default') => {
                 '--theme-card-bg': '#faeedd',
                 '--theme-font': "'Chalkboard SE', 'Comic Sans MS', sans-serif",
                 '--theme-radius': '255px 15px 225px 15px/15px 225px 15px 255px', // Organic/Rough
+                '--theme-card-text': '#5d4037', // Dark brown on light card
             };
         case 'neon':
             return {
@@ -44,6 +46,7 @@ export const getThemeVariables = (themeId: string = 'default') => {
                 '--theme-card-bg': 'rgba(0, 0, 0, 0.9)',
                 '--theme-font': "'Courier New', monospace",
                 '--theme-radius': '0px', // Sharp
+                '--theme-card-text': '#00ff00', // Green on black card
             };
         case 'retro':
             return {
@@ -58,6 +61,22 @@ export const getThemeVariables = (themeId: string = 'default') => {
                 '--theme-card-bg': '#ffffff',
                 '--theme-font': "'Courier New', monospace",
                 '--theme-radius': '0px',
+                '--theme-card-text': '#4338ca', // Indigo on white card
+            };
+        case 'kawaii':
+            return {
+                '--theme-bg': '#ffe4e6', // Rose 100
+                '--theme-bg-secondary': '#fff1f2', // Rose 50
+                '--theme-text': '#be185d', // Pink 700
+                '--theme-text-secondary': '#db2777', // Pink 600
+                '--theme-accent': '#f472b6', // Pink 400
+                '--theme-border': '#fbcfe8', // Pink 200
+                '--theme-button-bg': '#f472b6',
+                '--theme-button-text': '#ffffff',
+                '--theme-card-bg': 'rgba(255, 255, 255, 0.9)',
+                '--theme-font': "'Comic Sans MS', 'Chalkboard SE', cursive",
+                '--theme-radius': '2rem', // Extra rounded
+                '--theme-card-text': '#be185d', // Pink on light card
             };
         case 'default':
         default:
@@ -73,6 +92,7 @@ export const getThemeVariables = (themeId: string = 'default') => {
                 '--theme-card-bg': 'rgba(255, 255, 255, 0.8)', // More transparent
                 '--theme-font': "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
                 '--theme-radius': '1.5rem',
+                '--theme-card-text': '#1f2937', // Dark gray on white card (Fixes visibility)
             };
     }
 };

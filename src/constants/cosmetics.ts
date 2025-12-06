@@ -49,5 +49,6 @@ export const CARD_THEMES = [
     { id: 'cardboard', name: 'Cardboard', preview: '📦', description: 'Recycled chic & organic shapes', price: 5 },
     { id: 'dark', name: 'Dark Mode', preview: '⬛', description: 'Sleek dark background', price: 15 },
     { id: 'neon', name: 'Neon Glow', preview: '💜', description: 'Sharp edges & high contrast', price: 35 },
-    { id: 'retro', name: 'Retro', preview: '👾', description: 'Monospace font & pixel vibes', price: 25 }
+    { id: 'retro', name: 'Retro', preview: '👾', description: 'Monospace font & pixel vibes', price: 25 },
+    { id: 'kawaii', name: 'Kawaii', preview: '🌸', description: 'Cute pinks & round shapes', price: 20 }
 ];
