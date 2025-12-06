@@ -94,18 +94,25 @@ export const CasinoScreen: React.FC<CasinoScreenProps> = ({ onClose }) => {
     }, [spinning, balance, bet, reels]);
 
     return (
-        <div className="fixed inset-0 bg-gradient-to-b from-purple-900 via-purple-800 to-black flex flex-col items-center justify-center p-4 z-50">
-            {/* Close Button */}
+        <div
+            className="fixed inset-0 bg-gradient-to-b from-purple-900 via-purple-800 to-black flex flex-col items-center p-4 z-50 overflow-y-auto"
+            style={{ paddingTop: 'max(1.5rem, env(safe-area-inset-top) + 1rem)' }}
+        >
+            {/* Home Button Card */}
             <button
                 onClick={onClose}
-                className="absolute bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-2xl w-12 h-12 flex items-center justify-center text-white text-2xl font-bold transition-all hover:scale-105 active:scale-95"
-                style={{ top: 'max(1rem, env(safe-area-inset-top) + 0.5rem)', right: '1rem' }}
+                className="w-full max-w-md mb-6 bg-white/10 backdrop-blur-sm rounded-2xl p-4 border-2 border-white/20 flex items-center gap-4 hover:bg-white/20 active:scale-95 transition-all"
             >
-                ✕
+                <div className="text-3xl">🏠</div>
+                <div className="flex-1 text-left">
+                    <div className="text-lg font-bold text-white">Back to Home</div>
+                    <div className="text-white/60 text-sm">Return to main menu</div>
+                </div>
+                <div className="text-2xl text-white/60">←</div>
             </button>
 
             {/* Title */}
-            <div className="text-center mb-8">
+            <div className="text-center mb-6">
                 <h1 className="text-4xl font-bold text-yellow-400 drop-shadow-lg mb-2">
                     🎰 CASINO 🎰
                 </h1>

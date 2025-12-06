@@ -7,12 +7,14 @@ interface FinalResultsScreenProps {
     room: GameRoom;
     currentPlayerId: string;
     onPlayAgain: () => void;
+    onGoHome: () => void;
 }
 
 export const FinalResultsScreen: React.FC<FinalResultsScreenProps> = ({
     room,
     currentPlayerId,
-    onPlayAgain
+    onPlayAgain,
+    onGoHome
 }) => {
     const [mounted, setMounted] = useState(false);
     const [showConfetti, setShowConfetti] = useState(false);
@@ -35,12 +37,28 @@ export const FinalResultsScreen: React.FC<FinalResultsScreenProps> = ({
     const [first, second, third] = sortedPlayers;
 
     return (
-        <div className={`min-h-screen bg-90s-animated flex flex-col items-center justify-center p-4 relative overflow-hidden ${mounted ? 'pop-in' : 'opacity-0'}`}>
+        <div
+            className={`min-h-screen bg-90s-animated flex flex-col items-center p-4 relative overflow-hidden ${mounted ? 'pop-in' : 'opacity-0'}`}
+            style={{ paddingTop: 'max(1.5rem, env(safe-area-inset-top) + 1rem)' }}
+        >
             {/* Confetti Effect */}
             {showConfetti && <Confetti />}
 
+            {/* Home Button Card */}
+            <button
+                onClick={onGoHome}
+                className="w-full max-w-md mb-4 bg-white/10 backdrop-blur-sm rounded-2xl p-4 border-2 border-white/20 flex items-center gap-4 hover:bg-white/20 active:scale-95 transition-all z-10"
+            >
+                <div className="text-3xl">🏠</div>
+                <div className="flex-1 text-left">
+                    <div className="text-lg font-bold text-white">Back to Home</div>
+                    <div className="text-white/60 text-sm">Return to main menu</div>
+                </div>
+                <div className="text-2xl text-white/60">←</div>
+            </button>
+
             {/* Header */}
-            <div className="text-center mb-8 z-10">
+            <div className="text-center mb-6 z-10">
                 <h1 className="text-5xl font-bold text-white drop-shadow-lg mb-2 animate-pulse">
                     🏆 GAME OVER! 🏆
                 </h1>

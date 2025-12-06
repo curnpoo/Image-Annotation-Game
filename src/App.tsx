@@ -1165,6 +1165,11 @@ function App() {
             room={room}
             currentPlayerId={player.id}
             onPlayAgain={handlePlayAgain}
+            onGoHome={() => {
+              setRoomCode(null);
+              StorageService.leaveRoom();
+              setCurrentScreen('home');
+            }}
           />
         )
       }
