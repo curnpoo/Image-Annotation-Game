@@ -18,6 +18,7 @@ export const CurrencyService = {
     // Set player's currency balance
     setCurrency(amount: number): void {
         localStorage.setItem(CURRENCY_KEY, Math.max(0, amount).toString());
+        window.dispatchEvent(new Event('currency-updated'));
     },
 
     // Add currency (returns new balance)

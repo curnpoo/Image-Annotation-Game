@@ -24,6 +24,18 @@ export const CasinoScreen: React.FC<CasinoScreenProps> = ({ onClose }) => {
     const [result, setResult] = useState<{ message: string; win: number } | null>(null);
     const [spinningReels, setSpinningReels] = useState([false, false, false]);
 
+    // Update balance when it changes externally
+    React.useEffect(() => {
+        const handleCurrencyUpdate = () => {
+            setBalance(CurrencyService.getCurrency());
+        };
+        window.addEventListener('currency-updated', handleCurrencyUpdate);
+        // Also check on mount just in case
+        setBalance(CurrencyService.getCurrency());
+
+        return () => window.removeEventListener('currency-updated', handleCurrencyUpdate);
+    }, []);
+
     const spin = useCallback(async () => {
         if (spinning || balance < bet) return;
 

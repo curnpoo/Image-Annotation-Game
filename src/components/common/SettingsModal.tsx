@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import type { Player } from '../../types';
 import { requestPushPermission, storePushToken, isPushSupported } from '../../services/pushNotifications';
 import { AuthService } from '../../services/auth';
+import { CurrencyService } from '../../services/currency';
 
 interface SettingsModalProps {
     player: Player;
@@ -261,11 +262,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     {/* DEV: Money Grant Button */}
                     <button
                         onClick={async () => {
+                            // Update Local Currency (for Casino)
+                            CurrencyService.addCurrency(50);
+
+                            // Update Remote/App State
                             const current = AuthService.getCurrentUser();
                             if (current) {
                                 const newBalance = (current.currency || 0) + 50;
                                 await AuthService.updateUser(current.id, { currency: newBalance });
                                 onUpdateProfile({ currency: newBalance });
+
                                 // Just a little visual feedback
                                 const btn = document.getElementById('grant-btn');
                                 if (btn) {
