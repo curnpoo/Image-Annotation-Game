@@ -258,6 +258,29 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         </div>
                     )}
 
+                    {/* DEV: Money Grant Button */}
+                    <button
+                        onClick={async () => {
+                            const current = AuthService.getCurrentUser();
+                            if (current) {
+                                const newBalance = (current.currency || 0) + 50;
+                                await AuthService.updateUser(current.id, { currency: newBalance });
+                                onUpdateProfile({ currency: newBalance });
+                                // Just a little visual feedback
+                                const btn = document.getElementById('grant-btn');
+                                if (btn) {
+                                    const originalText = btn.innerText;
+                                    btn.innerText = '✅ Added $50!';
+                                    setTimeout(() => btn.innerText = originalText, 1000);
+                                }
+                            }
+                        }}
+                        id="grant-btn"
+                        className="w-full py-3 px-4 bg-green-50 text-green-700 font-bold rounded-xl border-2 border-green-100 hover:bg-green-100 transition-colors flex items-center justify-center gap-2"
+                    >
+                        💰 Get $50 (Test)
+                    </button>
+
                     {/* Main Save Button */}
                     <button
                         onClick={handleSave}
