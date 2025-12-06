@@ -270,6 +270,25 @@ export const StorageService = {
         return roomCode;
     },
 
+    // Get room data for rejoin preview (lighter fetch?)
+    async getRoomPreview(roomCode: string): Promise<{ hostName: string; playerCount: number } | null> {
+        try {
+            const snapshot = await get(ref(database, `rooms/${roomCode}`));
+            if (!snapshot.exists()) return null;
+
+            const room = this.normalizeRoom(snapshot.val());
+            const host = room.players.find(p => p.id === room.hostId);
+
+            return {
+                hostName: host?.name || 'Unknown Host',
+                playerCount: room.players.length
+            };
+        } catch (error) {
+            console.error('Error fetching room preview:', error);
+            return null;
+        }
+    },
+
     getRoom: async (roomCode: string): Promise<GameRoom | null> => {
         const roomRef = ref(database, `${ROOMS_PATH}/${roomCode}`);
         const snapshot = await get(roomRef);

@@ -11,8 +11,12 @@ interface HomeScreenProps {
     onSettings: () => void;
     onStore: () => void;
     onCasino: () => void;
-    lastRoomCode?: string | null;
-    onQuickJoin?: (roomCode: string) => void;
+    lastGameDetails?: {
+        roomCode: string;
+        hostName: string;
+        playerCount: number;
+    } | null;
+    onRejoin?: (code: string) => void;
 }
 
 export const HomeScreen: React.FC<HomeScreenProps> = ({
@@ -22,8 +26,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     onSettings,
     onStore,
     onCasino,
-    lastRoomCode,
-    onQuickJoin
+    lastGameDetails,
+    onRejoin
 }) => {
     const balance = CurrencyService.getCurrency();
 
@@ -145,27 +149,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 </div>
             </div>
 
-            {/* Quick Rejoin Card - shown if user was in a game */}
-            {lastRoomCode && onQuickJoin && (
-                <button
-                    onClick={() => onQuickJoin(lastRoomCode)}
-                    className="mb-4 w-full max-w-md mx-auto bg-gradient-to-r from-orange-400 to-orange-500 rounded-2xl p-4 shadow-lg border-3 border-orange-400 flex items-center gap-4 hover:scale-[1.02] active:scale-95 transition-all"
-                >
-                    <div className="text-3xl">🔄</div>
-                    <div className="flex-1 text-left">
-                        <div className="text-lg font-bold text-white">Rejoin Game</div>
-                        <div className="text-white/80 text-sm">Room: {lastRoomCode}</div>
-                    </div>
-                    <div className="text-2xl text-white">→</div>
-                </button>
-            )}
-
             {/* Main Navigation Cards */}
             <div className="flex-1 flex flex-col justify-center">
                 <div className="grid grid-cols-2 gap-4 max-w-md mx-auto w-full">
                     {/* Large Play Button - spans 2 columns */}
                     <button
-                        onClick={cards[0].onClick}
+                        onClick={onPlay}
                         className={`col-span-2 bg-gradient-to-br ${cards[0].color} rounded-3xl p-6 shadow-xl border-4 ${cards[0].border} 
                             transform transition-all duration-200 hover:scale-[1.02] active:scale-95 jelly-hover`}
                     >
@@ -187,6 +176,26 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                             <div className="text-white/70 text-xs">{card.description}</div>
                         </button>
                     ))}
+
+                    {/* Rejoin Card (6th Card) */}
+                    {lastGameDetails && onRejoin && (
+                        <button
+                            onClick={() => onRejoin(lastGameDetails.roomCode)}
+                            className="col-span-2 bg-white rounded-2xl p-4 shadow-lg border-2 border-orange-200 flex items-center justify-between group active:scale-95 transition-all"
+                        >
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center text-xl group-hover:rotate-12 transition-transform">
+                                    🔙
+                                </div>
+                                <div className="text-left">
+                                    <div className="text-xs font-bold text-orange-400 uppercase tracking-wider">Rejoin Game</div>
+                                    <div className="text-gray-800 font-bold">Host: {lastGameDetails.hostName}</div>
+                                    <div className="text-xs text-gray-500">{lastGameDetails.playerCount} Players • {lastGameDetails.roomCode}</div>
+                                </div>
+                            </div>
+                            <div className="text-orange-400 font-bold text-sm">Join →</div>
+                        </button>
+                    )}
                 </div>
             </div>
 

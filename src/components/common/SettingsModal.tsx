@@ -199,23 +199,61 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     }
 
     return (
-        <div className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center animate-fade-in">
-            <div
-                className="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl slide-up max-h-[90vh] overflow-y-auto"
-                style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}
-            >
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center pointer-events-none">
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm pointer-events-auto" onClick={onClose} />
+            <div className="bg-white w-full sm:w-[500px] sm:rounded-3xl rounded-t-3xl p-6 shadow-2xl pointer-events-auto max-h-[90vh] overflow-y-auto animate-slide-up">
+
                 {/* Header */}
                 <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-2xl font-black text-gray-800">Settings</h2>
-                    <button
-                        onClick={onClose}
-                        className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 font-bold hover:bg-gray-200 transition-colors"
-                    >
+                    <div>
+                        <h2 className="text-2xl font-black text-gray-800">SETTINGS</h2>
+                        {roomCode && (
+                            <div className="flex items-center gap-2 mt-1">
+                                <span className="text-sm font-bold text-gray-400 uppercase tracking-wider">Room Code:</span>
+                                <span className="text-lg font-black font-mono text-purple-600 bg-purple-100 px-2 py-0.5 rounded-lg select-all">
+                                    {roomCode}
+                                </span>
+                            </div>
+                        )}
+                    </div>
+                    <button onClick={onClose} className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-xl hover:bg-gray-200 transition-colors">
                         ✕
                     </button>
                 </div>
 
                 <div className="space-y-6">
+                    {/* Game Actions (Only if in a game) */}
+                    {roomCode && (
+                        <div className="bg-gray-50 rounded-2xl p-4 border-2 border-gray-100">
+                            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Game Actions</h3>
+                            <div className="grid gap-3">
+                                {onGoHome && (
+                                    <button
+                                        onClick={() => {
+                                            if (confirm('Leave this game and return home? You can rejoin later.')) {
+                                                onGoHome();
+                                                onClose();
+                                            }
+                                        }}
+                                        className="w-full bg-orange-100 hover:bg-orange-200 text-orange-700 font-bold py-3 rounded-xl border-2 border-orange-200 active:scale-95 transition-all"
+                                    >
+                                        🏠 Go Home
+                                    </button>
+                                )}
+                                <button
+                                    onClick={() => {
+                                        if (confirm('Are you sure you want to completely leave this game?')) {
+                                            if (onLeaveGame) onLeaveGame();
+                                            onClose();
+                                        }
+                                    }}
+                                    className="w-full bg-red-100 hover:bg-red-200 text-red-600 font-bold py-3 rounded-xl border-2 border-red-200 active:scale-95 transition-all"
+                                >
+                                    👋 Leave Game Completely
+                                </button>
+                            </div>
+                        </div>
+                    )}
                     {/* Name Edit */}
                     <div className="space-y-2">
                         <label className="text-sm font-bold text-gray-500 uppercase tracking-wider">Your Name</label>
