@@ -84,18 +84,19 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto border-4 border-purple-500 pop-in flex flex-col">
                 <div className="p-6 border-b border-gray-100 flex justify-between items-center sticky top-0 bg-white z-10">
-                    <h2 className="text-2xl font-bold text-purple-600">Settings ⚙️</h2>
+                    <div className="flex items-center gap-3">
+                        <h2 className="text-2xl font-bold text-purple-600">Settings</h2>
+                        {roomCode && (
+                            <div className="bg-purple-100 text-purple-600 px-3 py-1 rounded-lg font-mono font-bold text-lg shadow-sm border border-purple-200">
+                                {roomCode}
+                            </div>
+                        )}
+                    </div>
                     <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl">✕</button>
                 </div>
 
                 <div className="p-6 space-y-6">
-                    {/* Room Code */}
-                    {roomCode && (
-                        <div className="bg-purple-50 p-4 rounded-xl text-center">
-                            <p className="text-sm text-purple-600 font-bold mb-1">ROOM CODE</p>
-                            <p className="text-3xl font-black tracking-widest text-purple-800 select-all">{roomCode}</p>
-                        </div>
-                    )}
+
 
                     {/* Notifications Toggle */}
                     {('Notification' in window) && (
@@ -171,7 +172,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         <label className="block text-sm font-bold text-gray-700 mb-2">YOUR AVATAR</label>
                         <div className="flex justify-center mb-2">
                             <div
-                                className={`w-48 h-48 rounded-full bg-white overflow-hidden relative shadow-sm ${FRAMES.find(f => f.id === frame)?.class}`}
+                                className={`w-72 h-72 rounded-full bg-white overflow-hidden relative shadow-sm ${FRAMES.find(f => f.id === frame)?.class}`}
                                 style={{ color: color, border: '2px solid #eee' }}
                             >
                                 <GameCanvas
@@ -234,32 +235,32 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     </div>
                 </div>
 
-                <div className="p-6 border-t border-gray-100 sticky bottom-0 bg-white space-y-4">
+                <div className="p-4 border-t border-gray-100 sticky bottom-0 bg-white space-y-3">
                     <button
                         onClick={handleSave}
                         disabled={!name.trim()}
-                        className="w-full btn-90s bg-gradient-to-r from-purple-500 to-pink-500 text-white py-3 rounded-xl font-bold text-lg shadow-lg disabled:opacity-50"
+                        className="w-full btn-90s bg-gradient-to-r from-purple-500 to-pink-500 text-white py-2 rounded-xl font-bold text-base shadow-lg disabled:opacity-50 hover:scale-[1.02] active:scale-95 transition-all"
                     >
                         Save Changes
                     </button>
 
                     {/* Danger Zone */}
                     {(onLeaveGame || (isHost && onEndGame)) && (
-                        <div className="pt-4 border-t border-gray-100">
-                            <div className="space-y-3">
-                                {onGoHome && (
+                        <div className="pt-2 border-t border-gray-100">
+                            <div className="grid grid-cols-2 gap-2">
+                                {onGoHome ? (
                                     <button
                                         onClick={() => setShowHomeConfirm(true)}
-                                        className="w-full py-3 rounded-xl font-bold text-gray-700 bg-gray-100 hover:bg-gray-200 border-2 border-transparent transition-all"
+                                        className="py-2.5 rounded-xl font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 border-2 border-transparent transition-all text-sm"
                                     >
                                         🏠 Go Home
                                     </button>
-                                )}
+                                ) : <div />}
 
                                 {onLeaveGame && !isHost && (
                                     <button
                                         onClick={() => setShowLeaveConfirm(true)}
-                                        className="w-full py-3 rounded-xl font-bold text-red-600 bg-red-50 hover:bg-red-100 border-2 border-transparent hover:border-red-200 transition-all"
+                                        className="py-2.5 rounded-xl font-bold text-red-600 bg-red-50 hover:bg-red-100 border-2 border-transparent hover:border-red-200 transition-all text-sm"
                                     >
                                         Leave Game 🏃‍♂️
                                     </button>
@@ -273,7 +274,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                                                 onClose();
                                             }
                                         }}
-                                        className="w-full py-3 rounded-xl font-bold text-white bg-red-500 hover:bg-red-600 shadow-lg transition-all"
+                                        className="py-2.5 rounded-xl font-bold text-white bg-red-500 hover:bg-red-600 shadow-lg transition-all text-sm"
                                     >
                                         End Game 🛑
                                     </button>
@@ -294,7 +295,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                             }}
                             className="text-xs font-bold text-gray-400 hover:text-red-500 transition-colors p-2"
                         >
-                            Emergency Reset 🔄
+                            RESET ACCOUNT 🔄
                         </button>
                     </div>
                 </div>

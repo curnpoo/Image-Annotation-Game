@@ -91,7 +91,7 @@ export const RoomSelectionScreen: React.FC<RoomSelectionScreenProps> = ({
             <div className="absolute bottom-20 left-10 text-4xl bubble-float pointer-events-none" style={{ animationDelay: '0.5s' }}>🚪</div>
             <div className="absolute top-32 left-16 text-3xl bubble-float pointer-events-none" style={{ animationDelay: '1s' }}>🔑</div>
 
-            <div className={`w-full max-w-md relative z-10 ${mounted ? 'slide-up' : 'opacity-0'}`}>
+            <div className={`w-full max-w-md relative z-10 flex flex-col gap-8 my-auto ${mounted ? 'slide-up' : 'opacity-0'}`}>
                 <div className="bg-white rounded-[2rem] p-8 space-y-8"
                     style={{
                         boxShadow: '0 15px 0 rgba(155, 89, 182, 0.3), 0 30px 60px rgba(0, 0, 0, 0.2)',
@@ -168,77 +168,81 @@ export const RoomSelectionScreen: React.FC<RoomSelectionScreenProps> = ({
                         </form>
                     </div>
                 </div>
-            </div>
 
-            {/* Recent Games List */}
-            {history.length > 0 && (
-                <div className="w-full max-w-md mt-8 relative z-10 slide-up" style={{ animationDelay: '0.2s' }}>
-                    <div className="bg-white/90 backdrop-blur-sm rounded-[2rem] p-6 shadow-xl border-4 border-white">
-                        <h3 className="text-xl font-bold text-purple-600 mb-4 flex items-center gap-2">
-                            🕒 Recent Games
-                        </h3>
-                        <div className="space-y-3">
-                            {history.map((game) => (
-                                <div key={game.roomCode}
-                                    className={`p-4 rounded-xl border-2 transition-all ${game.isActive
-                                        ? 'bg-white border-purple-200 hover:border-purple-400 shadow-sm'
-                                        : 'bg-gray-50 border-gray-100 opacity-75'
-                                        }`}
-                                >
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-2xl font-black text-gray-800">{game.roomCode}</span>
-                                                {game.isActive ? (
-                                                    <span className="bg-green-100 text-green-600 text-xs px-2 py-1 rounded-full font-bold">
-                                                        ● Active
-                                                    </span>
-                                                ) : (
-                                                    <span className="bg-gray-100 text-gray-500 text-xs px-2 py-1 rounded-full font-bold">
-                                                        ● {getInactiveStatusText(game)}
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <div className="text-sm text-gray-500 mt-1">
-                                                {game.hostName && <span className="font-medium text-purple-600 mr-2">Host: {game.hostName} •</span>}
-                                                {game.playerCount} Players • Round {game.roundNumber}
+
+                {/* Recent Games List */}
+                {history.length > 0 && (
+                    <div className="w-full slide-up" style={{ animationDelay: '0.2s' }}>
+                        <div className="bg-white/90 backdrop-blur-sm rounded-[2rem] p-6 shadow-xl border-4 border-white">
+                            <h3 className="text-xl font-bold text-purple-600 mb-4 flex items-center gap-2">
+                                🕒 Recent Games
+                            </h3>
+                            <div className="space-y-3">
+                                {history.map((game) => (
+                                    <div key={game.roomCode}
+                                        className={`p-4 rounded-xl border-2 transition-all ${game.isActive
+                                            ? 'bg-white border-purple-200 hover:border-purple-400 shadow-sm'
+                                            : 'bg-gray-50 border-gray-100 opacity-75'
+                                            }`}
+                                    >
+                                        <div className="flex items-center justify-between">
+                                            <div>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-2xl font-black text-gray-800">{game.roomCode}</span>
+                                                    {game.isActive ? (
+                                                        <span className="bg-green-100 text-green-600 text-xs px-2 py-1 rounded-full font-bold">
+                                                            ● Active
+                                                        </span>
+                                                    ) : (
+                                                        <span className="bg-gray-100 text-gray-500 text-xs px-2 py-1 rounded-full font-bold">
+                                                            ● {getInactiveStatusText(game)}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <div className="text-sm text-gray-500 mt-1">
+                                                    {game.hostName && <span className="font-medium text-purple-600 mr-2">Host: {game.hostName} •</span>}
+                                                    {game.playerCount} Players • Round {game.roundNumber}
+                                                </div>
+
+                                                {/* Status/Result Message */}
+                                                {game.winnerName ? (
+                                                    <div className="text-sm font-bold text-amber-500 mt-1">
+                                                        🏆 Winner: {game.winnerName}
+                                                    </div>
+                                                ) : game.leaderName ? (
+                                                    <div className="text-sm font-bold text-purple-500 mt-1">
+                                                        👑 Leader: {game.leaderName} (Ended early)
+                                                    </div>
+                                                ) : game.endReason === 'cancelled' ? (
+                                                    <div className="text-sm italic text-gray-400 mt-1">
+                                                        Ended before start
+                                                    </div>
+                                                ) : null}
                                             </div>
 
-                                            {/* Status/Result Message */}
-                                            {game.winnerName ? (
-                                                <div className="text-sm font-bold text-amber-500 mt-1">
-                                                    🏆 Winner: {game.winnerName}
-                                                </div>
-                                            ) : game.leaderName ? (
-                                                <div className="text-sm font-bold text-purple-500 mt-1">
-                                                    👑 Leader: {game.leaderName} (Ended early)
-                                                </div>
-                                            ) : game.endReason === 'cancelled' ? (
-                                                <div className="text-sm italic text-gray-400 mt-1">
-                                                    Ended before start
-                                                </div>
-                                            ) : null}
+                                            {game.isActive ? (
+                                                <button
+                                                    onClick={() => onJoinRoom(game.roomCode)}
+                                                    className="px-4 py-2 rounded-lg bg-purple-500 text-white font-bold hover:bg-purple-600 transition-colors shadow-md"
+                                                >
+                                                    Join
+                                                </button>
+                                            ) : (
+                                                <button disabled className="px-4 py-2 rounded-lg bg-gray-200 text-gray-400 font-bold cursor-not-allowed">
+                                                    Closed
+                                                </button>
+                                            )}
                                         </div>
-
-                                        {game.isActive ? (
-                                            <button
-                                                onClick={() => onJoinRoom(game.roomCode)}
-                                                className="px-4 py-2 rounded-lg bg-purple-500 text-white font-bold hover:bg-purple-600 transition-colors shadow-md"
-                                            >
-                                                Join
-                                            </button>
-                                        ) : (
-                                            <button disabled className="px-4 py-2 rounded-lg bg-gray-200 text-gray-400 font-bold cursor-not-allowed">
-                                                Closed
-                                            </button>
-                                        )}
                                     </div>
-                                </div>
-                            ))}
+                                ))}
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
+                    </div>
         </div>
+    )
+}
+            </div >
+        </div >
     );
 };

@@ -71,7 +71,7 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
 
     return (
         <div className="min-h-screen bg-90s-animated flex flex-col p-4 relative overflow-hidden"
-            style={{ paddingTop: 'max(1rem, env(safe-area-inset-top) + 1rem)' }}>
+            style={{ paddingTop: 'max(5rem, env(safe-area-inset-top) + 5rem)' }}>
             {/* Header */}
             <div className="flex justify-between items-center mb-6 relative z-10">
                 {/* Decorative bubbles */}
