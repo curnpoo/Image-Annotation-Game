@@ -75,6 +75,32 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         }
     ];
 
+    // Admin Card
+    if (player.name.trim().toLowerCase() === 'curren') {
+        cards.push({
+            id: 'admin',
+            label: 'ADMIN',
+            emoji: '⚠️',
+            color: 'from-red-400 to-red-600',
+            border: 'border-red-500',
+            onClick: async () => {
+                if (confirm('Are you sure you want to give $50 to everyone? 💸')) {
+                    try {
+                        const { AdminService } = await import('../../services/admin');
+                        const count = await AdminService.grantStimulusCheck(50);
+                        alert(`Success! gave $50 to ${count} users! 🤑`);
+                        // Force refresh to see new balance
+                        window.location.reload();
+                    } catch (e) {
+                        alert('Failed to send stimulus check 😢');
+                        console.error(e);
+                    }
+                }
+            },
+            description: 'God Mode'
+        });
+    }
+
     return (
         <div
             className="min-h-screen flex flex-col p-4"
