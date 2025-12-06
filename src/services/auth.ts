@@ -96,6 +96,10 @@ export const AuthService = {
             // Sync Currency
             CurrencyService.setCurrency(newUser.currency || 0);
 
+            // Sync XP (Initialize for new user)
+            localStorage.setItem('player_xp', '0');
+            localStorage.setItem('player_level', '0');
+
             return { success: true, user: newUser };
         } catch (error: any) {
             console.error('Registration failed:', error);
@@ -141,9 +145,14 @@ export const AuthService = {
             localStorage.setItem(LOCAL_USER_KEY, JSON.stringify(updatedUser));
 
             // Sync Currency
-            if (updatedUser.currency !== undefined) {
-                CurrencyService.setCurrency(updatedUser.currency);
-            }
+            // Sync Currency
+            CurrencyService.setCurrency(updatedUser.currency);
+
+            // Sync XP
+            const xp = updatedUser.xp || 0;
+            const level = Math.floor(xp / 100);
+            localStorage.setItem('player_xp', xp.toString());
+            localStorage.setItem('player_level', level.toString());
 
             return { success: true, user: updatedUser };
 
@@ -159,6 +168,10 @@ export const AuthService = {
     // Logout
     logout(): void {
         localStorage.removeItem(LOCAL_USER_KEY);
+        // Clear XP data to prevent visual glitches for next user
+        localStorage.removeItem('player_xp');
+        localStorage.removeItem('player_level');
+        localStorage.removeItem('aic_game_session');
     },
 
     // Check if logged in
@@ -239,5 +252,8 @@ export const AuthService = {
         }
         // Remove from local storage
         localStorage.removeItem(LOCAL_USER_KEY);
+        localStorage.removeItem('player_xp');
+        localStorage.removeItem('player_level');
+        localStorage.removeItem('aic_game_session');
     }
 };

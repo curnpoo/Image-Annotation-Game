@@ -35,6 +35,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     const [kickTarget, setKickTarget] = useState<string | null>(null);
     const [notificationsEnabled, setNotificationsEnabled] = useState(false);
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
     useEffect(() => {
         if ('Notification' in window) {
@@ -55,6 +56,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     const handleLogout = () => {
         AuthService.logout();
         StorageService.clearSession(); // Clear persistent game session
+        window.location.reload();
+    };
+
+    const handleDeleteAccount = async () => {
+        await AuthService.deleteAccount();
+        StorageService.clearSession();
         window.location.reload();
     };
 
@@ -158,6 +165,36 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                             className="flex-1 py-3 px-6 bg-red-500 text-white font-bold rounded-xl shadow-lg hover:bg-red-600 active:scale-95 transition-all"
                         >
                             Log Out
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    if (showDeleteConfirm) {
+        return (
+            <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+                <div className="relative z-10 bg-white rounded-3xl p-6 shadow-2xl w-full max-w-sm text-center pop-in">
+                    <div className="text-4xl mb-4">🗑️</div>
+                    <h3 className="text-2xl font-black text-gray-800 mb-2">Delete Account?</h3>
+                    <p className="text-gray-600 mb-6 font-medium">
+                        This will <span className="text-red-600 font-bold">permanently delete</span> all your stats, currency, and cosmetics.
+                        <br /><br />
+                        <span className="text-xs uppercase font-bold text-gray-400">This cannot be undone.</span>
+                    </p>
+                    <div className="flex gap-3">
+                        <button
+                            onClick={() => setShowDeleteConfirm(false)}
+                            className="flex-1 py-3 px-6 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition-colors"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            onClick={handleDeleteAccount}
+                            className="flex-1 py-3 px-6 bg-red-600 text-white font-bold rounded-xl shadow-lg hover:bg-red-700 active:scale-95 transition-all"
+                        >
+                            Delete Forever
                         </button>
                     </div>
                 </div>
@@ -321,6 +358,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     >
                         Log Out
                     </button>
+
+                    {/* Delete Account - Hidden at bottom */}
+                    <div className="pt-8 text-center">
+                        <button
+                            onClick={() => setShowDeleteConfirm(true)}
+                            className="text-xs text-red-300 hover:text-red-500 font-bold transition-colors uppercase tracking-widest"
+                        >
+                            Delete Account
+                        </button>
+                    </div>
 
 
 
