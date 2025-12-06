@@ -64,7 +64,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onPlay }) => {
 
                     <h1 className="text-5xl font-bold tracking-tight drop-shadow-lg"
                         style={{
-                            textShadow: '4px 4px 0 #9B59B6, 8px 8px 0 rgba(0,0,0,0.2)'
+                            textShadow: '0px 4px 0 #9B59B6, 0px 8px 0 rgba(0,0,0,0.2)'
                         }}>
                         <span className="rainbow-text">Fill the</span>
                         <br />
