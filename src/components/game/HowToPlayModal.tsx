@@ -9,8 +9,10 @@ export const HowToPlayModal: React.FC<HowToPlayModalProps> = ({ isOpen, onClose 
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-            <div className="bg-white rounded-[2rem] max-w-md w-full p-8 space-y-6 pop-in"
+
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 pointer-events-none">
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm pointer-events-auto" onClick={onClose} />
+            <div className="relative z-10 bg-white rounded-[2rem] max-w-md w-full p-8 space-y-6 pop-in pointer-events-auto"
                 style={{
                     boxShadow: '0 20px 0 rgba(155, 89, 182, 0.3), 0 40px 80px rgba(0, 0, 0, 0.3)',
                     border: '5px solid transparent',

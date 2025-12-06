@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { CurrencyService, formatCurrency } from '../../services/currency';
 import { XPService } from '../../services/xp';
 import { AvatarDisplay } from '../common/AvatarDisplay';
+import { AdminModal } from '../common/AdminModal';
 import type { Player } from '../../types';
 
 interface HomeScreenProps {
@@ -30,6 +31,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     onRejoin
 }) => {
     const balance = CurrencyService.getCurrency();
+    const [showAdminModal, setShowAdminModal] = useState(false);
 
     const cards = [
         {
@@ -87,20 +89,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             emoji: '⚠️',
             color: 'from-red-400 to-red-600',
             border: 'border-red-500',
-            onClick: async () => {
-                if (confirm('Are you sure you want to give $50 to everyone? 💸')) {
-                    try {
-                        const { AdminService } = await import('../../services/admin');
-                        const count = await AdminService.grantStimulusCheck(50);
-                        alert(`Success! gave $50 to ${count} users! 🤑`);
-                        // Force refresh to see new balance
-                        window.location.reload();
-                    } catch (e) {
-                        alert('Failed to send stimulus check 😢');
-                        console.error(e);
-                    }
-                }
-            },
+            onClick: () => setShowAdminModal(true),
             description: 'God Mode'
         });
     }
@@ -203,6 +192,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             <div className="text-center text-white/60 text-xs mt-4">
                 Draw. Vote. Win! 🎨
             </div>
+
+            {/* Admin Modal */}
+            {showAdminModal && (
+                <AdminModal onClose={() => setShowAdminModal(false)} />
+            )}
         </div>
     );
 };
