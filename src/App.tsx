@@ -1027,10 +1027,23 @@ function App() {
       )}
 
       {/* Store Screen */}
-      {currentScreen === 'store' && player && (
-        <StoreScreen onBack={() => setCurrentScreen('home')} />
+      {currentScreen === 'store' && (
+        <StoreScreen
+          onBack={() => {
+            // Refresh player state when returning from store
+            const freshUser = AuthService.getCurrentUser();
+            if (freshUser && player) {
+              const updatedSession = { ...player, cosmetics: freshUser.cosmetics };
+              setPlayer(updatedSession);
+              // Force theme update if needed
+              if (freshUser.cosmetics?.activeTheme !== player.cosmetics?.activeTheme) {
+                window.location.reload(); // Simplest way to ensure all CSS vars re-bind if hot-swap fails
+              }
+            }
+            setCurrentScreen('home');
+          }}
+        />
       )}
-
       {/* Profile Screen */}
       {currentScreen === 'profile' && player && (
         <ProfileScreen

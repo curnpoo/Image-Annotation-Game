@@ -62,13 +62,13 @@ export const getThemeVariables = (themeId: string = 'default') => {
         case 'default':
         default:
             return {
-                '--theme-bg': 'linear-gradient(135deg, #e0f2fe 0%, #f3e8ff 100%)', // Subtle Sky to Purple fade
-                '--theme-bg-secondary': '#ffffff',
-                '--theme-text': '#1e293b',
-                '--theme-text-secondary': '#64748b',
-                '--theme-accent': '#8b5cf6', // Violet
-                '--theme-border': 'rgba(139, 92, 246, 0.2)',
-                '--theme-button-bg': 'linear-gradient(to right, #38bdf8, #8b5cf6)',
+                '--theme-bg': 'linear-gradient(135deg, #0f766e 0%, #0c4a6e 100%)', // Darker Teal to Navy fade
+                '--theme-bg-secondary': '#f0fdf4',
+                '--theme-text': '#f0f9ff', // Light text for dark bg
+                '--theme-text-secondary': '#bae6fd',
+                '--theme-accent': '#2dd4bf', // Teal accent
+                '--theme-border': 'rgba(45, 212, 191, 0.3)',
+                '--theme-button-bg': 'linear-gradient(to right, #14b8a6, #0ea5e9)',
                 '--theme-button-text': '#ffffff',
                 '--theme-card-bg': 'rgba(255, 255, 255, 0.8)', // More transparent
                 '--theme-font': "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",

@@ -43,13 +43,11 @@ export const POWERUPS = [
 ];
 
 // Player card themes (permanent unlocks)
+// Player card themes (permanent unlocks)
 export const CARD_THEMES = [
-    { id: 'default', name: 'Classic', preview: '⬜', description: 'Standard white card', price: 0 },
-    { id: 'cardboard', name: 'Cardboard', preview: '📦', description: 'Recycled chic', price: 5 },
+    { id: 'default', name: 'Classic', preview: '⬜', description: 'Standard rounded style', price: 0 },
+    { id: 'cardboard', name: 'Cardboard', preview: '📦', description: 'Recycled chic & organic shapes', price: 5 },
     { id: 'dark', name: 'Dark Mode', preview: '⬛', description: 'Sleek dark background', price: 15 },
-    { id: 'gradient', name: 'Sunset', preview: '🌅', description: 'Orange to purple gradient', price: 25 },
-    { id: 'neon', name: 'Neon Glow', preview: '💜', description: 'Glowing neon border', price: 35 },
-    { id: 'gold', name: 'Golden', preview: '🏆', description: 'Luxurious gold trim', price: 50 },
-    { id: 'holographic', name: 'Holographic', preview: '🌈', description: 'Rainbow shimmer effect', price: 75 },
-    { id: 'galaxy', name: 'Galaxy', preview: '🌌', description: 'Starry space background', price: 100 }
+    { id: 'neon', name: 'Neon Glow', preview: '💜', description: 'Sharp edges & high contrast', price: 35 },
+    { id: 'retro', name: 'Retro', preview: '👾', description: 'Monospace font & pixel vibes', price: 25 }
 ];
