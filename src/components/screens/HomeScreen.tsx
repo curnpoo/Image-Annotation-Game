@@ -10,6 +10,8 @@ interface HomeScreenProps {
     onSettings: () => void;
     onStore: () => void;
     onCasino: () => void;
+    lastRoomCode?: string | null;
+    onQuickJoin?: (roomCode: string) => void;
 }
 
 export const HomeScreen: React.FC<HomeScreenProps> = ({
@@ -18,7 +20,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     onProfile,
     onSettings,
     onStore,
-    onCasino
+    onCasino,
+    lastRoomCode,
+    onQuickJoin
 }) => {
     const balance = CurrencyService.getCurrency();
 
@@ -113,6 +117,21 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                     </div>
                 </div>
             </div>
+
+            {/* Quick Rejoin Card - shown if user was in a game */}
+            {lastRoomCode && onQuickJoin && (
+                <button
+                    onClick={() => onQuickJoin(lastRoomCode)}
+                    className="mb-4 w-full max-w-md mx-auto bg-gradient-to-r from-orange-400 to-orange-500 rounded-2xl p-4 shadow-lg border-3 border-orange-400 flex items-center gap-4 hover:scale-[1.02] active:scale-95 transition-all"
+                >
+                    <div className="text-3xl">🔄</div>
+                    <div className="flex-1 text-left">
+                        <div className="text-lg font-bold text-white">Rejoin Game</div>
+                        <div className="text-white/80 text-sm">Room: {lastRoomCode}</div>
+                    </div>
+                    <div className="text-2xl text-white">→</div>
+                </button>
+            )}
 
             {/* Main Navigation Cards */}
             <div className="flex-1 flex flex-col justify-center">

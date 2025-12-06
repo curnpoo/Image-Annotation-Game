@@ -124,12 +124,12 @@ function App() {
           } else {
             // Room invalid/closed
             StorageService.leaveRoom();
-            setCurrentScreen('room-selection');
+            setCurrentScreen('home');
           }
         });
       } else {
-        // Too old or no room -> Room Selection
-        setCurrentScreen('room-selection');
+        // Too old or no room -> Home Screen
+        setCurrentScreen('home');
       }
     }
   }, []);
@@ -815,6 +815,17 @@ function App() {
           onStore={() => setCurrentScreen('store')}
           onProfile={() => setCurrentScreen('profile')}
           onSettings={() => setShowSettings(true)}
+          lastRoomCode={StorageService.getRoomCode()}
+          onQuickJoin={async (code) => {
+            setRoomCode(code);
+            const room = await StorageService.joinRoom(code, player);
+            if (room) {
+              // Let the room status useEffect handle screen navigation
+            } else {
+              StorageService.leaveRoom();
+              showToast('Game no longer available', 'error');
+            }
+          }}
         />
       )}
 
