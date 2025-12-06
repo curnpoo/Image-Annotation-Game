@@ -64,6 +64,65 @@ export const StorageService = {
         }
     },
 
+    // --- Logic Helper ---
+    checkAndAdvanceState: (room: GameRoom): GameRoom => {
+        // If we in drawing phase, check if all have submitted
+        if (room.status === 'drawing') {
+            const allSubmitted = room.players.every(p =>
+                room.playerStates[p.id]?.status === 'submitted'
+            );
+            if (allSubmitted && room.players.length > 0) {
+                room.status = 'voting';
+            }
+        }
+        // If we in voting phase, check if all have voted
+        else if (room.status === 'voting') {
+            const allVoted = room.players.every(p => room.votes[p.id]);
+            if (allVoted && room.players.length > 0) {
+                // Calculate Results (Re-using logic from submitVote essentially)
+                // We need to trigger the calculation.
+                // Since exact calculation is complex to duplicate, we'll extract it or simple trigger 'results'
+                // For robustness, let's just copy the calc logic here to ensure it happens.
+
+                const voteCounts: { [playerId: string]: number } = {};
+                room.players.forEach(p => { voteCounts[p.id] = 0; });
+                Object.values(room.votes).forEach(votedFor => {
+                    voteCounts[votedFor] = (voteCounts[votedFor] || 0) + 1;
+                });
+
+                const rankings = room.players
+                    .map(p => ({
+                        playerId: p.id,
+                        playerName: p.name,
+                        votes: voteCounts[p.id] || 0,
+                        points: 0
+                    }))
+                    .sort((a, b) => b.votes - a.votes);
+
+                if (rankings[0]) rankings[0].points = 3;
+                if (rankings[1]) rankings[1].points = 2;
+                if (rankings[2]) rankings[2].points = 1;
+
+                const newScores = { ...room.scores };
+                rankings.forEach(rank => {
+                    newScores[rank.playerId] = (newScores[rank.playerId] || 0) + rank.points;
+                });
+
+                const roundResult: RoundResult = {
+                    roundNumber: room.roundNumber,
+                    rankings
+                };
+
+                const isFinalRound = room.roundNumber >= room.settings.totalRounds;
+
+                room.scores = newScores;
+                room.roundResults = [...(room.roundResults || []), roundResult];
+                room.status = isFinalRound ? 'final' : 'results';
+            }
+        }
+        return room;
+    },
+
     // --- Persistence ---
     saveRoomCode: (code: string) => {
         localStorage.setItem('lastRoomCode', code);
@@ -83,17 +142,28 @@ export const StorageService = {
         await runTransaction(roomRef, (room) => {
             if (!room) return null;
 
+            // Remove from players lists
             if (room.players) {
                 room.players = room.players.filter((p: Player) => p.id !== playerId);
             }
             if (room.waitingPlayers) {
                 room.waitingPlayers = room.waitingPlayers.filter((p: Player) => p.id !== playerId);
             }
-            // Also remove their state if exists
+
+            // Remove state
             if (room.playerStates && room.playerStates[playerId]) {
                 delete room.playerStates[playerId];
             }
-            return room;
+            // Remove votes
+            if (room.votes && room.votes[playerId]) {
+                delete room.votes[playerId]; // Remove their vote
+            }
+            // Remove votes received by them (optional, but cleaner)
+            // If someone voted for the kicked player, that vote technically points to nobody now.
+            // We can leave it or clear it. Leaving it is safer for now to avoid complexity in counting.
+
+            // CKECK FOR ADVANCEMENT
+            return StorageService.checkAndAdvanceState(room);
         });
     },
 
@@ -327,6 +397,13 @@ export const StorageService = {
             const newPlayers = r.players.filter(p => p.id !== playerId);
             const newWaiting = r.waitingPlayers?.filter(p => p.id !== playerId) || [];
 
+            // Remove state & votes
+            const newPlayerStates = { ...r.playerStates };
+            delete newPlayerStates[playerId];
+
+            const newVotes = { ...r.votes };
+            delete newVotes[playerId];
+
             let newHostId = r.hostId;
             if (playerId === r.hostId) {
                 // Host left, assign new host
@@ -337,12 +414,16 @@ export const StorageService = {
                 }
             }
 
-            return {
+            const updatedRoom = {
                 ...r,
                 players: newPlayers,
                 waitingPlayers: newWaiting,
+                playerStates: newPlayerStates,
+                votes: newVotes,
                 hostId: newHostId
             };
+
+            return StorageService.checkAndAdvanceState(updatedRoom);
         });
     },
 

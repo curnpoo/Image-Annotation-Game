@@ -871,7 +871,10 @@ function App() {
                   brushColor={brushColor}
                   brushSize={brushSize}
                   isEraser={isEraser}
-                  onColorChange={setBrushColor}
+                  onColorChange={(color) => {
+                    setBrushColor(color);
+                    setIsEraser(false);
+                  }}
                   onSizeChange={setBrushSize}
                   onEraserToggle={handleEraserToggle}
                   onUndo={handleUndo}
