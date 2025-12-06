@@ -46,6 +46,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     const [frame, setFrame] = useState(FRAMES.find(f => f.class === player.frame)?.id || 'none');
     const [showHomeConfirm, setShowHomeConfirm] = useState(false);
     const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+    const [showEndGameConfirm, setShowEndGameConfirm] = useState(false);
+    const [showResetConfirm, setShowResetConfirm] = useState(false);
+    const [kickTarget, setKickTarget] = useState<string | null>(null);
     const [notificationsEnabled, setNotificationsEnabled] = useState(false);
 
     useEffect(() => {
@@ -139,11 +142,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                                         </div>
                                         {isHost && p.id !== player.id && onKick && (
                                             <button
-                                                onClick={() => {
-                                                    if (window.confirm(`Kick ${p.name}?`)) {
-                                                        onKick(p.id);
-                                                    }
-                                                }}
+                                                onClick={() => setKickTarget(p.id)}
                                                 className="bg-red-100 text-red-500 hover:bg-red-500 hover:text-white p-1 rounded-lg transition-colors text-xs font-bold px-2"
                                             >
                                                 Kick
@@ -268,12 +267,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
                                 {isHost && onEndGame && (
                                     <button
-                                        onClick={() => {
-                                            if (confirm('Are you sure you want to end the game for everyone?')) {
-                                                onEndGame();
-                                                onClose();
-                                            }
-                                        }}
+                                        onClick={() => setShowEndGameConfirm(true)}
                                         className="py-2.5 rounded-xl font-bold text-white bg-red-500 hover:bg-red-600 shadow-lg transition-all text-sm"
                                     >
                                         End Game 🛑
@@ -286,13 +280,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     {/* Emergency Reset - Always visible */}
                     <div className="pt-2 text-center">
                         <button
-                            onClick={() => {
-                                if (confirm('This will clear all data and reload the app. Use this if the game is broken. Continue?')) {
-                                    localStorage.clear();
-                                    sessionStorage.clear();
-                                    window.location.reload();
-                                }
-                            }}
+                            onClick={() => setShowResetConfirm(true)}
                             className="text-xs font-bold text-gray-400 hover:text-red-500 transition-colors p-2"
                         >
                             RESET ACCOUNT 🔄
@@ -353,6 +341,100 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                                     className="px-4 py-2 rounded-xl bg-red-500 text-white font-bold hover:bg-red-600"
                                 >
                                     Leave Game
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {showEndGameConfirm && (
+                    <div className="absolute inset-0 bg-white/90 backdrop-blur-sm flex items-center justify-center p-6 z-20 rounded-3xl">
+                        <div className="text-center space-y-4 animate-pop-in">
+                            <div className="text-4xl">🛑</div>
+                            <h3 className="text-xl font-bold text-red-600">End Game?</h3>
+                            <p className="text-gray-600 text-sm">
+                                This will end the game for <strong>everyone</strong>. Are you sure?
+                            </p>
+                            <div className="flex gap-2 justify-center">
+                                <button
+                                    onClick={() => setShowEndGameConfirm(false)}
+                                    className="px-4 py-2 rounded-xl bg-gray-100 font-bold text-gray-600 hover:bg-gray-200"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        onEndGame?.();
+                                        onClose();
+                                    }}
+                                    className="px-4 py-2 rounded-xl bg-red-500 text-white font-bold hover:bg-red-600"
+                                >
+                                    End Game
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {kickTarget && (
+                    <div className="absolute inset-0 bg-white/90 backdrop-blur-sm flex items-center justify-center p-6 z-20 rounded-3xl">
+                        <div className="text-center space-y-4 animate-pop-in">
+                            <div className="text-4xl">👢</div>
+                            <h3 className="text-xl font-bold text-red-600">Kick Player?</h3>
+                            <p className="text-gray-600 text-sm">
+                                Are you sure you want to remove <br />
+                                <span className="font-bold text-purple-600">
+                                    {players.find(p => p.id === kickTarget)?.name || 'this player'}
+                                </span>?
+                            </p>
+                            <div className="flex gap-2 justify-center">
+                                <button
+                                    onClick={() => setKickTarget(null)}
+                                    className="px-4 py-2 rounded-xl bg-gray-100 font-bold text-gray-600 hover:bg-gray-200"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        if (onKick && kickTarget) {
+                                            onKick(kickTarget);
+                                            setKickTarget(null);
+                                        }
+                                    }}
+                                    className="px-4 py-2 rounded-xl bg-red-500 text-white font-bold hover:bg-red-600"
+                                >
+                                    Kick
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {showResetConfirm && (
+                    <div className="absolute inset-0 bg-white/90 backdrop-blur-sm flex items-center justify-center p-6 z-20 rounded-3xl">
+                        <div className="text-center space-y-4 animate-pop-in">
+                            <div className="text-4xl">🔄</div>
+                            <h3 className="text-xl font-bold text-red-600">Reset Account?</h3>
+                            <p className="text-gray-600 text-sm">
+                                This will <strong>clear all data</strong> and reload the app.<br />
+                                Only use this if the game is stuck.
+                            </p>
+                            <div className="flex gap-2 justify-center">
+                                <button
+                                    onClick={() => setShowResetConfirm(false)}
+                                    className="px-4 py-2 rounded-xl bg-gray-100 font-bold text-gray-600 hover:bg-gray-200"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        localStorage.clear();
+                                        sessionStorage.clear();
+                                        window.location.reload();
+                                    }}
+                                    className="px-4 py-2 rounded-xl bg-red-500 text-white font-bold hover:bg-red-600"
+                                >
+                                    Reset
                                 </button>
                             </div>
                         </div>
