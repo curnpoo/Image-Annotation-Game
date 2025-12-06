@@ -43,7 +43,7 @@ function App() {
   const strokesRef = useRef<DrawingStroke[]>([]);
   const [isMyTimerRunning, setIsMyTimerRunning] = useState(false);
   const [showHowToPlay, setShowHowToPlay] = useState(false);
-  const [showHowToPlay, setShowHowToPlay] = useState(false);
+
   const [isEraser, setIsEraser] = useState(false);
   const [isEyedropper, setIsEyedropper] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -58,7 +58,7 @@ function App() {
   const [showGameEnded, setShowGameEnded] = useState(false);
   const [showKicked, setShowKicked] = useState(false);
   const [endGameCountdown, setEndGameCountdown] = useState(3);
-  const [endGameCountdown, setEndGameCountdown] = useState(3);
+
   const [kickCountdown, setKickCountdown] = useState(3);
   const [isReadying, setIsReadying] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
@@ -121,6 +121,16 @@ function App() {
 
   // Calculated state for dependencies
   const amWaiting = room?.waitingPlayers?.some(p => p.id === player?.id) || false;
+
+  // Derived State
+  const myPlayerState = room?.playerStates?.[player?.id || ''];
+  const hasSubmitted = myPlayerState?.status === 'submitted';
+  const timerEndsAt = myPlayerState?.timerStartedAt
+    ? myPlayerState.timerStartedAt + (room?.settings?.timerDuration || 15) * 1000
+    : null;
+  const submittedCount = room ? Object.values(room.playerStates || {}).filter(s => s.status === 'submitted').length : 0;
+  const totalPlayers = room?.players?.length || 0;
+  const unfinishedPlayers = room?.players.filter(p => room.playerStates?.[p.id]?.status !== 'submitted') || [];
 
   // Sync screen with room status
   useEffect(() => {
@@ -213,6 +223,17 @@ function App() {
       }
     }
   }, [room, player, roomCode]);
+
+  // Effect: Sync local timer state with server state (Auto-resume / Fix stuck state)
+  useEffect(() => {
+    if (room?.status === 'drawing' && myPlayerState?.status === 'drawing') {
+      if (!isMyTimerRunning) {
+        // Server says we are drawing, so unlock the screen
+        setIsMyTimerRunning(true);
+        setIsReadying(false); // Stop "Starting..." spinner
+      }
+    }
+  }, [room?.status, myPlayerState?.status, isMyTimerRunning]);
 
   // Effect: Kicked Countdown
   useEffect(() => {
@@ -572,16 +593,7 @@ function App() {
     window.location.reload();
   };
 
-  // Get my player state
-  const myPlayerState = room?.playerStates?.[player?.id || ''];
-  const hasSubmitted = myPlayerState?.status === 'submitted';
-  const timerEndsAt = myPlayerState?.timerStartedAt
-    ? myPlayerState.timerStartedAt + (room?.settings?.timerDuration || 15) * 1000
-    : null;
 
-  // Count submitted players
-  const submittedCount = room ? Object.values(room.playerStates || {}).filter(s => s.status === 'submitted').length : 0;
-  const totalPlayers = room?.players?.length || 0;
 
   if (isLoading || isInitialLoading) {
     return <LoadingScreen onGoHome={handleSafeReset} />;
@@ -597,10 +609,7 @@ function App() {
     return <LoadingScreen onGoHome={handleSafeReset} />;
   }
 
-  // Feature: Find players who haven't finished
-  const unfinishedPlayers = room?.players.filter(p =>
-    room.playerStates[p.id]?.status !== 'submitted'
-  ) || [];
+
 
   return (
     <div>
@@ -881,59 +890,12 @@ function App() {
                     strokes={strokes}
                     onStrokesChange={setStrokes}
                     isEraser={isEraser}
+                    isEyedropper={isEyedropper}
+                    onColorPick={handleColorPick}
                   />
                 )}
 
                 {/* Show "waiting" overlay if not ready */}
-                {!isMyTimerRunning && !hasSubmitted && (
-                  <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-30">
-                    <div className="bg-white rounded-3xl p-8 text-center max-w-sm mx-4 shadow-2xl pop-in border-4 border-purple-500">
-                      <div className="text-6xl mb-4 animate-bounce">🎨</div>
-                      <h3 className="text-2xl font-bold text-purple-600 mb-2">It's Drawing Time!</h3>
-                      <p className="text-gray-500 mb-6">You have {room.settings.timerDuration} seconds to draw.</p>
-                      <button
-                        onClick={handleReady}
-                        disabled={isReadying}
-                        className="w-full btn-90s bg-gradient-to-r from-lime-400 to-emerald-500 text-white px-8 py-4 rounded-xl font-bold text-xl jelly-hover shadow-lg disabled:opacity-70 disabled:grayscale"
-                      >
-                        {isReadying ? (
-                          <span className="flex items-center justify-center gap-2">
-                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                            STARTING...
-                          </span>
-                        ) : (
-                          "I'M READY! 🚀"
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* Show "submitted" overlay */}
-                {hasSubmitted && (
-                  <div className="absolute inset-0 bg-black/30 flex items-center justify-center z-30">
-                    <div className="bg-white rounded-2xl p-6 text-center max-w-sm mx-4 shadow-xl animate-bounce-gentle">
-                      <div className="text-4xl mb-2">✅</div>
-                      <h3 className="font-bold text-green-600 text-xl mb-2">Drawing Submitted!</h3>
-                      <p className="text-gray-500 text-sm mb-4">Waiting for others...</p>
-
-
-                      {/* Game Canvas */}
-                      <GameCanvas
-                        imageUrl={room.currentImage?.url || ''}
-                        brushColor={brushColor}
-                        brushSize={brushSize}
-                        isDrawingEnabled={isMyTimerRunning && !hasSubmitted}
-                        strokes={strokes}
-                        onStrokesChange={setStrokes}
-                        isEraser={isEraser}
-                        isEyedropper={isEyedropper}
-                        onColorPick={handleColorPick}
-                      />
-                    </div>
-                  </div>
-
-            {/* Show "waiting" overlay if not ready */}
                 {!isMyTimerRunning && !hasSubmitted && (
                   <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-30">
                     <div className="bg-white rounded-3xl p-8 text-center max-w-sm mx-4 shadow-2xl pop-in border-4 border-purple-500">
@@ -1009,36 +971,38 @@ function App() {
                 </div>
               )}
             </div>
+          </div>
+        </div>
       )}
 
-            {/* Voting Screen */}
-            {currentScreen === 'voting' && room && player && (
-              <VotingScreen
-                room={room}
-                currentPlayerId={player.id}
-                onVote={handleVote}
-              />
-            )}
+      {/* Voting Screen */}
+      {currentScreen === 'voting' && room && player && (
+        <VotingScreen
+          room={room}
+          currentPlayerId={player.id}
+          onVote={handleVote}
+        />
+      )}
 
-            {/* Results Screen */}
-            {currentScreen === 'results' && room && player && (
-              <ResultsScreen
-                room={room}
-                currentPlayerId={player.id}
-                onNextRound={handleNextRound}
-              />
-            )}
+      {/* Results Screen */}
+      {currentScreen === 'results' && room && player && (
+        <ResultsScreen
+          room={room}
+          currentPlayerId={player.id}
+          onNextRound={handleNextRound}
+        />
+      )}
 
-            {/* Final Results Screen */}
-            {currentScreen === 'final' && room && player && (
-              <FinalResultsScreen
-                room={room}
-                currentPlayerId={player.id}
-                onPlayAgain={handlePlayAgain}
-              />
-            )}
-          </div>
-          );
+      {/* Final Results Screen */}
+      {currentScreen === 'final' && room && player && (
+        <FinalResultsScreen
+          room={room}
+          currentPlayerId={player.id}
+          onPlayAgain={handlePlayAgain}
+        />
+      )}
+    </div>
+  );
 }
 
-          export default App;
+export default App;
