@@ -89,8 +89,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
     if (showLeaveConfirm) {
         return (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-                <div className="bg-white rounded-3xl p-6 shadow-2xl w-full max-w-sm text-center pop-in">
+            <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+                <div className="relative z-10 bg-white rounded-3xl p-6 shadow-2xl w-full max-w-sm text-center pop-in">
                     <div className="text-4xl mb-4">😰</div>
                     <h3 className="text-2xl font-black text-gray-800 mb-2">Leave Game?</h3>
                     <p className="text-gray-600 mb-6 font-medium">You'll lose your current progress!</p>
@@ -115,8 +115,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
     if (showEndGameConfirm) {
         return (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-                <div className="bg-white rounded-3xl p-6 shadow-2xl w-full max-w-sm text-center pop-in">
+            <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+                <div className="relative z-10 bg-white rounded-3xl p-6 shadow-2xl w-full max-w-sm text-center pop-in">
                     <div className="text-4xl mb-4">🛑</div>
                     <h3 className="text-2xl font-black text-gray-800 mb-2">End Game?</h3>
                     <p className="text-gray-600 mb-6 font-medium">This will kick everyone out and close the room.</p>
@@ -141,8 +141,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
     if (showLogoutConfirm) {
         return (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-                <div className="bg-white rounded-3xl p-6 shadow-2xl w-full max-w-sm text-center pop-in">
+            <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+                <div className="relative z-10 bg-white rounded-3xl p-6 shadow-2xl w-full max-w-sm text-center pop-in">
                     <div className="text-4xl mb-4">👋</div>
                     <h3 className="text-2xl font-black text-gray-800 mb-2">Log Out?</h3>
                     <p className="text-gray-600 mb-6 font-medium">You will return to the welcome screen.</p>
@@ -199,9 +199,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     }
 
     return (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center pointer-events-none">
+        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center pointer-events-none">
             <div className="absolute inset-0 bg-black/40 backdrop-blur-sm pointer-events-auto" onClick={onClose} />
-            <div className="bg-white w-full sm:w-[500px] sm:rounded-3xl rounded-t-3xl p-6 shadow-2xl pointer-events-auto max-h-[90vh] overflow-y-auto animate-slide-up">
+            <div className="relative z-10 bg-white w-full sm:w-[500px] sm:rounded-3xl rounded-t-3xl p-6 shadow-2xl pointer-events-auto max-h-[90vh] overflow-y-auto animate-slide-up">
 
                 {/* Header */}
                 <div className="flex items-center justify-between mb-6">
