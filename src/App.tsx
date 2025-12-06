@@ -461,570 +461,575 @@ function App() {
   };
 
 
-  const currentStrokes = strokesRef.current;
-  const validStrokes = currentStrokes.filter(s => s && Array.isArray(s.points) && s.points.length > 0);
+  const handleTimeUp = useCallback(async () => {
+    if (!roomCode || !player || !room) return;
 
-  const drawing: PlayerDrawing = {
-    playerId: player.id,
-    playerName: player.name,
-    playerColor: player.color,
-    strokes: validStrokes,
-    submittedAt: Date.now()
+    setIsMyTimerRunning(false);
+
+    const currentStrokes = strokesRef.current;
+    const validStrokes = currentStrokes.filter(s => s && Array.isArray(s.points) && s.points.length > 0);
+
+    const drawing: PlayerDrawing = {
+      playerId: player.id,
+      playerName: player.name,
+      playerColor: player.color,
+      strokes: validStrokes,
+      submittedAt: Date.now()
+    };
+
+    try {
+      await StorageService.submitDrawing(roomCode, drawing);
+      showToast('Drawing submitted! ✅', 'success');
+    } catch (err) {
+      console.error('Failed to submit drawing:', err);
+      showToast('Failed to submit drawing 😅', 'error');
+    }
+  }, [roomCode, player, room, showToast]);
+
+  const handleVote = async (votedForId: string) => {
+    if (!roomCode || !player) return;
+    try {
+      await StorageService.submitVote(roomCode, player.id, votedForId);
+      showToast('Vote submitted! 🗳️', 'success');
+    } catch (err) {
+      console.error('Failed to vote:', err);
+      showToast('Failed to vote 😅', 'error');
+    }
   };
 
-  try {
-    await StorageService.submitDrawing(roomCode, drawing);
-    showToast('Drawing submitted! ✅', 'success');
-  } catch (err) {
-    console.error('Failed to submit drawing:', err);
-    showToast('Failed to submit drawing 😅', 'error');
-  }
-}, [roomCode, player, room, showToast]);
+  const handleNextRound = async () => {
+    if (!roomCode) return;
+    try {
+      await StorageService.nextRound(roomCode);
+    } catch (err) {
+      console.error('Failed to start next round:', err);
+      showToast('Failed to start next round 😅', 'error');
+    }
+  };
 
-const handleVote = async (votedForId: string) => {
-  if (!roomCode || !player) return;
-  try {
-    await StorageService.submitVote(roomCode, player.id, votedForId);
-    showToast('Vote submitted! 🗳️', 'success');
-  } catch (err) {
-    console.error('Failed to vote:', err);
-    showToast('Failed to vote 😅', 'error');
-  }
-};
+  const handlePlayAgain = async () => {
+    if (!roomCode) return;
+    try {
+      await StorageService.resetGame(roomCode);
+    } catch (err) {
+      console.error('Failed to reset game:', err);
+      showToast('Failed to reset game 😅', 'error');
+    }
+  };
 
-const handleNextRound = async () => {
-  if (!roomCode) return;
-  try {
-    await StorageService.nextRound(roomCode);
-  } catch (err) {
-    console.error('Failed to start next round:', err);
-    showToast('Failed to start next round 😅', 'error');
-  }
-};
+  const handleUndo = () => {
+    setStrokes(prev => prev.slice(0, -1));
+  };
 
-const handlePlayAgain = async () => {
-  if (!roomCode) return;
-  try {
-    await StorageService.resetGame(roomCode);
-  } catch (err) {
-    console.error('Failed to reset game:', err);
-    showToast('Failed to reset game 😅', 'error');
-  }
-};
+  const handleClear = () => {
+    setStrokes([]);
+  };
 
-const handleUndo = () => {
-  setStrokes(prev => prev.slice(0, -1));
-};
+  const handleEraserToggle = () => {
+    setIsEraser(prev => !prev);
+    setIsEyedropper(false);
+  };
 
-const handleClear = () => {
-  setStrokes([]);
-};
+  const handleEyedropperToggle = () => {
+    setIsEyedropper(prev => !prev);
+    setIsEraser(false);
+  };
 
-const handleEraserToggle = () => {
-  setIsEraser(prev => !prev);
-  setIsEyedropper(false);
-};
+  const handleColorPick = (color: string) => {
+    setBrushColor(color);
+    setIsEyedropper(false);
+    setIsEraser(false);
+    showToast('Color picked! 🎨', 'success');
+  };
 
-const handleEyedropperToggle = () => {
-  setIsEyedropper(prev => !prev);
-  setIsEraser(false);
-};
+  const handleLeaveGame = async () => {
+    if (!roomCode || !player) return;
 
-const handleColorPick = (color: string) => {
-  setBrushColor(color);
-  setIsEyedropper(false);
-  setIsEraser(false);
-  showToast('Color picked! 🎨', 'success');
-};
-
-const handleLeaveGame = async () => {
-  if (!roomCode || !player) return;
-
-  // Attempt to remove from server, but don't block local exit
-  try {
-    await StorageService.removePlayerFromRoom(roomCode, player.id);
-  } catch (err) {
-    console.error('Failed to leave game:', err);
-  }
-
-  // Always exit locally
-  StorageService.leaveRoom();
-  setRoomCode(null);
-  setCurrentScreen('room-selection');
-  setIsLoading(false);
-  setIsLoadingTransition(false);
-  showToast('Left game 👋', 'info');
-};
-
-const handleEndGame = async () => {
-  if (!roomCode || !room) return;
-  try {
-    // Determine reason and leader
-    let reason: 'cancelled' | 'early' = 'early';
-    let leaderName: string | undefined;
-
-    if (room.status === 'lobby') {
-      reason = 'cancelled';
-    } else {
-      // Find leader
-      if (room.scores) {
-        const leaderId = Object.entries(room.scores).sort(([, a], [, b]) => b - a)[0]?.[0];
-        const leader = room.players.find(p => p.id === leaderId);
-        if (leader) leaderName = leader.name;
-      }
+    // Attempt to remove from server, but don't block local exit
+    try {
+      await StorageService.removePlayerFromRoom(roomCode, player.id);
+    } catch (err) {
+      console.error('Failed to leave game:', err);
     }
 
-    // Update history before closing
-    StorageService.updateHistoryEndState(roomCode, reason, leaderName);
-
-    // Close room (delete from Firebase)
-    await StorageService.closeRoom(roomCode);
-
-    // Clear local state
+    // Always exit locally
     StorageService.leaveRoom();
     setRoomCode(null);
     setCurrentScreen('room-selection');
+    setIsLoading(false);
+    setIsLoadingTransition(false);
+    showToast('Left game 👋', 'info');
+  };
 
-    showToast('Game ended and room closed 🛑', 'info');
-  } catch (err) {
-    console.error('Failed to end game:', err);
-    showToast('Failed to end game', 'error');
-  }
-};
+  const handleEndGame = async () => {
+    if (!roomCode || !room) return;
+    try {
+      // Determine reason and leader
+      let reason: 'cancelled' | 'early' = 'early';
+      let leaderName: string | undefined;
 
-const handleGoHome = () => {
-  setIsBrowsing(true);
-  setCurrentScreen('room-selection');
-  setShowSettings(false);
-};
-
-const handleSafeReset = () => {
-  StorageService.leaveRoom(); // Clear local session to prevent auto-rejoin
-  window.location.reload();
-};
-
-
-
-if (isLoading || isInitialLoading) {
-  return <LoadingScreen onGoHome={handleSafeReset} />;
-}
-
-if (isLoadingTransition) {
-  return <LoadingScreen onGoHome={handleSafeReset} />;
-}
-
-// Prevent white screen if in game but room/player missing
-const isGameScreen = ['lobby', 'waiting', 'uploading', 'drawing', 'voting', 'results', 'final'].includes(currentScreen);
-if (isGameScreen && (!room || !player)) {
-  return <LoadingScreen onGoHome={handleSafeReset} />;
-}
-
-
-
-return (
-  <div>
-    {/* Toast */}
-    {toast && (
-      <Toast
-        message={toast.message}
-        type={toast.type}
-        onClose={hideToast}
-      />
-    )}
-
-    {/* Notification Prompt */}
-    <NotificationPromptModal
-      isOpen={showNotificationPrompt}
-      onEnable={async () => {
-        if ('Notification' in window) {
-          await Notification.requestPermission();
+      if (room.status === 'lobby') {
+        reason = 'cancelled';
+      } else {
+        // Find leader
+        if (room.scores) {
+          const leaderId = Object.entries(room.scores).sort(([, a], [, b]) => b - a)[0]?.[0];
+          const leader = room.players.find(p => p.id === leaderId);
+          if (leader) leaderName = leader.name;
         }
-        setShowNotificationPrompt(false);
-        sessionStorage.setItem('seenNotificationPrompt', 'true');
-      }}
-      onLater={() => {
-        setShowNotificationPrompt(false);
-        sessionStorage.setItem('seenNotificationPrompt', 'true');
-      }}
-    />
+      }
 
-    {/* Game Ended Modal */}
-    {showGameEnded && (
-      <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[100] flex items-center justify-center animate-fade-in">
-        <div className="bg-white rounded-3xl p-8 text-center max-w-sm mx-4 shadow-2xl pop-in border-4 border-red-500">
-          <div className="text-6xl mb-4 animate-bounce">🛑</div>
-          <h3 className="text-2xl font-bold text-red-600 mb-2">Game Ended</h3>
-          <p className="text-gray-600 font-medium">The host has closed the room.</p>
-          <p className="text-gray-400 text-sm mt-4">Returning to lobby in {endGameCountdown}...</p>
-          <div className="mt-6 flex justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500"></div>
-          </div>
-        </div>
-      </div>
-    )}
+      // Update history before closing
+      StorageService.updateHistoryEndState(roomCode, reason, leaderName);
 
-    {/* Kicked Modal */}
-    {showKicked && (
-      <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[100] flex items-center justify-center animate-fade-in">
-        <div className="bg-white rounded-3xl p-8 text-center max-w-sm mx-4 shadow-2xl pop-in border-4 border-orange-500">
-          <div className="text-6xl mb-4 animate-bounce">👢</div>
-          <h3 className="text-2xl font-bold text-orange-600 mb-2">You were Kicked</h3>
-          <p className="text-gray-600 font-medium">You have been removed from the room.</p>
-          <p className="text-gray-400 text-sm mt-4">Returning to lobby in {kickCountdown}...</p>
-          <div className="mt-6 flex justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
-          </div>
-        </div>
-      </div>
-    )}
+      // Close room (delete from Firebase)
+      await StorageService.closeRoom(roomCode);
 
-    {/* Settings Button - Show on all screens except welcome/name-entry */}
-    {player && currentScreen !== 'welcome' && currentScreen !== 'name-entry' && (
-      <button
-        onClick={() => setShowSettings(true)}
-        className="fixed left-4 z-50 bg-white/90 backdrop-blur-sm p-3 rounded-xl shadow-lg border-2 border-purple-200 hover:border-purple-500 transition-all hover:scale-110"
-        style={{ top: 'max(1rem, env(safe-area-inset-top) + 1rem)' }}
-        title="Settings"
-      >
-        ⚙️
-      </button>
-    )}
+      // Clear local state
+      StorageService.leaveRoom();
+      setRoomCode(null);
+      setCurrentScreen('room-selection');
 
-    {/* Settings Modal */}
-    {showSettings && player && (
-      <SettingsModal
-        player={player}
-        players={room?.players}
-        roomCode={roomCode}
-        isHost={room?.hostId === player.id}
-        onClose={() => setShowSettings(false)}
-        onUpdateProfile={handleUpdateProfile}
-        onLeaveGame={roomCode ? handleLeaveGame : undefined}
-        onEndGame={room?.hostId === player.id ? handleEndGame : undefined}
-        onGoHome={handleGoHome}
-        onKick={async (playerId) => {
-          if (!roomCode) return;
-          try {
-            await StorageService.kickPlayer(roomCode, playerId);
-            showToast('Player kicked 👢', 'info');
-          } catch (err) {
-            console.error(err);
-            showToast('Failed to kick player', 'error');
+      showToast('Game ended and room closed 🛑', 'info');
+    } catch (err) {
+      console.error('Failed to end game:', err);
+      showToast('Failed to end game', 'error');
+    }
+  };
+
+  const handleGoHome = () => {
+    setIsBrowsing(true);
+    setCurrentScreen('room-selection');
+    setShowSettings(false);
+  };
+
+  const handleSafeReset = () => {
+    StorageService.leaveRoom(); // Clear local session to prevent auto-rejoin
+    window.location.reload();
+  };
+
+
+
+  if (isLoading || isInitialLoading) {
+    return <LoadingScreen onGoHome={handleSafeReset} />;
+  }
+
+  if (isLoadingTransition) {
+    return <LoadingScreen onGoHome={handleSafeReset} />;
+  }
+
+  // Prevent white screen if in game but room/player missing
+  const isGameScreen = ['lobby', 'waiting', 'uploading', 'drawing', 'voting', 'results', 'final'].includes(currentScreen);
+  if (isGameScreen && (!room || !player)) {
+    return <LoadingScreen onGoHome={handleSafeReset} />;
+  }
+
+
+
+  return (
+    <div>
+      {/* Toast */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={hideToast}
+        />
+      )}
+
+      {/* Notification Prompt */}
+      <NotificationPromptModal
+        isOpen={showNotificationPrompt}
+        onEnable={async () => {
+          if ('Notification' in window) {
+            await Notification.requestPermission();
           }
+          setShowNotificationPrompt(false);
+          sessionStorage.setItem('seenNotificationPrompt', 'true');
+        }}
+        onLater={() => {
+          setShowNotificationPrompt(false);
+          sessionStorage.setItem('seenNotificationPrompt', 'true');
         }}
       />
-    )}
 
-    {/* How To Play Modal */}
-    <HowToPlayModal isOpen={showHowToPlay} onClose={() => setShowHowToPlay(false)} />
+      {/* Game Ended Modal */}
+      {showGameEnded && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[100] flex items-center justify-center animate-fade-in">
+          <div className="bg-white rounded-3xl p-8 text-center max-w-sm mx-4 shadow-2xl pop-in border-4 border-red-500">
+            <div className="text-6xl mb-4 animate-bounce">🛑</div>
+            <h3 className="text-2xl font-bold text-red-600 mb-2">Game Ended</h3>
+            <p className="text-gray-600 font-medium">The host has closed the room.</p>
+            <p className="text-gray-400 text-sm mt-4">Returning to lobby in {endGameCountdown}...</p>
+            <div className="mt-6 flex justify-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500"></div>
+            </div>
+          </div>
+        </div>
+      )}
 
-    {/* Loading Overlay */}
-    {/* This block is now handled by the top-level conditional rendering for isLoading and isLoadingTransition */}
-    {/* {isLoading && (
+      {/* Kicked Modal */}
+      {showKicked && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[100] flex items-center justify-center animate-fade-in">
+          <div className="bg-white rounded-3xl p-8 text-center max-w-sm mx-4 shadow-2xl pop-in border-4 border-orange-500">
+            <div className="text-6xl mb-4 animate-bounce">👢</div>
+            <h3 className="text-2xl font-bold text-orange-600 mb-2">You were Kicked</h3>
+            <p className="text-gray-600 font-medium">You have been removed from the room.</p>
+            <p className="text-gray-400 text-sm mt-4">Returning to lobby in {kickCountdown}...</p>
+            <div className="mt-6 flex justify-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Settings Button - Show on all screens except welcome/name-entry */}
+      {player && currentScreen !== 'welcome' && currentScreen !== 'name-entry' && (
+        <button
+          onClick={() => setShowSettings(true)}
+          className="fixed left-4 z-50 bg-white/90 backdrop-blur-sm p-3 rounded-xl shadow-lg border-2 border-purple-200 hover:border-purple-500 transition-all hover:scale-110"
+          style={{ top: 'max(1rem, env(safe-area-inset-top) + 1rem)' }}
+          title="Settings"
+        >
+          ⚙️
+        </button>
+      )}
+
+      {/* Settings Modal */}
+      {showSettings && player && (
+        <SettingsModal
+          player={player}
+          players={room?.players}
+          roomCode={roomCode}
+          isHost={room?.hostId === player.id}
+          onClose={() => setShowSettings(false)}
+          onUpdateProfile={handleUpdateProfile}
+          onLeaveGame={roomCode ? handleLeaveGame : undefined}
+          onEndGame={room?.hostId === player.id ? handleEndGame : undefined}
+          onGoHome={handleGoHome}
+          onKick={async (playerId) => {
+            if (!roomCode) return;
+            try {
+              await StorageService.kickPlayer(roomCode, playerId);
+              showToast('Player kicked 👢', 'info');
+            } catch (err) {
+              console.error(err);
+              showToast('Failed to kick player', 'error');
+            }
+          }}
+        />
+      )}
+
+      {/* How To Play Modal */}
+      <HowToPlayModal isOpen={showHowToPlay} onClose={() => setShowHowToPlay(false)} />
+
+      {/* Loading Overlay */}
+      {/* This block is now handled by the top-level conditional rendering for isLoading and isLoadingTransition */}
+      {/* {isLoading && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
           <div className="text-6xl animate-bounce">🎨</div>
         </div>
       )} */}
 
-    {/* Screens */}
-    {currentScreen === 'welcome' && (
-      <WelcomeScreen onPlay={handlePlayNow} />
-    )}
+      {/* Screens */}
+      {currentScreen === 'welcome' && (
+        <WelcomeScreen onPlay={handlePlayNow} />
+      )}
 
-    {currentScreen === 'name-entry' && (
-      <ProfileSetupScreen
-        onComplete={handleProfileComplete}
-      />
-    )}
+      {currentScreen === 'name-entry' && (
+        <ProfileSetupScreen
+          onComplete={handleProfileComplete}
+        />
+      )}
 
-    {currentScreen === 'room-selection' && player && (
-      <RoomSelectionScreen
-        playerName={player.name}
-        onCreateRoom={handleCreateRoom}
-        onJoinRoom={handleJoinRoom}
-        onBack={() => setCurrentScreen('name-entry')}
-      />
-    )}
+      {currentScreen === 'room-selection' && player && (
+        <RoomSelectionScreen
+          playerName={player.name}
+          onCreateRoom={handleCreateRoom}
+          onJoinRoom={handleJoinRoom}
+          onBack={() => setCurrentScreen('name-entry')}
+        />
+      )}
 
-    {currentScreen === 'lobby' && room && player && (
-      <LobbyScreen
-        room={room}
-        currentPlayerId={player.id}
-        onStartGame={handleStartGame}
-        onSettingsChange={handleSettingsChange}
-        onLeave={handleLeaveGame}
-        onKick={async (playerId) => {
-          if (!roomCode) return;
-          try {
-            await StorageService.kickPlayer(roomCode, playerId);
-            showToast('Player kicked 👢', 'info');
-          } catch (err) {
-            console.error(err);
-            showToast('Failed to kick player', 'error');
-          }
-        }}
-        onJoinGame={async () => {
-          if (!roomCode || !player) return;
-          try {
-            await StorageService.joinCurrentGame(roomCode, player.id);
-            showToast('Joined the round! 🚀', 'success');
-
-            // Force screen transition immediately
-            if (room.status === 'uploading') setCurrentScreen('uploading');
-            else if (room.status === 'drawing') setCurrentScreen('drawing');
-            else if (room.status === 'voting') setCurrentScreen('voting');
-            else if (room.status === 'results') setCurrentScreen('results');
-            else if (room.status === 'final') setCurrentScreen('final');
-          } catch (err) {
-            console.error(err);
-            showToast('Failed to join round', 'error');
-          }
-        }}
-      />
-    )}
-
-    {currentScreen === 'waiting' && room && player && (
-      <WaitingRoomScreen
-        room={room}
-        currentPlayerId={player.id}
-        onJoinGame={async () => {
-          if (!roomCode || !player) return;
-          try {
-            await StorageService.joinCurrentGame(roomCode, player.id);
-            showToast('Joined the round! 🚀', 'success');
-
-            // Force screen transition immediately
-            if (room.status === 'uploading') setCurrentScreen('uploading');
-            else if (room.status === 'drawing') setCurrentScreen('drawing');
-            else if (room.status === 'voting') setCurrentScreen('voting');
-            else if (room.status === 'results') setCurrentScreen('results');
-            else if (room.status === 'final') setCurrentScreen('final');
-          } catch (err) {
-            console.error(err);
-            showToast('Failed to join round', 'error');
-          }
-        }}
-      />
-    )}
-
-    {currentScreen === 'uploading' && room && player && (
-      <UploadScreen
-        room={room}
-        currentPlayerId={player.id}
-        onUploadImage={handleUploadImage}
-      />
-    )}
-
-    {/* Drawing Screen */}
-    {currentScreen === 'drawing' && room && room.currentImage && player && (
-      <div className="fixed inset-0 bg-90s-animated overflow-hidden">
-        <div
-          className="h-full w-full flex flex-col p-4 pb-0"
-          style={{
-            paddingTop: 'max(1rem, env(safe-area-inset-top) + 1rem)',
-            paddingBottom: 'max(0rem, env(safe-area-inset-bottom))'
+      {currentScreen === 'lobby' && room && player && (
+        <LobbyScreen
+          room={room}
+          currentPlayerId={player.id}
+          onStartGame={handleStartGame}
+          onSettingsChange={handleSettingsChange}
+          onLeave={handleLeaveGame}
+          onKick={async (playerId) => {
+            if (!roomCode) return;
+            try {
+              await StorageService.kickPlayer(roomCode, playerId);
+              showToast('Player kicked 👢', 'info');
+            } catch (err) {
+              console.error(err);
+              showToast('Failed to kick player', 'error');
+            }
           }}
-        >
-          {/* Top Info Bar - Restored Larger Layout */}
-          <div className="absolute top-4 left-0 w-full flex justify-between items-start px-4 z-20 pointer-events-none">
-            <div className="flex flex-col gap-2">
-              {/* Settings Button */}
-              <button
-                onClick={() => setShowSettings(true)}
-                className="bg-white p-3 rounded-2xl shadow-lg hover:scale-105 active:scale-95 transition-all w-12 h-12 flex items-center justify-center pointer-events-auto border-2 border-gray-100"
-              >
-                ⚙️
-              </button>
+          onJoinGame={async () => {
+            if (!roomCode || !player) return;
+            try {
+              await StorageService.joinCurrentGame(roomCode, player.id);
+              showToast('Joined the round! 🚀', 'success');
 
-              {/* Progress */}
-              <div className="bg-white/95 backdrop-blur-sm px-4 py-2 rounded-xl pop-in ml-16"
-                style={{ boxShadow: '0 4px 0 rgba(155, 89, 182, 0.3)', border: '3px solid #9B59B6' }}>
-                <span className="font-bold text-purple-600">
-                  Round {room.roundNumber}/{room.settings.totalRounds}
-                </span>
-                <span className="ml-3 text-gray-500">
-                  {submittedCount}/{totalPlayers} drawn
-                </span>
-              </div>
+              // Force screen transition immediately
+              if (room.status === 'uploading') setCurrentScreen('uploading');
+              else if (room.status === 'drawing') setCurrentScreen('drawing');
+              else if (room.status === 'voting') setCurrentScreen('voting');
+              else if (room.status === 'results') setCurrentScreen('results');
+              else if (room.status === 'final') setCurrentScreen('final');
+            } catch (err) {
+              console.error(err);
+              showToast('Failed to join round', 'error');
+            }
+          }}
+        />
+      )}
 
-              {/* Timer or Status */}
-              <div className="pointer-events-auto">
-                {hasSubmitted ? (
-                  <div className="bg-green-500 text-white px-4 py-2 rounded-xl font-bold">
-                    ✓ Submitted!
-                  </div>
-                ) : isMyTimerRunning && timerEndsAt ? (
-                  <div className="scale-75 origin-left">
-                    <Timer endsAt={timerEndsAt} onTimeUp={handleTimeUp} />
-                  </div>
-                ) : null}
+      {currentScreen === 'waiting' && room && player && (
+        <WaitingRoomScreen
+          room={room}
+          currentPlayerId={player.id}
+          onJoinGame={async () => {
+            if (!roomCode || !player) return;
+            try {
+              await StorageService.joinCurrentGame(roomCode, player.id);
+              showToast('Joined the round! 🚀', 'success');
+
+              // Force screen transition immediately
+              if (room.status === 'uploading') setCurrentScreen('uploading');
+              else if (room.status === 'drawing') setCurrentScreen('drawing');
+              else if (room.status === 'voting') setCurrentScreen('voting');
+              else if (room.status === 'results') setCurrentScreen('results');
+              else if (room.status === 'final') setCurrentScreen('final');
+            } catch (err) {
+              console.error(err);
+              showToast('Failed to join round', 'error');
+            }
+          }}
+        />
+      )}
+
+      {currentScreen === 'uploading' && room && player && (
+        <UploadScreen
+          room={room}
+          currentPlayerId={player.id}
+          onUploadImage={handleUploadImage}
+        />
+      )}
+
+      {/* Drawing Screen */}
+      {currentScreen === 'drawing' && room && room.currentImage && player && (
+        <div className="fixed inset-0 bg-90s-animated overflow-hidden">
+          <div
+            className="h-full w-full flex flex-col p-4 pb-0"
+            style={{
+              paddingTop: 'max(1rem, env(safe-area-inset-top) + 1rem)',
+              paddingBottom: 'max(0rem, env(safe-area-inset-bottom))'
+            }}
+          >
+            {/* Top Info Bar - Restored Larger Layout */}
+            <div className="absolute top-4 left-0 w-full flex justify-between items-start px-4 z-20 pointer-events-none">
+              <div className="flex flex-col gap-2">
+                {/* Settings Button */}
+                <button
+                  onClick={() => setShowSettings(true)}
+                  className="bg-white p-3 rounded-2xl shadow-lg hover:scale-105 active:scale-95 transition-all w-12 h-12 flex items-center justify-center pointer-events-auto border-2 border-gray-100"
+                >
+                  ⚙️
+                </button>
+
+                {/* Progress */}
+                <div className="bg-white/95 backdrop-blur-sm px-4 py-2 rounded-xl pop-in ml-16"
+                  style={{ boxShadow: '0 4px 0 rgba(155, 89, 182, 0.3)', border: '3px solid #9B59B6' }}>
+                  <span className="font-bold text-purple-600">
+                    Round {room.roundNumber}/{room.settings.totalRounds}
+                  </span>
+                  <span className="ml-3 text-gray-500">
+                    {submittedCount}/{totalPlayers} drawn
+                  </span>
+                </div>
+
+                {/* Timer or Status */}
+                <div className="pointer-events-auto">
+                  {hasSubmitted ? (
+                    <div className="bg-green-500 text-white px-4 py-2 rounded-xl font-bold">
+                      ✓ Submitted!
+                    </div>
+                  ) : isMyTimerRunning && timerEndsAt ? (
+                    <div className="scale-75 origin-left">
+                      <Timer endsAt={timerEndsAt} onTimeUp={handleTimeUp} />
+                    </div>
+                  ) : null}
+                </div>
               </div>
             </div>
-          </div>
 
 
 
-          {/* Image Container */}
-          <div className="flex-1 min-h-0 flex items-center justify-center p-2">
-            <div className="relative aspect-square w-full max-w-[min(100%,calc(100vh-200px))]"
-              style={{
-                borderRadius: '1.5rem',
-                overflow: 'hidden',
-                boxShadow: '0 10px 0 rgba(155, 89, 182, 0.4)',
-                border: '5px solid white'
-              }}>
-              {/* Base Image */}
-              <img
-                src={room.currentImage.url}
-                alt="Round image"
-                className="absolute inset-0 w-full h-full object-cover"
-              />
-
-              {/* Block Overlay */}
-              {room.block && (
-                <div
-                  className="absolute bg-white"
-                  style={{
-                    left: `${room.block.x}%`,
-                    top: `${room.block.y}%`,
-                    width: `${room.block.size}%`,
-                    height: `${room.block.size}%`,
-                    borderRadius: room.block.type === 'circle' ? '50%' : '8px',
-                    boxShadow: 'inset 0 0 20px rgba(0,0,0,0.1)'
-                  }}
+            {/* Image Container */}
+            <div className="flex-1 min-h-0 flex items-center justify-center p-2">
+              <div className="relative aspect-square w-full max-w-[min(100%,calc(100vh-200px))]"
+                style={{
+                  borderRadius: '1.5rem',
+                  overflow: 'hidden',
+                  boxShadow: '0 10px 0 rgba(155, 89, 182, 0.4)',
+                  border: '5px solid white'
+                }}>
+                {/* Base Image */}
+                <img
+                  src={room.currentImage.url}
+                  alt="Round image"
+                  className="absolute inset-0 w-full h-full object-cover"
                 />
-              )}
 
-              {/* Drawing Canvas - Only when timer running */}
-              {isMyTimerRunning && !hasSubmitted && (
-                <GameCanvas
-                  key={room.roundNumber}
-                  imageUrl={room.currentImage.url}
-                  brushColor={isEraser ? '#FFFFFF' : brushColor}
-                  brushSize={isEraser ? brushSize * 2 : brushSize}
-                  isDrawingEnabled={true}
-                  strokes={strokes}
-                  onStrokesChange={setStrokes}
-                  isEraser={isEraser}
-                  isEyedropper={isEyedropper}
-                  onColorPick={handleColorPick}
-                />
-              )}
+                {/* Block Overlay */}
+                {room.block && (
+                  <div
+                    className="absolute bg-white"
+                    style={{
+                      left: `${room.block.x}%`,
+                      top: `${room.block.y}%`,
+                      width: `${room.block.size}%`,
+                      height: `${room.block.size}%`,
+                      borderRadius: room.block.type === 'circle' ? '50%' : '8px',
+                      boxShadow: 'inset 0 0 20px rgba(0,0,0,0.1)'
+                    }}
+                  />
+                )}
 
-              {/* Show "waiting" overlay if not ready */}
-              {!isMyTimerRunning && !hasSubmitted && (
-                <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-30">
-                  <div className="bg-white rounded-3xl p-8 text-center max-w-sm mx-4 shadow-2xl pop-in border-4 border-purple-500">
-                    <div className="text-6xl mb-4 animate-bounce">🎨</div>
-                    <h3 className="text-2xl font-bold text-purple-600 mb-2">It's Drawing Time!</h3>
-                    <p className="text-gray-500 mb-6">You have {room.settings.timerDuration} seconds to draw.</p>
-                    <button
-                      onClick={handleReady}
-                      disabled={isReadying}
-                      className="w-full btn-90s bg-gradient-to-r from-lime-400 to-emerald-500 text-white px-8 py-4 rounded-xl font-bold text-xl jelly-hover shadow-lg disabled:opacity-70 disabled:grayscale"
-                    >
-                      {isReadying ? (
-                        <span className="flex items-center justify-center gap-2">
-                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                          STARTING...
-                        </span>
-                      ) : (
-                        "I'M READY! 🚀"
-                      )}
-                    </button>
+                {/* Drawing Canvas - Only when timer running */}
+                {isMyTimerRunning && !hasSubmitted && (
+                  <GameCanvas
+                    key={room.roundNumber}
+                    imageUrl={room.currentImage.url}
+                    brushColor={isEraser ? '#FFFFFF' : brushColor}
+                    brushSize={isEraser ? brushSize * 2 : brushSize}
+                    isDrawingEnabled={true}
+                    strokes={strokes}
+                    onStrokesChange={setStrokes}
+                    isEraser={isEraser}
+                    isEyedropper={isEyedropper}
+                    onColorPick={handleColorPick}
+                  />
+                )}
+
+                {/* Show "waiting" overlay if not ready */}
+                {!isMyTimerRunning && !hasSubmitted && (
+                  <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-30">
+                    <div className="bg-white rounded-3xl p-8 text-center max-w-sm mx-4 shadow-2xl pop-in border-4 border-purple-500">
+                      <div className="text-6xl mb-4 animate-bounce">🎨</div>
+                      <h3 className="text-2xl font-bold text-purple-600 mb-2">It's Drawing Time!</h3>
+                      <p className="text-gray-500 mb-6">You have {room.settings.timerDuration} seconds to draw.</p>
+                      <button
+                        onClick={handleReady}
+                        disabled={isReadying}
+                        className="w-full btn-90s bg-gradient-to-r from-lime-400 to-emerald-500 text-white px-8 py-4 rounded-xl font-bold text-xl jelly-hover shadow-lg disabled:opacity-70 disabled:grayscale"
+                      >
+                        {isReadying ? (
+                          <span className="flex items-center justify-center gap-2">
+                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                            STARTING...
+                          </span>
+                        ) : (
+                          "I'M READY! 🚀"
+                        )}
+                      </button>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              {/* Show "submitted" overlay */}
-              {hasSubmitted && (
-                <div className="absolute inset-0 bg-black/30 flex items-center justify-center z-30">
-                  <div className="bg-white rounded-2xl p-6 text-center max-w-sm mx-4 shadow-xl animate-bounce-gentle">
-                    <div className="text-4xl mb-2">✅</div>
-                    <h3 className="font-bold text-green-600 text-xl mb-2">Drawing Submitted!</h3>
-                    <p className="text-gray-500 text-sm mb-4">Waiting for others...</p>
+                {/* Show "submitted" overlay */}
+                {hasSubmitted && (
+                  <div className="absolute inset-0 bg-black/30 flex items-center justify-center z-30">
+                    <div className="bg-white rounded-2xl p-6 text-center max-w-sm mx-4 shadow-xl animate-bounce-gentle">
+                      <div className="text-4xl mb-2">✅</div>
+                      <h3 className="font-bold text-green-600 text-xl mb-2">Drawing Submitted!</h3>
+                      <p className="text-gray-500 text-sm mb-4">Waiting for others...</p>
 
-                    {/* List unfinished players */}
-                    {unfinishedPlayers.length > 0 && (
-                      <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
-                        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Still Drawing</p>
-                        <div className="flex flex-wrap justify-center gap-2">
-                          {unfinishedPlayers.map(p => (
-                            <div key={p.id} className="flex items-center gap-1 bg-white border border-gray-200 px-2 py-1 rounded-lg shadow-sm">
-                              <span className="text-xs">{p.avatar || '👤'}</span>
-                              <span className="text-xs font-semibold text-gray-600 truncate max-w-[80px]">{p.name}</span>
-                            </div>
-                          ))}
+                      {/* List unfinished players */}
+                      {unfinishedPlayers.length > 0 && (
+                        <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
+                          <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Still Drawing</p>
+                          <div className="flex flex-wrap justify-center gap-2">
+                            {unfinishedPlayers.map(p => (
+                              <div key={p.id} className="flex items-center gap-1 bg-white border border-gray-200 px-2 py-1 rounded-lg shadow-sm">
+                                <span className="text-xs">{p.avatar || '👤'}</span>
+                                <span className="text-xs font-semibold text-gray-600 truncate max-w-[80px]">{p.name}</span>
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
+                )}
+              </div>
+
+              {/* Chat - Removed */}
+
+              {/* Toolbar - Only show when drawing is enabled */}
+              {isMyTimerRunning && !hasSubmitted && (
+                <div className="flex-shrink-0 z-30 pb-4 pop-in">
+                  <Toolbar
+                    brushColor={brushColor}
+                    brushSize={brushSize}
+                    isEraser={isEraser}
+                    onColorChange={(color) => {
+                      setBrushColor(color);
+                      setIsEraser(false);
+                      setIsEyedropper(false);
+                    }}
+                    onSizeChange={setBrushSize}
+                    onEraserToggle={handleEraserToggle}
+                    onUndo={handleUndo}
+                    onClear={handleClear}
+                    isEyedropper={isEyedropper}
+                    onEyedropperToggle={handleEyedropperToggle}
+                  />
                 </div>
               )}
             </div>
-
-            {/* Chat - Removed */}
-
-            {/* Toolbar - Only show when drawing is enabled */}
-            {isMyTimerRunning && !hasSubmitted && (
-              <div className="flex-shrink-0 z-30 pb-4 pop-in">
-                <Toolbar
-                  brushColor={brushColor}
-                  brushSize={brushSize}
-                  isEraser={isEraser}
-                  onColorChange={(color) => {
-                    setBrushColor(color);
-                    setIsEraser(false);
-                    setIsEyedropper(false);
-                  }}
-                  onSizeChange={setBrushSize}
-                  onEraserToggle={handleEraserToggle}
-                  onUndo={handleUndo}
-                  onClear={handleClear}
-                  isEyedropper={isEyedropper}
-                  onEyedropperToggle={handleEyedropperToggle}
-                />
-              </div>
-            )}
           </div>
         </div>
-      </div>
-    )}
+      )}
 
-    {/* Voting Screen */}
-    {
-      currentScreen === 'voting' && room && player && (
-        <VotingScreen
-          room={room}
-          currentPlayerId={player.id}
-          onVote={handleVote}
-        />
-      )
-    }
+      {/* Voting Screen */}
+      {
+        currentScreen === 'voting' && room && player && (
+          <VotingScreen
+            room={room}
+            currentPlayerId={player.id}
+            onVote={handleVote}
+          />
+        )
+      }
 
-    {/* Results Screen */}
-    {
-      currentScreen === 'results' && room && player && (
-        <ResultsScreen
-          room={room}
-          currentPlayerId={player.id}
-          onNextRound={handleNextRound}
-        />
-      )
-    }
+      {/* Results Screen */}
+      {
+        currentScreen === 'results' && room && player && (
+          <ResultsScreen
+            room={room}
+            currentPlayerId={player.id}
+            onNextRound={handleNextRound}
+          />
+        )
+      }
 
-    {/* Final Results Screen */}
-    {
-      currentScreen === 'final' && room && player && (
-        <FinalResultsScreen
-          room={room}
-          currentPlayerId={player.id}
-          onPlayAgain={handlePlayAgain}
-        />
-      )
-    }
-  </div >
-);
+      {/* Final Results Screen */}
+      {
+        currentScreen === 'final' && room && player && (
+          <FinalResultsScreen
+            room={room}
+            currentPlayerId={player.id}
+            onPlayAgain={handlePlayAgain}
+          />
+        )
+      }
+    </div >
+  );
 }
 
 export default App;
