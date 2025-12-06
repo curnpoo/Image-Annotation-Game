@@ -1106,57 +1106,55 @@ function App() {
 
       {/* Drawing Screen */}
       {currentScreen === 'drawing' && room && room.currentImage && player && (
-        <div className="fixed inset-0 bg-90s-animated overflow-hidden">
+        <div className="fixed inset-0 overflow-hidden">
           <div
             className="h-full w-full flex flex-col p-4 pb-0"
             style={{
-              paddingTop: 'max(1rem, env(safe-area-inset-top) + 1rem)',
+              paddingTop: 'max(1rem, env(safe-area-inset-top) + 0.5rem)',
               paddingBottom: 'max(0rem, env(safe-area-inset-bottom))'
             }}
           >
-            {/* Top Info Bar - Restored Larger Layout */}
-            <div className="absolute top-4 left-0 w-full flex justify-between items-start px-4 z-20 pointer-events-none">
-              <div className="flex flex-col gap-2">
-                {/* Settings Button */}
-                <button
-                  onClick={() => setShowSettings(true)}
-                  className="bg-white p-3 rounded-2xl shadow-lg hover:scale-105 active:scale-95 transition-all w-12 h-12 flex items-center justify-center pointer-events-auto border-2 border-gray-100"
-                >
-                  ⚙️
-                </button>
+            {/* Top Info Bar - Relative Layout */}
+            <div className="w-full flex justify-between items-start px-2 z-20 pointer-events-none mb-2 shrink-0">
+              <div className="flex flex-col gap-2 w-full">
+                <div className="flex justify-between w-full">
+                  {/* Settings Button */}
+                  <button
+                    onClick={() => setShowSettings(true)}
+                    className="bg-white p-3 rounded-2xl shadow-lg hover:scale-105 active:scale-95 transition-all w-12 h-12 flex items-center justify-center pointer-events-auto border-2 border-gray-100"
+                  >
+                    ⚙️
+                  </button>
 
-                {/* Progress */}
-                <div className="bg-white/95 backdrop-blur-sm px-4 py-2 rounded-xl pop-in ml-16 flex items-center gap-2"
-                  style={{ boxShadow: '0 4px 0 rgba(155, 89, 182, 0.3)', border: '3px solid #9B59B6' }}>
-                  <span className="font-bold text-purple-600">
+                  {/* Timer or Status */}
+                  <div className="pointer-events-auto">
+                    {hasSubmitted ? (
+                      <div className="bg-green-500 text-white px-4 py-2 rounded-xl font-bold">
+                        ✓ Submitted!
+                      </div>
+                    ) : isMyTimerRunning && timerEndsAt ? (
+                      <div className="scale-90 origin-right">
+                        <Timer endsAt={timerEndsAt} onTimeUp={handleTimeUp} />
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+
+                {/* Progress Bar */}
+                <div className="bg-white/95 backdrop-blur-sm px-4 py-2 rounded-xl flex items-center justify-between gap-2 shadow-sm border-2 border-purple-200 self-center"
+                  style={{ width: 'fit-content' }}>
+                  <span className="font-bold text-purple-600 text-sm whitespace-nowrap">
                     Round {room.roundNumber}/{room.settings.totalRounds}
                   </span>
                   {room.isDoublePoints && (
-                    <span className="bg-yellow-400 text-yellow-900 px-2 py-0.5 rounded-full text-xs font-bold animate-pulse">
-                      2X POINTS!
+                    <span className="bg-yellow-400 text-yellow-900 px-2 py-0.5 rounded-full text-xs font-bold animate-pulse whitespace-nowrap">
+                      2X!
                     </span>
                   )}
-                  {room.timeBonusPlayerId === player?.id && (
-                    <span className="bg-green-400 text-green-900 px-2 py-0.5 rounded-full text-xs font-bold">
-                      +5s ⚡
-                    </span>
-                  )}
-                  <span className="ml-2 text-gray-500">
-                    {submittedCount}/{totalPlayers} drawn
+                  <span className="text-gray-400 text-xs">|</span>
+                  <span className="text-gray-500 text-sm whitespace-nowrap">
+                    {submittedCount}/{totalPlayers} done
                   </span>
-                </div>
-
-                {/* Timer or Status */}
-                <div className="pointer-events-auto">
-                  {hasSubmitted ? (
-                    <div className="bg-green-500 text-white px-4 py-2 rounded-xl font-bold">
-                      ✓ Submitted!
-                    </div>
-                  ) : isMyTimerRunning && timerEndsAt ? (
-                    <div className="scale-75 origin-left">
-                      <Timer endsAt={timerEndsAt} onTimeUp={handleTimeUp} />
-                    </div>
-                  ) : null}
                 </div>
               </div>
             </div>
@@ -1164,14 +1162,14 @@ function App() {
 
 
             {/* Image Container */}
-            <div className="flex-1 min-h-0 flex items-center justify-center p-2">
+            <div className="flex-1 min-h-0 flex items-center justify-center p-2 relative">
               <div className="relative w-full h-full max-w-lg mx-auto"
                 style={{
                   aspectRatio: '1 / 1',
-                  maxHeight: 'calc(100vh - 280px)',
+                  maxHeight: '100%', // Allow it to perform natural contain within flex item
                   borderRadius: '1.5rem',
                   overflow: 'hidden',
-                  boxShadow: '0 10px 0 rgba(155, 89, 182, 0.4)',
+                  boxShadow: '0 10px 30px -10px rgba(0,0,0,0.2)',
                   border: '5px solid white'
                 }}>
                 {/* Base Image */}

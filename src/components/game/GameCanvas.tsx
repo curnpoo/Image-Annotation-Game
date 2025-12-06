@@ -27,13 +27,14 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
 }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
-    const wrapperRef = useRef<HTMLDivElement>(null); // New wrapper ref
-    const imageCanvasRef = useRef<HTMLCanvasElement | null>(null);
     const [isDrawing, setIsDrawing] = useState(false);
     const [currentStroke, setCurrentStroke] = useState<DrawingStroke | null>(null);
-    const [canvasSize, setCanvasSize] = useState(300); // Default start size
 
-    // Initialize hidden image canvas
+    // No internal image canvas needed for display, only for eyedropper color picking
+    // But we still need to load the image into a hidden canvas if we want to pick colors from it.
+    // We can keep imageCanvasRef logic.
+    const imageCanvasRef = useRef<HTMLCanvasElement | null>(null);
+
     useEffect(() => {
         if (!imageUrl) return;
         const img = new Image();
@@ -64,24 +65,19 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
 
-        // Draw all completed strokes (convert from percentage to pixels)
         strokes.forEach(stroke => {
             if (stroke.points.length === 0) return;
-
             ctx.beginPath();
             ctx.strokeStyle = stroke.color;
             ctx.fillStyle = stroke.color;
             ctx.lineWidth = stroke.size;
             ctx.globalCompositeOperation = stroke.isEraser ? 'destination-out' : 'source-over';
-
             if (stroke.points.length === 1) {
-                // Draw dot
                 const x = stroke.points[0].x / 100 * width;
                 const y = stroke.points[0].y / 100 * height;
                 ctx.arc(x, y, stroke.size / 2, 0, Math.PI * 2);
                 ctx.fill();
             } else {
-                // Draw line
                 ctx.moveTo(stroke.points[0].x / 100 * width, stroke.points[0].y / 100 * height);
                 for (let i = 1; i < stroke.points.length; i++) {
                     ctx.lineTo(stroke.points[i].x / 100 * width, stroke.points[i].y / 100 * height);
@@ -90,16 +86,13 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
             }
         });
 
-        // Draw current stroke
         if (currentStroke && currentStroke.points.length > 0) {
             ctx.beginPath();
             ctx.strokeStyle = currentStroke.color;
             ctx.fillStyle = currentStroke.color;
             ctx.lineWidth = currentStroke.size;
             ctx.globalCompositeOperation = currentStroke.isEraser ? 'destination-out' : 'source-over';
-
             if (currentStroke.points.length === 1) {
-                // Draw dot
                 const x = currentStroke.points[0].x / 100 * width;
                 const y = currentStroke.points[0].y / 100 * height;
                 ctx.arc(x, y, currentStroke.size / 2, 0, Math.PI * 2);
@@ -112,39 +105,23 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
                 ctx.stroke();
             }
         }
-
-        // Reset composite operation
         ctx.globalCompositeOperation = 'source-over';
     }, [strokes, currentStroke]);
 
-    // Initialize canvas size and image
+    // Handle resize - match resolution to container size
     useEffect(() => {
         const canvas = canvasRef.current;
         const container = containerRef.current;
-        if (!canvas || !container) return; // wrapperRef not needed for calculation
+        if (!canvas || !container) return;
 
         const resizeCanvas = () => {
-            // Force square aspect ratio based on width, but max out at height
+            // Simply match the container's size (controlled by parent CSS)
             const width = container.clientWidth;
             const height = container.clientHeight;
 
-            // Subtract padding/safe area
-            const safeHeight = height - 100; // Buffer for UI elements
-            const size = Math.min(width - 32, safeHeight); // -32 for horizontal padding
-
-            // Update State (triggers re-render with correct style)
-            setCanvasSize(size);
-
-            // Set Canvas Resolution (needs to match display size for 1:1 strokes)
-            // We set this imperatively because it clears the canvas if we rely on props only? 
-            // Actually, setting width/height on canvas clears it. 
-            // We should only do this if size CHANGED significantly.
-            if (canvas.width !== size || canvas.height !== size) {
-                canvas.width = size;
-                canvas.height = size;
-                // We need to request a redraw after this update propagates
-                // But the drawAll effect depends on 'strokes' or implicit mounting.
-                // We can call drawAll() immediately, but if width changed, it clears.
+            if (canvas.width !== width || canvas.height !== height) {
+                canvas.width = width;
+                canvas.height = height;
                 requestAnimationFrame(drawAll);
             }
         };
@@ -153,20 +130,19 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         resizeCanvas();
 
         return () => window.removeEventListener('resize', resizeCanvas);
-    }, [imageUrl, drawAll]); // added drawAll to dep array for safety
+    }, [drawAll]);
 
+    // Draw when strokes change
     useEffect(() => {
         drawAll();
     }, [drawAll]);
 
-    // Get point as percentage of canvas
     const getPoint = (e: React.MouseEvent | React.TouchEvent) => {
         const canvas = canvasRef.current;
         if (!canvas) return { x: 0, y: 0 };
         const rect = canvas.getBoundingClientRect();
         const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
         const clientY = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
-        // Store as percentage (0-100)
         return {
             x: ((clientX - rect.left) / rect.width) * 100,
             y: ((clientY - rect.top) / rect.height) * 100
@@ -175,36 +151,27 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
 
     const startDrawing = (e: React.MouseEvent | React.TouchEvent) => {
         if (!isDrawingEnabled && !isEyedropper) return;
-        // Only prevent default on touch to allow mouse interactions elsewhere if needed
         if ('touches' in e) e.preventDefault();
-
-        // Haptic feedback
         vibrate(HapticPatterns.soft);
-
         const point = getPoint(e);
 
         if (isEyedropper && onColorPick) {
+            // Eyedropper logic remains same...
             const canvas = canvasRef.current;
             const imgCanvas = imageCanvasRef.current;
             if (!canvas) return;
-
-            // 1. Try picking from strokes (current canvas)
+            // 1. Try picking from strokes
             const ctx = canvas.getContext('2d');
             if (ctx) {
-                // Point is in percentage, convert to px
                 const x = (point.x / 100) * canvas.width;
                 const y = (point.y / 100) * canvas.height;
                 const p = ctx.getImageData(x, y, 1, 1).data;
-
                 if (p[3] > 0) {
-                    // Found color in strokes
-                    // RGB to Hex
                     const hex = "#" + [p[0], p[1], p[2]].map(x => x.toString(16).padStart(2, '0')).join('');
                     onColorPick(hex);
                     return;
                 }
             }
-
             // 2. Try picking from image
             if (imgCanvas) {
                 const ctx = imgCanvas.getContext('2d');
@@ -212,7 +179,6 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
                     const x = (point.x / 100) * imgCanvas.width;
                     const y = (point.y / 100) * imgCanvas.height;
                     const p = ctx.getImageData(x, y, 1, 1).data;
-
                     const hex = "#" + [p[0], p[1], p[2]].map(x => x.toString(16).padStart(2, '0')).join('');
                     onColorPick(hex);
                     return;
@@ -244,8 +210,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         if (!isDrawing) return;
         setIsDrawing(false);
         if (currentStroke) {
-            const newStrokes = [...strokes, currentStroke];
-            onStrokesChange(newStrokes);
+            onStrokesChange([...strokes, currentStroke]);
             setCurrentStroke(null);
         }
     };
@@ -253,53 +218,24 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
     return (
         <div
             ref={containerRef}
-            className="absolute inset-0 touch-none select-none overflow-hidden"
+            className="absolute inset-0 w-full h-full touch-none"
             style={{
-                WebkitUserSelect: 'none',
-                WebkitTouchCallout: 'none',
-                WebkitTapHighlightColor: 'transparent',
+                touchAction: 'none',
                 userSelect: 'none',
-                paddingTop: 'max(env(safe-area-inset-top), 2rem)', // Safe area + padding
-                paddingBottom: 'max(env(safe-area-inset-bottom), 1rem)',
-                paddingLeft: '1rem',
-                paddingRight: '1rem',
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center'
+                WebkitUserSelect: 'none'
             }}
         >
-            {/* Image Layer - Visible Image */}
-            <div
-                ref={wrapperRef}
-                className="relative shadow-2xl overflow-hidden bg-gray-100 transition-all duration-200"
-                style={{
-                    width: canvasSize,
-                    height: canvasSize,
-                    borderRadius: '20px',
-                    flexShrink: 0
-                }}
-            >
-                {imageUrl && (
-                    <img
-                        src={imageUrl}
-                        alt="Game target"
-                        className="absolute inset-0 w-full h-full object-contain pointer-events-none select-none"
-                    />
-                )}
-
-                {/* Drawing Layer - Strict Square Canvas */}
-                <canvas
-                    ref={canvasRef}
-                    className={`absolute inset-0 w-full h-full touch-none ${isEyedropper ? 'cursor-cell' : 'cursor-crosshair'}`}
-                    onMouseDown={startDrawing}
-                    onMouseMove={draw}
-                    onMouseUp={stopDrawing}
-                    onMouseLeave={stopDrawing}
-                    onTouchStart={startDrawing}
-                    onTouchMove={draw}
-                    onTouchEnd={stopDrawing}
-                />
-            </div>
+            <canvas
+                ref={canvasRef}
+                className={`w-full h-full block touch-none ${isEyedropper ? 'cursor-cell' : 'cursor-crosshair'}`}
+                onMouseDown={startDrawing}
+                onMouseMove={draw}
+                onMouseUp={stopDrawing}
+                onMouseLeave={stopDrawing}
+                onTouchStart={startDrawing}
+                onTouchMove={draw}
+                onTouchEnd={stopDrawing}
+            />
         </div>
     );
 };
