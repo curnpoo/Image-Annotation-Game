@@ -39,25 +39,32 @@ const defaultCosmetics: PlayerCosmetics = {
 export const AuthService = {
     // Check if a username already exists
     async usernameExists(username: string): Promise<boolean> {
-        const usersRef = ref(database, USERS_PATH);
-        const usernameQuery = query(usersRef, orderByChild('username'), equalTo(username.toLowerCase()));
-        const snapshot = await get(usernameQuery);
-        return snapshot.exists();
+        try {
+            const usersRef = ref(database, USERS_PATH);
+            const usernameQuery = query(usersRef, orderByChild('username'), equalTo(username.toLowerCase()));
+            const snapshot = await get(usernameQuery);
+            return snapshot.exists();
+        } catch (error) {
+            console.error('Error checking username:', error);
+            // Default to false so user can TRY to register if it's just a permission/network blip?
+            // Or true to be safe? 
+            // If permissions are denied (read: false), this throws. 
+            // We should probably let the registration attempt fail with a specific error if write also fails.
+            throw error;
+        }
     },
 
     // Register a new user
-    async register(username: string, pin: string): Promise<UserAccount | null> {
+    async register(username: string, pin: string): Promise<{ success: boolean; user?: UserAccount; error?: string }> {
         try {
-            // Check username availability
-            if (await this.usernameExists(username)) {
-                console.error('Username already taken');
-                return null;
-            }
-
             // Validate PIN
             if (pin.length !== 4 || !/^\d+$/.test(pin)) {
-                console.error('PIN must be 4 digits');
-                return null;
+                return { success: false, error: 'PIN must be 4 digits' };
+            }
+
+            // Check username availability
+            if (await this.usernameExists(username)) {
+                return { success: false, error: 'Username already taken' };
             }
 
             const userId = crypto.randomUUID ? crypto.randomUUID() : Date.now().toString();
@@ -82,51 +89,58 @@ export const AuthService = {
             // Save locally
             localStorage.setItem(LOCAL_USER_KEY, JSON.stringify(newUser));
 
-            return newUser;
-        } catch (error) {
+            return { success: true, user: newUser };
+        } catch (error: any) {
             console.error('Registration failed:', error);
-            return null;
+            if (error.code === 'PERMISSION_DENIED') {
+                return { success: false, error: 'Database access denied. Check Firebase rules.' };
+            }
+            return { success: false, error: error.message || 'Registration failed due to network or server error.' };
         }
     },
 
     // Login with username and PIN
-    async login(username: string, pin: string): Promise<UserAccount | null> {
+    async login(username: string, pin: string): Promise<{ success: boolean; user?: UserAccount; error?: string }> {
         try {
             const usersRef = ref(database, USERS_PATH);
             const usernameQuery = query(usersRef, orderByChild('username'), equalTo(username.toLowerCase()));
             const snapshot = await get(usernameQuery);
 
             if (!snapshot.exists()) {
-                console.error('User not found');
-                return null;
+                return { success: false, error: 'User not found' };
             }
 
-            // Get the user data
+            // Should only be one user with this username
             let user: UserAccount | null = null;
             snapshot.forEach((child) => {
-                const userData = child.val() as UserAccount;
-                if (userData.pinHash === hashPin(pin)) {
-                    user = userData;
-                }
+                user = child.val();
             });
 
-            if (!user) {
-                console.error('Invalid PIN');
-                return null;
+            if (!user) return { success: false, error: 'User data corrupted' };
+
+            // Check PIN
+            if ((user as UserAccount).pinHash !== hashPin(pin)) {
+                return { success: false, error: 'Incorrect PIN' };
             }
 
-            // Update last login - need to cast to avoid TS narrowing issue
-            const loggedInUser = user as UserAccount;
-            loggedInUser.lastLoginAt = Date.now();
-            await set(ref(database, `${USERS_PATH}/${loggedInUser.id}/lastLoginAt`), loggedInUser.lastLoginAt);
+            // Update Login Time
+            const u = user as UserAccount;
+            const updates = { lastLoginAt: Date.now() };
+            // Fire and forget update
+            AuthService.updateUser(u.id, updates);
 
             // Save locally
-            localStorage.setItem(LOCAL_USER_KEY, JSON.stringify(loggedInUser));
+            const updatedUser = { ...u, lastLoginAt: Date.now() };
+            localStorage.setItem(LOCAL_USER_KEY, JSON.stringify(updatedUser));
 
-            return loggedInUser;
-        } catch (error) {
+            return { success: true, user: updatedUser };
+
+        } catch (error: any) {
             console.error('Login failed:', error);
-            return null;
+            if (error.code === 'PERMISSION_DENIED') {
+                return { success: false, error: 'Database access denied. Check Firebase rules.' };
+            }
+            return { success: false, error: error.message || 'Login failed' };
         }
     },
 

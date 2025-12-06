@@ -24,27 +24,21 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
         setError(null);
 
         try {
-            let result;
-            if (mode === 'register') {
-                result = await AuthService.register(username.trim(), pin);
-                if (!result) {
-                    setError('Username already taken or invalid PIN');
-                }
-            } else {
-                result = await AuthService.login(username.trim(), pin);
-                if (!result) {
-                    setError('Invalid username or PIN');
-                }
-            }
+            const result = mode === 'register'
+                ? await AuthService.register(username.trim(), pin)
+                : await AuthService.login(username.trim(), pin);
 
-            if (result) {
+            if (result.success) {
                 vibrate(HapticPatterns.success);
+                // The onLogin callback typically re-checks AuthService.getCurrentUser() 
+                // or we could pass the user object, but existing flow relies on AuthService state/storage.
                 onLogin();
             } else {
+                setError(result.error || 'Authentication failed');
                 vibrate(HapticPatterns.error);
             }
-        } catch (err) {
-            setError('Something went wrong. Please try again.');
+        } catch (err: any) {
+            setError(err.message || 'Something went wrong. Please try again.');
             vibrate(HapticPatterns.error);
         } finally {
             setLoading(false);
@@ -177,10 +171,10 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
                         onClick={handleSubmit}
                         disabled={loading || !username.trim() || pin.length !== 4}
                         className={`w-full py-4 rounded-xl font-bold text-lg transition-all ${loading
-                                ? 'bg-gray-400 text-white'
-                                : mode === 'register'
-                                    ? 'bg-gradient-to-r from-green-400 to-emerald-600 text-white hover:scale-[1.02]'
-                                    : 'bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:scale-[1.02]'
+                            ? 'bg-gray-400 text-white'
+                            : mode === 'register'
+                                ? 'bg-gradient-to-r from-green-400 to-emerald-600 text-white hover:scale-[1.02]'
+                                : 'bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:scale-[1.02]'
                             } disabled:opacity-50`}
                     >
                         {loading
