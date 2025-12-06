@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import type { GameRoom } from '../../types';
 import { AvatarDisplay } from '../common/AvatarDisplay';
+import { GameCanvas } from '../game/GameCanvas';
 import { vibrate, HapticPatterns } from '../../utils/haptics';
 
 interface VotingScreenProps {
@@ -131,39 +132,18 @@ export const VotingScreen: React.FC<VotingScreenProps> = ({
                         />
                     )}
 
-                    {/* Drawing overlay - use viewBox for percentage coordinates */}
-                    <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-                        {currentDrawing.drawing.strokes && Array.isArray(currentDrawing.drawing.strokes) && currentDrawing.drawing.strokes.map((stroke, i) => {
-                            if (!stroke || !stroke.points || !Array.isArray(stroke.points) || stroke.points.length === 0) return null;
-
-                            if (stroke.points.length === 1) {
-                                const p = stroke.points[0];
-                                return (
-                                    <circle
-                                        key={i}
-                                        cx={p.x}
-                                        cy={p.y}
-                                        r={(stroke.size / 3) / 2}
-                                        fill={stroke.color}
-                                    />
-                                );
-                            }
-
-                            return (
-                                <path
-                                    key={i}
-                                    d={stroke.points.map((p, j) =>
-                                        p ? `${j === 0 ? 'M' : 'L'} ${p.x} ${p.y}` : ''
-                                    ).join(' ')}
-                                    stroke={stroke.color}
-                                    strokeWidth={stroke.size / 3}
-                                    fill="none"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                />
-                            );
-                        })}
-                    </svg>
+                    {/* Drawing overlay - use GameCanvas for proper eraser rendering */}
+                    <div className="absolute inset-0 pointer-events-none">
+                        <GameCanvas
+                            imageUrl={room.currentImage?.url || ''}
+                            brushColor="#000000" // Dummy value, not used in read-only
+                            brushSize={10} // Dummy value
+                            isDrawingEnabled={false}
+                            strokes={currentDrawing.drawing.strokes || []}
+                            onStrokesChange={() => { }} // Read-only
+                            isEraser={false}
+                        />
+                    </div>
                 </div>
 
                 {/* Navigation Dots */}
