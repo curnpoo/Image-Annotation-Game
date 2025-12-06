@@ -2,6 +2,7 @@
 import { ref, get, set, query, orderByChild, equalTo } from 'firebase/database';
 import { database } from '../firebase';
 import type { UserAccount, PlayerStats, PlayerCosmetics } from '../types';
+import { CurrencyService } from './currency';
 
 const USERS_PATH = 'users';
 const LOCAL_USER_KEY = 'logged_in_user';
@@ -92,6 +93,9 @@ export const AuthService = {
             // Save locally
             localStorage.setItem(LOCAL_USER_KEY, JSON.stringify(newUser));
 
+            // Sync Currency
+            CurrencyService.setCurrency(newUser.currency || 0);
+
             return { success: true, user: newUser };
         } catch (error: any) {
             console.error('Registration failed:', error);
@@ -135,6 +139,11 @@ export const AuthService = {
             // Save locally
             const updatedUser = { ...u, lastLoginAt: Date.now() };
             localStorage.setItem(LOCAL_USER_KEY, JSON.stringify(updatedUser));
+
+            // Sync Currency
+            if (updatedUser.currency !== undefined) {
+                CurrencyService.setCurrency(updatedUser.currency);
+            }
 
             return { success: true, user: updatedUser };
 
@@ -206,6 +215,12 @@ export const AuthService = {
                 }
 
                 localStorage.setItem(LOCAL_USER_KEY, JSON.stringify(user));
+
+                // Sync Currency
+                if (user.currency !== undefined) {
+                    CurrencyService.setCurrency(user.currency);
+                }
+
                 return user;
             }
         } catch (error) {
