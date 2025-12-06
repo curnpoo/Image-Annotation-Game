@@ -13,8 +13,8 @@ import { CasinoScreen } from './components/screens/CasinoScreen';
 import { HomeScreen } from './components/screens/HomeScreen';
 import { StoreScreen } from './components/screens/StoreScreen';
 import { ProfileScreen } from './components/screens/ProfileScreen';
-
 import { LoginScreen } from './components/screens/LoginScreen';
+import { AvatarEditorScreen } from './components/screens/AvatarEditorScreen';
 import { AuthService } from './services/auth';
 import { StorageService } from './services/storage';
 import { ImageService } from './services/image';
@@ -42,7 +42,7 @@ import { requestPushPermission, storePushToken, isPushSupported } from './servic
 
 import type { Player, DrawingStroke, GameSettings, PlayerDrawing, GameRoom } from './types';
 
-type Screen = 'welcome' | 'login' | 'name-entry' | 'home' | 'room-selection' | 'store' | 'profile' | 'lobby' | 'waiting' | 'uploading' | 'drawing' | 'voting' | 'results' | 'final';
+type Screen = 'welcome' | 'login' | 'name-entry' | 'home' | 'room-selection' | 'store' | 'profile' | 'avatar-editor' | 'lobby' | 'waiting' | 'uploading' | 'drawing' | 'voting' | 'results' | 'final';
 
 interface ToastState {
   message: string;
@@ -895,8 +895,8 @@ function App() {
         </div>
       )}
 
-      {/* Settings Button - Show on all screens except welcome/name-entry/home */}
-      {player && currentScreen !== 'welcome' && currentScreen !== 'name-entry' && currentScreen !== 'home' && currentScreen !== 'store' && currentScreen !== 'profile' && (
+      {/* Settings Button - Show only during active game rounds (excluding drawing which has its own) */}
+      {player && ['waiting', 'uploading', 'voting', 'results', 'final'].includes(currentScreen) && (
         <div className="fixed left-4 z-50 flex items-center gap-2" style={{ top: 'max(1rem, env(safe-area-inset-top) + 1rem)' }}>
           <button
             onClick={() => setShowSettings(true)}
@@ -904,13 +904,6 @@ function App() {
             title="Settings"
           >
             ⚙️
-          </button>
-          <button
-            onClick={() => setShowCasino(true)}
-            className="bg-yellow-400/90 backdrop-blur-sm p-3 rounded-xl shadow-lg border-2 border-yellow-500 hover:border-yellow-600 transition-all hover:scale-110"
-            title="Casino"
-          >
-            🎰
           </button>
         </div>
       )}
@@ -931,7 +924,7 @@ function App() {
           onUpdateProfile={handleUpdateProfile}
           onLeaveGame={roomCode ? handleLeaveGame : undefined}
           onEndGame={room?.hostId === player.id ? handleEndGame : undefined}
-          onGoHome={handleGoHome}
+
           onKick={async (playerId) => {
             if (!roomCode) return;
             try {
@@ -1003,11 +996,19 @@ function App() {
       {currentScreen === 'profile' && player && (
         <ProfileScreen
           player={player}
-          onBack={() => setCurrentScreen('home')}
-          onUpdateProfile={(updates) => {
-            const updatedPlayer = { ...player, ...updates };
-            setPlayer(updatedPlayer);
-            StorageService.saveSession(updatedPlayer);
+          onBack={handleGoHome}
+          onUpdateProfile={handleUpdateProfile}
+          onEditAvatar={() => setCurrentScreen('avatar-editor')}
+        />
+      )}
+
+      {currentScreen === 'avatar-editor' && player && (
+        <AvatarEditorScreen
+          player={player}
+          onCancel={() => setCurrentScreen('profile')}
+          onSave={(strokes, color, frame) => {
+            handleUpdateProfile({ avatarStrokes: strokes, color, frame });
+            setCurrentScreen('profile');
           }}
         />
       )}
@@ -1302,42 +1303,36 @@ function App() {
       )}
 
       {/* Voting Screen */}
-      {
-        currentScreen === 'voting' && room && player && (
-          <VotingScreen
-            room={room}
-            currentPlayerId={player.id}
-            onVote={handleVote}
-          />
-        )
-      }
+      {currentScreen === 'voting' && room && player && (
+        <VotingScreen
+          room={room}
+          currentPlayerId={player.id}
+          onVote={handleVote}
+          showToast={showToast}
+        />
+      )}
 
       {/* Results Screen */}
-      {
-        currentScreen === 'results' && room && player && (
-          <ResultsScreen
-            room={room}
-            currentPlayerId={player.id}
-            onNextRound={handleNextRound}
-          />
-        )
-      }
+      {currentScreen === 'results' && room && player && (
+        <ResultsScreen
+          room={room}
+          currentPlayerId={player.id}
+          player={player}
+          onNextRound={handleNextRound}
+          showToast={showToast}
+        />
+      )}
 
       {/* Final Results Screen */}
-      {
-        currentScreen === 'final' && room && player && (
-          <FinalResultsScreen
-            room={room}
-            currentPlayerId={player.id}
-            onPlayAgain={handlePlayAgain}
-            onGoHome={() => {
-              setRoomCode(null);
-              StorageService.leaveRoom();
-              setCurrentScreen('home');
-            }}
-          />
-        )
-      }
+      {currentScreen === 'final' && room && player && (
+        <FinalResultsScreen
+          room={room}
+          currentPlayerId={player.id}
+          onPlayAgain={handlePlayAgain}
+          onGoHome={handleGoHome}
+          showToast={showToast}
+        />
+      )}
     </div >
   );
 }

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import type { Player, DrawingStroke } from '../../types';
+import type { Player } from '../../types';
 import { AvatarDisplay } from '../common/AvatarDisplay';
 import { CurrencyService, formatCurrency } from '../../services/currency';
 import { StatsModal } from '../common/StatsModal';
@@ -8,18 +8,16 @@ interface ProfileScreenProps {
     player: Player;
     onBack: () => void;
     onUpdateProfile: (updates: Partial<Player>) => void;
+    onEditAvatar: () => void;
 }
-
-const COLORS = ['#FF69B4', '#9B59B6', '#3498DB', '#1ABC9C', '#F1C40F', '#E67E22', '#E74C3C', '#34495E', '#000000'];
 
 export const ProfileScreen: React.FC<ProfileScreenProps> = ({
     player,
     onBack,
-    onUpdateProfile
+    onUpdateProfile,
+    onEditAvatar
 }) => {
     const [name, setName] = useState(player.name);
-    const [strokes] = useState<DrawingStroke[]>(player.avatarStrokes || []);
-    const [color, setColor] = useState(player.color);
     const [showStats, setShowStats] = useState(false);
 
     const balance = CurrencyService.getCurrency();
@@ -27,9 +25,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
     const handleSave = () => {
         if (name.trim()) {
             onUpdateProfile({
-                name: name.trim(),
-                avatarStrokes: strokes,
-                color
+                name: name.trim()
             });
             onBack();
         }
@@ -88,63 +84,33 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                 {/* Avatar Display */}
                 <div className="bg-white rounded-2xl p-4 shadow-lg">
                     <label className="block text-sm font-bold text-gray-700 mb-2">YOUR AVATAR</label>
-                    <div className="flex justify-center">
-                        <div className="w-24 h-24">
+                    <button
+                        onClick={onEditAvatar}
+                        className="w-full flex flex-col items-center p-4 rounded-xl border-2 border-dashed border-gray-300 hover:border-blue-500 hover:bg-blue-50 transition-all group"
+                    >
+                        <div className="w-32 h-32 relative mb-2 group-hover:scale-105 transition-transform">
                             <AvatarDisplay
-                                strokes={strokes}
+                                strokes={player.avatarStrokes}
                                 avatar={player.avatar}
                                 frame={player.frame}
-                                color={color}
-                                size={96}
+                                color={player.color}
+                                size={128}
                             />
-                        </div>
-                    </div>
-                    <p className="text-center text-xs text-gray-400 mt-2">Edit avatar in name-entry screen</p>
-                </div>
-
-                {/* Color Selection */}
-                <div className="bg-white rounded-2xl p-4 shadow-lg">
-                    <label className="block text-sm font-bold text-gray-700 mb-2">CARD COLOR</label>
-                    <div className="flex flex-wrap justify-center gap-2">
-                        {COLORS.map(c => (
-                            <button
-                                key={c}
-                                onClick={() => setColor(c)}
-                                className={`w-10 h-10 rounded-full border-4 transition-all ${color === c ? 'scale-110 border-blue-500' : 'border-transparent hover:scale-105'
-                                    }`}
-                                style={{ backgroundColor: c }}
-                            />
-                        ))}
-                    </div>
-                </div>
-
-                {/* Preview */}
-                <div className="flex justify-center py-4">
-                    <div className="bg-white rounded-2xl p-4 shadow-lg">
-                        <div className="text-center text-xs font-bold text-gray-400 mb-2">PREVIEW</div>
-                        <div className="flex items-center gap-3 bg-gray-50 rounded-xl p-3" style={{ borderLeft: `4px solid ${color}` }}>
-                            <AvatarDisplay
-                                strokes={strokes}
-                                avatar={player.avatar}
-                                frame={player.frame}
-                                color={color}
-                                size={50}
-                            />
-                            <div>
-                                <div className="font-bold text-gray-800">{name || 'Player'}</div>
-                                <div className="text-xs text-gray-500">Ready to play!</div>
+                            <div className="absolute bottom-0 right-0 bg-blue-500 text-white p-2 rounded-full shadow-lg">
+                                ✏️
                             </div>
                         </div>
-                    </div>
+                        <span className="text-blue-500 font-bold">Tap to Edit Avatar</span>
+                    </button>
                 </div>
+            </div>
 
-                {/* Save Button */}
+            <div className="p-4 bg-white/10 backdrop-blur-sm safe-area-inset-bottom">
                 <button
                     onClick={handleSave}
-                    disabled={!name.trim()}
-                    className="w-full bg-gradient-to-r from-green-400 to-green-600 text-white py-4 rounded-2xl font-bold text-lg shadow-lg hover:scale-[1.02] transition-all disabled:opacity-50"
+                    className="w-full py-4 bg-black text-white font-bold text-xl rounded-2xl shadow-lg hover:bg-gray-800 active:scale-95 transition-all"
                 >
-                    ✓ SAVE CHANGES
+                    Save Changes
                 </button>
             </div>
 

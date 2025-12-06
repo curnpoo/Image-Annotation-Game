@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import type { GameRoom } from '../../types';
+import { XPService } from '../../services/xp';
+import { AuthService } from '../../services/auth';
+import type { GameRoom, Player } from '../../types';
 import { AvatarDisplay } from '../common/AvatarDisplay';
 import { Confetti } from '../common/Confetti';
 import { vibrate, HapticPatterns } from '../../utils/haptics';
@@ -7,7 +9,9 @@ import { vibrate, HapticPatterns } from '../../utils/haptics';
 interface ResultsScreenProps {
     room: GameRoom;
     currentPlayerId: string;
+    player: Player;
     onNextRound: () => void;
+    showToast: (message: string, type: 'success' | 'error' | 'info') => void;
 }
 
 // Fun award definitions
@@ -22,11 +26,80 @@ const AWARDS = [
 export const ResultsScreen: React.FC<ResultsScreenProps> = ({
     room,
     currentPlayerId,
-    onNextRound
+    onNextRound,
+    player, // Destructure player prop
+    showToast // Destructure showToast prop
 }) => {
     const [mounted, setMounted] = useState(false);
     const [showPodium, setShowPodium] = useState(false);
     const [showConfetti, setShowConfetti] = useState(false);
+
+    // Track if we've already processed this round's results to avoid double XP
+    const [processedRound, setProcessedRound] = useState<number>(-1);
+
+    useEffect(() => {
+        if (!room.roundResults || room.roundResults.length === 0) return;
+
+        const latestResult = room.roundResults[room.roundResults.length - 1];
+
+        // Only process if we haven't seen this round yet
+        if (latestResult.roundNumber !== processedRound) {
+            setProcessedRound(latestResult.roundNumber);
+
+            // Find my rank
+            const myRankIndex = latestResult.rankings.findIndex(r => r.playerId === player.id);
+            if (myRankIndex !== -1) {
+                const rank = myRankIndex + 1; // 1st, 2nd, 3rd
+                let xpAward = 0;
+                let wonRound = false;
+
+                if (rank === 1) {
+                    xpAward = 50;
+                    wonRound = true;
+                } else if (rank === 2) {
+                    xpAward = 30;
+                } else if (rank === 3) {
+                    xpAward = 15;
+                } else {
+                    xpAward = 5; // Participation
+                }
+
+                // Double XP check
+                if (room.isDoublePoints) xpAward *= 2;
+
+                const { leveledUp, newLevel } = XPService.addXP(xpAward);
+
+                // Show toast for significant XP
+                setTimeout(() => {
+                    if (leveledUp) {
+                        showToast(`🎉 Level Up! Level ${newLevel}!`, 'success');
+                    } else if (xpAward >= 15) {
+                        showToast(`+${xpAward} XP! ${rank === 1 ? '🥇' : rank === 2 ? '🥈' : '🥉'}`, 'success');
+                    }
+                }, 1000); // Slight delay to let animations start
+
+                // Update Stats
+                const currentStats = AuthService.getCurrentUser()?.stats || {
+                    gamesPlayed: 0, gamesWon: 0, roundsWon: 0, roundsLost: 0,
+                    timesSabotaged: 0, timesSaboteur: 0, totalCurrencyEarned: 0,
+                    totalXPEarned: 0, highestLevel: 1
+                };
+
+                const newStats = {
+                    ...currentStats,
+                    roundsWon: currentStats.roundsWon + (wonRound ? 1 : 0),
+                    roundsLost: currentStats.roundsLost + (wonRound ? 0 : 1),
+                    totalXPEarned: currentStats.totalXPEarned + xpAward,
+                    highestLevel: Math.max(currentStats.highestLevel, newLevel || 1)
+                };
+
+                // Sync to AuthService (local + eventually firebase)
+                if (AuthService.getCurrentUser()) {
+                    AuthService.updateUser(player.id, { stats: newStats, xp: XPService.getXP() });
+                }
+            }
+        }
+    }, [room.roundResults, processedRound, player.id, room.isDoublePoints, showToast, room.roundNumber]); // Added room.roundNumber to dependencies for completeness
 
     useEffect(() => {
         setMounted(true);

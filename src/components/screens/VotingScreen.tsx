@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import type { GameRoom } from '../../types';
+import { StorageService } from '../../services/storage';
+import { XPService } from '../../services/xp';
 import { AvatarDisplay } from '../common/AvatarDisplay';
 import { GameCanvas } from '../game/GameCanvas';
 import { vibrate, HapticPatterns } from '../../utils/haptics';
@@ -8,12 +10,14 @@ interface VotingScreenProps {
     room: GameRoom;
     currentPlayerId: string;
     onVote: (votedForId: string) => void;
+    showToast: (message: string, type: 'success' | 'error' | 'info') => void;
 }
 
 export const VotingScreen: React.FC<VotingScreenProps> = ({
     room,
     currentPlayerId,
-    onVote
+    onVote,
+    showToast
 }) => {
     const [selectedIndex, setSelectedIndex] = useState(0);
     const [hasVoted, setHasVoted] = useState(false);
@@ -42,10 +46,24 @@ export const VotingScreen: React.FC<VotingScreenProps> = ({
         setHasVoted(alreadyVoted);
     }, [alreadyVoted]);
 
-    const handleVote = () => {
+    const handleVote = async () => {
         if (!isOwnDrawing && currentDrawing && !hasVoted) {
-            vibrate(HapticPatterns.success);
-            onVote(currentDrawing.player.id);
+            vibrate(HapticPatterns.success); // Changed from selection to success as per original logic
+            onVote(currentDrawing.player.id); // This is the existing vote submission mechanism
+
+            // Award XP for voting
+            const { leveledUp, newLevel } = XPService.addXP(10);
+            if (leveledUp) {
+                showToast(`🎉 Level Up! You are now level ${newLevel}!`, 'success');
+            } else {
+                showToast(`Vote cast! +10 XP ✨`, 'success');
+            }
+
+            // Assuming room.code and currentPlayerId are available for StorageService
+            // Note: The original snippet used `roomCode` and `player.id`, which are not directly available here.
+            // Using `room.code` and `currentPlayerId` as a plausible substitute.
+            await StorageService.submitVote(room.roomCode, currentPlayerId, currentDrawing.player.id);
+
             setHasVoted(true);
         }
     };

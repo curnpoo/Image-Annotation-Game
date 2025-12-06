@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { XPService } from '../../services/xp';
+import { AuthService } from '../../services/auth';
 import type { GameRoom } from '../../types';
 import { Confetti } from '../common/Confetti';
 import { vibrate, HapticPatterns } from '../../utils/haptics';
@@ -8,13 +10,15 @@ interface FinalResultsScreenProps {
     currentPlayerId: string;
     onPlayAgain: () => void;
     onGoHome: () => void;
+    showToast: (message: string, type: 'success' | 'error' | 'info') => void;
 }
 
 export const FinalResultsScreen: React.FC<FinalResultsScreenProps> = ({
     room,
     currentPlayerId,
     onPlayAgain,
-    onGoHome
+    onGoHome,
+    showToast
 }) => {
     const [mounted, setMounted] = useState(false);
     const [showConfetti, setShowConfetti] = useState(false);
@@ -26,6 +30,57 @@ export const FinalResultsScreen: React.FC<FinalResultsScreenProps> = ({
             vibrate(HapticPatterns.success);
         }, 800);
     }, []);
+
+    // Process final stats once
+    useEffect(() => {
+        const processFinalStats = async () => {
+            // prevent running multiple times
+            if (sessionStorage.getItem(`processed_game_${room.roomCode}`)) return;
+            sessionStorage.setItem(`processed_game_${room.roomCode}`, 'true');
+
+            // 1. Award Completion XP
+            const { leveledUp, newLevel } = XPService.addXP(100);
+            setTimeout(() => {
+                showToast(leveledUp ? `🎉 Level Up! Level ${newLevel}` : `+100 XP Game Complete!`, 'success');
+            }, 500);
+
+            // 2. Calculate Winner
+            const sortedPlayers = [...room.players].sort((a, b) => (room.scores[b.id] || 0) - (room.scores[a.id] || 0));
+            const isWinner = sortedPlayers[0]?.id === currentPlayerId; // Changed player.id to currentPlayerId
+
+            // 3. Update Stats
+            const currentUser = AuthService.getCurrentUser();
+            if (currentUser && currentUser.id === currentPlayerId) { // Ensure we're updating the current player's stats
+                const currentStats = currentUser.stats || {
+                    gamesPlayed: 0, gamesWon: 0, roundsWon: 0, roundsLost: 0,
+                    timesSabotaged: 0, timesSaboteur: 0, totalCurrencyEarned: 0,
+                    totalXPEarned: 0, highestLevel: 1
+                };
+
+                const newStats = {
+                    ...currentStats,
+                    gamesPlayed: currentStats.gamesPlayed + 1,
+                    gamesWon: currentStats.gamesWon + (isWinner ? 1 : 0),
+                    totalXPEarned: currentStats.totalXPEarned + 100,
+                    highestLevel: Math.max(currentStats.highestLevel, newLevel || 1)
+                };
+
+                // Award Currency (e.g., 50 coins for playing, +100 for winning)
+                const currencyEarned = 50 + (isWinner ? 100 : 0);
+                const newCurrency = (currentUser.currency || 0) + currencyEarned;
+
+                AuthService.updateUser(currentPlayerId, { // Changed player.id to currentPlayerId
+                    stats: newStats,
+                    xp: XPService.getXP(),
+                    currency: newCurrency
+                });
+
+                showToast(`+${currencyEarned} Coins Earned! 🪙`, 'success');
+            }
+        };
+
+        processFinalStats();
+    }, [room.roomCode, currentPlayerId, room.players, room.scores, showToast]); // Changed player.id to currentPlayerId
 
     const isHost = room.hostId === currentPlayerId;
 

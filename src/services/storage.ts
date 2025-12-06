@@ -427,13 +427,26 @@ export const StorageService = {
                 }
             }
 
+            let newUploaderId = r.currentUploaderId;
+            // If the player leaving was the current uploader (and we are in uploading phase)
+            if (playerId === r.currentUploaderId && r.status === 'uploading') {
+                if (newPlayers.length > 0) {
+                    const randomPlayer = newPlayers[Math.floor(Math.random() * newPlayers.length)];
+                    newUploaderId = randomPlayer.id;
+                } else {
+                    // No players left? Game is effectively empty, but we'll set to null or handle in checkAndAdvance
+                    // Actually, if 0 players, room handling might close it or wait
+                }
+            }
+
             const updatedRoom = {
                 ...r,
                 players: newPlayers,
                 waitingPlayers: newWaiting,
                 playerStates: newPlayerStates,
                 votes: newVotes,
-                hostId: newHostId
+                hostId: newHostId,
+                currentUploaderId: newUploaderId
             };
 
             return StorageService.checkAndAdvanceState(updatedRoom);
@@ -528,9 +541,9 @@ export const StorageService = {
                 playerStates,
                 votes: {},
                 isDoublePoints,
-                timeBonusPlayerId,
+                timeBonusPlayerId: timeBonusPlayerId || undefined,
                 // Sabotage state
-                saboteurId: isSabotageRound ? saboteurId : undefined,
+                saboteurId: isSabotageRound && saboteurId ? saboteurId : undefined,
                 sabotageTargetId: undefined, // Saboteur picks this
                 sabotageTriggered: false
             };

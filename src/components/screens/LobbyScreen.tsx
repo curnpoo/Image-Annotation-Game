@@ -78,26 +78,24 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
         <div className="min-h-screen bg-90s-animated flex flex-col pb-safe overflow-y-auto"
             style={{ paddingTop: 'max(1.5rem, env(safe-area-inset-top) + 1rem)' }}>
 
-            <button
-                onClick={() => setShowSettings(true)}
-                className="absolute top-4 right-4 z-20 bg-white p-3 rounded-2xl shadow-lg border-2 border-purple-100 hover:scale-105 active:scale-95 transition-all w-12 h-12 flex items-center justify-center text-xl"
-            >
-                ⚙️
-            </button>
-
             <div className="w-full max-w-md mx-auto space-y-4 px-4 pb-8">
-                {/* Home Button Card */}
-                <button
-                    onClick={onBack}
-                    className="w-full bg-white/10 backdrop-blur-sm rounded-2xl p-4 border-2 border-white/20 flex items-center gap-4 hover:bg-white/20 active:scale-95 transition-all"
-                >
-                    <div className="text-3xl">🏠</div>
-                    <div className="flex-1 text-left">
-                        <div className="text-lg font-bold text-white">Return to Home</div>
-                        <div className="text-white/60 text-sm">Keep room open</div>
-                    </div>
-                    <div className="text-2xl text-white/60">←</div>
-                </button>
+                {/* Header Actions */}
+                <div className="grid grid-cols-2 gap-3">
+                    <button
+                        onClick={onBack}
+                        className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border-2 border-white/20 hover:bg-white/20 active:scale-95 transition-all text-center group"
+                    >
+                        <div className="text-3xl mb-1 group-hover:scale-110 transition-transform">🏠</div>
+                        <div className="font-bold text-white text-sm">Home</div>
+                    </button>
+                    <button
+                        onClick={() => setShowSettings(true)}
+                        className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border-2 border-white/20 hover:bg-white/20 active:scale-95 transition-all text-center group"
+                    >
+                        <div className="text-3xl mb-1 group-hover:scale-110 transition-transform">⚙️</div>
+                        <div className="font-bold text-white text-sm">Settings</div>
+                    </button>
+                </div>
 
                 {/* Room Code Card */}
                 <div className="bg-white rounded-3xl p-5 flex justify-between items-center shadow-xl"
@@ -278,7 +276,6 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                     onClose={() => setShowSettings(false)}
                     onUpdateProfile={() => { /* Profile updates handled internally */ }}
                     onLeaveGame={onLeave}
-                    onGoHome={onBack}
                     onEndGame={isHost ? () => StorageService.closeRoom(room.roomCode) : undefined}
                     onKick={isHost ? (playerId: string) => StorageService.kickPlayer(room.roomCode, playerId) : undefined}
                 />
