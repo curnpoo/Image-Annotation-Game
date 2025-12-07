@@ -359,15 +359,32 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     {isHost && roomCode && players.length > 1 && (
                         <div className="space-y-2">
                             <h3 className="text-sm font-bold uppercase tracking-wider" style={{ color: 'var(--theme-text-secondary)' }}>Manage Players</h3>
-                            <div className="bg-gray-50 rounded-xl p-2 space-y-2">
+                            <div className="rounded-xl p-2 space-y-2" style={{ backgroundColor: 'var(--theme-bg-secondary)' }}>
                                 {players.filter(p => p.id !== player.id).map(p => (
-                                    <div key={p.id} className="flex items-center justify-between p-2 bg-white rounded-lg border border-gray-100">
-                                        <span className="font-bold text-gray-700">{p.name}</span>
+                                    <div
+                                        key={p.id}
+                                        className="flex items-center justify-between p-2 rounded-lg"
+                                        style={{
+                                            backgroundColor: 'var(--theme-card-bg)',
+                                            border: '1px solid var(--theme-border)'
+                                        }}
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            {p.avatar && (
+                                                <img
+                                                    src={p.avatar}
+                                                    alt={p.name}
+                                                    className="w-8 h-8 rounded-full object-cover"
+                                                    style={{ border: '2px solid var(--theme-border)' }}
+                                                />
+                                            )}
+                                            <span className="font-bold" style={{ color: 'var(--theme-text)' }}>{p.name}</span>
+                                        </div>
                                         <button
                                             onClick={() => setKickTarget(p.id)}
-                                            className="px-3 py-1 bg-red-100 text-red-600 text-xs font-bold rounded-lg hover:bg-red-200"
+                                            className="px-3 py-1 bg-red-500/20 text-red-400 text-xs font-bold rounded-lg hover:bg-red-500/30 transition-colors"
                                         >
-                                            Flick
+                                            Kick
                                         </button>
                                     </div>
                                 ))}

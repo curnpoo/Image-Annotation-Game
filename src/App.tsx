@@ -92,7 +92,7 @@ function App() {
   const lastWaitingRef = useRef<boolean>(false);
 
 
-  const [pendingGameStats, setPendingGameStats] = useState<{ xp: number, coins: number, isWinner: boolean } | null>(null);
+  const [pendingGameStats, setPendingGameStats] = useState<{ xp: number, coins: number, isWinner: boolean, action: 'home' | 'replay' } | null>(null);
 
   // Fetch last game details when on home screen
   useEffect(() => {
@@ -337,14 +337,6 @@ function App() {
         return;
       }
 
-      // Status or Round changed - trigger transition
-      // Check for Host Restart (Final -> Lobby)
-      if (lastStatusRef.current === 'final' && status === 'lobby') {
-        const sortedPlayers = [...(room.players || [])].sort((a, b) => (room.scores[b.id] || 0) - (room.scores[a.id] || 0));
-        const isWinner = sortedPlayers[0]?.id === player?.id;
-        // Deterministic calc
-        setPendingGameStats({ xp: 100, coins: 50 + (isWinner ? 100 : 0), isWinner });
-      }
 
       lastStatusRef.current = status;
       lastRoundRef.current = round;
@@ -833,7 +825,14 @@ function App() {
     }
   };
 
-
+  // Centralized rewards popup trigger - called from FinalResultsScreen
+  const showGameRewards = (action: 'home' | 'replay') => {
+    if (!room || !player) return;
+    const sortedPlayers = [...room.players].sort((a, b) => (room.scores[b.id] || 0) - (room.scores[a.id] || 0));
+    const isWinner = sortedPlayers[0]?.id === player.id;
+    const coins = 50 + (isWinner ? 100 : 0);
+    setPendingGameStats({ xp: 100, coins, isWinner, action });
+  };
 
   const handleSabotageSelect = async (targetId: string, effect: any) => {
     if (!roomCode) return;
@@ -1119,6 +1118,7 @@ function App() {
         onVote={handleVote}
         onNextRound={handleNextRound}
         onPlayAgain={handlePlayAgain}
+        onShowRewards={showGameRewards}
 
         onEquipTheme={handleEquipTheme}
         onSabotageSelect={handleSabotageSelect}
@@ -1156,7 +1156,7 @@ function App() {
 
       <ThemeTransition isActive={isTransitionActive} onComplete={handleTransitionComplete} />
 
-      {/* Universal Game Stats Modal (Host Restart) */}
+      {/* Universal Game Rewards Modal */}
       {pendingGameStats && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[100] pop-in">
           <div className="rounded-3xl p-8 w-full max-w-sm mx-4 text-center border-4 shadow-2xl relative overflow-hidden"
@@ -1169,8 +1169,8 @@ function App() {
             <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/20 to-transparent pointer-events-none" />
 
             <div className="text-6xl mb-4 animate-bounce">🎁</div>
-            <h2 className="text-3xl font-black mb-2" style={{ color: 'var(--theme-text)' }}>Round Rewards</h2>
-            <p className="mb-6" style={{ color: 'var(--theme-text-secondary)' }}>Host started a new game! Here's what you earned:</p>
+            <h2 className="text-3xl font-black mb-2" style={{ color: 'var(--theme-text)' }}>Game Rewards</h2>
+            <p className="mb-6" style={{ color: 'var(--theme-text-secondary)' }}>Great game! Here's what you earned:</p>
 
             <div className="space-y-4 mb-8">
               {/* Coins */}
@@ -1203,14 +1203,22 @@ function App() {
             </div>
 
             <button
-              onClick={() => setPendingGameStats(null)}
+              onClick={() => {
+                const action = pendingGameStats.action;
+                setPendingGameStats(null);
+                if (action === 'replay') {
+                  handlePlayAgain();
+                } else {
+                  handleLeaveGame('room-selection');
+                }
+              }}
               className="w-full py-4 rounded-xl font-bold text-lg hover:scale-105 active:scale-95 transition-all shadow-xl"
               style={{
                 backgroundColor: 'var(--theme-accent)',
                 color: 'var(--theme-button-text)'
               }}
             >
-              Continue to Lobby
+              {pendingGameStats.action === 'replay' ? 'Continue to Lobby' : 'Go Home'}
             </button>
           </div>
         </div>

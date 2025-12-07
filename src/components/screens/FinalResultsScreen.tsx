@@ -10,17 +10,15 @@ import { vibrate, HapticPatterns } from '../../utils/haptics';
 interface FinalResultsScreenProps {
     room: GameRoom;
     currentPlayerId: string;
-    onPlayAgain: () => void;
-    onGoHome: () => void;
     showToast: (message: string, type: 'success' | 'error' | 'info') => void;
+    onShowRewards: (action: 'home' | 'replay') => void;
 }
 
 export const FinalResultsScreen: React.FC<FinalResultsScreenProps> = ({
     room,
     currentPlayerId,
-    onPlayAgain,
-    onGoHome,
-    showToast
+    showToast,
+    onShowRewards
 }) => {
     const [mounted, setMounted] = useState(false);
     const [showConfetti, setShowConfetti] = useState(false);
@@ -101,43 +99,12 @@ export const FinalResultsScreen: React.FC<FinalResultsScreenProps> = ({
         processFinalStats();
     }, [room.roomCode, currentPlayerId, room.players, room.scores, showToast]);
 
-    // Stats Logic
-    const [showStatsModal, setShowStatsModal] = useState(false);
-    const [pendingAction, setPendingAction] = useState<'home' | 'replay' | null>(null);
-    const [earnedStats, setEarnedStats] = useState<{ xp: number; coins: number; isWinner: boolean; newLevel?: number } | null>(null);
-
-    // Capture calculated stats (using a separate effect or ref logic would be cleaner, but we can hook into the existing one if we move logic out,
-    // OR we can just re-calculate/access them since they are deterministic based on room state).
-    // Let's re-calculate cleanly here for display purposes.
-    useEffect(() => {
-        if (!earnedStats && mounted) {
-            const sortedPlayers = [...room.players].sort((a, b) => (room.scores[b.id] || 0) - (room.scores[a.id] || 0));
-            const isWinner = sortedPlayers[0]?.id === currentPlayerId;
-            const currencyEarned = 50 + (isWinner ? 100 : 0);
-            // We can't easily know "newLevel" here without duplicating the XP service call which acts as a transaction.
-            // For now, let's just show "+100 XP".
-            setEarnedStats({
-                xp: 100,
-                coins: currencyEarned,
-                isWinner
-            });
-        }
-    }, [room, currentPlayerId, mounted]);
-
-
     const handleGoHome = () => {
-        setPendingAction('home');
-        setShowStatsModal(true);
+        onShowRewards('home');
     };
 
     const handlePlayAgain = () => {
-        setPendingAction('replay');
-        setShowStatsModal(true);
-    };
-
-    const handleContinue = () => {
-        if (pendingAction === 'home') onGoHome();
-        if (pendingAction === 'replay') onPlayAgain();
+        onShowRewards('replay');
     };
 
 
@@ -309,62 +276,7 @@ export const FinalResultsScreen: React.FC<FinalResultsScreenProps> = ({
                 </p>
             )}
 
-            {/* Rewards Modal */}
-            {showStatsModal && earnedStats && (
-                <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 pop-in">
-                    <div className="bg-white rounded-[2.5rem] p-8 w-full max-w-sm mx-4 text-center border-4 border-yellow-400 shadow-2xl relative overflow-hidden"
-                        style={{
-                            backgroundColor: 'var(--theme-card-bg)',
-                            borderColor: 'var(--theme-accent)'
-                        }}>
-                        {/* Shine effect */}
-                        <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent pointer-events-none" />
 
-                        <div className="text-6xl mb-4 animate-bounce">🎁</div>
-                        <h2 className="text-3xl font-black mb-2" style={{ color: 'var(--theme-text)' }}>Round Rewards</h2>
-                        <p className="mb-6 font-medium" style={{ color: 'var(--theme-text-secondary)' }}>Great game! Here's what you earned:</p>
-
-                        <div className="space-y-4 mb-8">
-                            {/* Coins */}
-                            <div className="rounded-2xl p-4 border-2 flex items-center justify-between"
-                                style={{
-                                    backgroundColor: 'var(--theme-bg-secondary)',
-                                    borderColor: 'var(--theme-border)'
-                                }}>
-                                <div className="flex items-center gap-3">
-                                    <span className="text-3xl">🪙</span>
-                                    <span className="font-bold" style={{ color: 'var(--theme-text)' }}>Coins</span>
-                                </div>
-                                <div className="text-2xl font-black text-green-500">+{earnedStats.coins}</div>
-                            </div>
-
-                            {/* XP */}
-                            <div className="rounded-2xl p-4 border-2 flex items-center justify-between"
-                                style={{
-                                    backgroundColor: 'var(--theme-bg-secondary)',
-                                    borderColor: 'var(--theme-border)'
-                                }}>
-                                <div className="flex items-center gap-3">
-                                    <span className="text-3xl">✨</span>
-                                    <span className="font-bold" style={{ color: 'var(--theme-text)' }}>XP</span>
-                                </div>
-                                <div className="text-2xl font-black text-purple-500">+{earnedStats.xp}</div>
-                            </div>
-                        </div>
-
-                        <button
-                            onClick={handleContinue}
-                            className="w-full py-4 rounded-xl font-bold text-lg hover:scale-105 active:scale-95 transition-all shadow-xl"
-                            style={{
-                                backgroundColor: 'var(--theme-accent)',
-                                color: 'var(--theme-button-text)'
-                            }}
-                        >
-                            Continue
-                        </button>
-                    </div>
-                </div>
-            )}
         </div>
     );
 };

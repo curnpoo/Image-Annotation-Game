@@ -59,6 +59,7 @@ interface ScreenRouterProps {
     onVote: (votedForId: string) => void;
     onNextRound: () => void;
     onPlayAgain: () => void;
+    onShowRewards: (action: 'home' | 'replay') => void;
 
     // Store
     onEquipTheme: (themeId?: string) => void;
@@ -126,6 +127,7 @@ export const ScreenRouter: React.FC<ScreenRouterProps> = ({
     onVote,
     onNextRound,
     onPlayAgain,
+    onShowRewards,
     onEquipTheme,
     onSabotageSelect,
     isMyTimerRunning,
@@ -380,9 +382,8 @@ export const ScreenRouter: React.FC<ScreenRouterProps> = ({
             return <FinalResultsScreen
                 room={room}
                 currentPlayerId={player.id}
-                onPlayAgain={onPlayAgain}
-                onGoHome={onLeaveGame}
                 showToast={showToast}
+                onShowRewards={onShowRewards}
             />;
 
         case 'sabotage-selection':
