@@ -74,21 +74,7 @@ export const InstallPromptModal: React.FC = () => {
                                 </div>
                             )}
 
-                            {/* "Have the app?" Section requested by user */}
-                            <div className="bg-purple-50 rounded-xl p-3 flex items-center justify-between">
-                                <span className="text-xs font-bold text-purple-800">Already installed?</span>
 
-                                <button
-                                    className="text-xs bg-white text-purple-600 px-3 py-1.5 rounded-lg font-bold shadow-sm border border-purple-100 active:scale-95 transition-transform"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        alert("Please open 'Ano Draw' from your device Home Screen!");
-                                        setShow(false);
-                                    }}
-                                >
-                                    Open App
-                                </button>
-                            </div>
                         </div>
                     </div>
 

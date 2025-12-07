@@ -915,12 +915,10 @@ function App() {
     // Tolerance of 0.5 provides ~80-90% reduction with minimal visual difference
     const simplifiedStrokes = simplifyStrokes(validStrokes, 0.5);
 
-    // Log optimization stats
-    const originalPoints = validStrokes.reduce((acc: number, s: any) => acc + s.points.length, 0);
-    const newPoints = simplifiedStrokes.reduce((acc: number, s: any) => acc + s.points.length, 0);
-    if (originalPoints > 0) {
-      // console.log(`Optimization: Reduced ${originalPoints} points to ${newPoints} (${Math.round((1 - newPoints / originalPoints) * 100)}% reduction)`);
-    }
+    // Log optimization stats (uncomment for debugging)
+    // const originalPoints = validStrokes.reduce((acc: number, s: any) => acc + s.points.length, 0);
+    // const newPoints = simplifiedStrokes.reduce((acc: number, s: any) => acc + s.points.length, 0);
+    // console.log(`Optimization: Reduced ${originalPoints} to ${newPoints} (${Math.round((1 - newPoints / originalPoints) * 100)}% reduction)`);
 
     const drawing: PlayerDrawing = {
       playerId: player.id,
