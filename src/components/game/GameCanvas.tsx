@@ -61,7 +61,10 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         const width = canvas.width;
         const height = canvas.height;
 
-        ctx.clearRect(0, 0, width, height);
+        // Always fill with white background first
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, width, height);
+
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
 
