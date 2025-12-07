@@ -8,9 +8,10 @@ import type { Player, Screen } from '../types';
 interface UsePlayerSessionProps {
     setCurrentScreen: (screen: Screen) => void;
     onProgress?: (stageId: string, status: 'loading' | 'completed' | 'error') => void;
+    onComplete?: () => void;
 }
 
-export const usePlayerSession = ({ setCurrentScreen, onProgress }: UsePlayerSessionProps) => {
+export const usePlayerSession = ({ setCurrentScreen, onProgress, onComplete }: UsePlayerSessionProps) => {
     const [player, setPlayer] = useState<Player | null>(null);
     const [roomCode, setRoomCode] = useState<string | null>(null);
     const [isInitialLoading, setIsInitialLoading] = useState(true);
@@ -23,70 +24,75 @@ export const usePlayerSession = ({ setCurrentScreen, onProgress }: UsePlayerSess
     // Restore session
     useEffect(() => {
         const initSession = async () => {
-            // 0. Cleanup old rooms (>24 hours) - runs in background, doesn't block session init
-            StorageService.cleanupOldRooms().catch(err => {
-                console.error('Room cleanup failed:', err);
-            });
+            try {
+                // 0. Cleanup old rooms (>24 hours)
+                StorageService.cleanupOldRooms().catch(err => {
+                    console.error('Room cleanup failed:', err);
+                });
 
-            // 1. Sync with Auth
-            onProgress?.('auth', 'loading');
-            const authUser = await AuthService.syncUser();
-            let session = StorageService.getSession();
-            onProgress?.('auth', 'completed');
+                // 1. Sync with Auth
+                onProgress?.('auth', 'loading');
+                const authUser = await AuthService.syncUser();
+                let session = StorageService.getSession();
+                onProgress?.('auth', 'completed');
 
-            if (authUser) {
-                onProgress?.('profile', 'loading');
-                if (!session || session.id !== authUser.id) {
-                    if (authUser.avatarStrokes && authUser.color) {
-                        session = {
-                            id: authUser.id,
-                            name: authUser.username,
-                            color: authUser.color,
-                            frame: authUser.frame || 'none',
-                            avatarStrokes: authUser.avatarStrokes,
-                            joinedAt: authUser.createdAt,
-                            lastSeen: Date.now(),
-                            cosmetics: authUser.cosmetics,
-                            level: XPService.getLevel(),
-                            xp: XPService.getXP(),
-                            stats: StatsService.getStats()
-                        };
-                        StorageService.saveSession(session);
-                        setPlayer(session);
-                    }
-                }
-                onProgress?.('profile', 'completed');
-            }
-
-            if (session) {
-                setPlayer(session);
-
-                // Auto-rejoin logic
-                const lastRoomCode = StorageService.getRoomCode();
-                const lastActive = StorageService.getLastLocalActivity();
-                const isRecent = Date.now() - lastActive < 10 * 60 * 1000; // 10 minutes
-
-                if (lastRoomCode && isRecent) {
-                    onProgress?.('room', 'loading');
-                    setRoomCode(lastRoomCode);
-                    try {
-                        const room = await StorageService.joinRoom(lastRoomCode, session);
-                        if (!room) {
-                            StorageService.leaveRoom();
-                            setCurrentScreen('home');
-                        } else {
-                            onProgress?.('room', 'completed');
+                if (authUser) {
+                    onProgress?.('profile', 'loading');
+                    if (!session || session.id !== authUser.id) {
+                        if (authUser.avatarStrokes && authUser.color) {
+                            session = {
+                                id: authUser.id,
+                                name: authUser.username,
+                                color: authUser.color,
+                                frame: authUser.frame || 'none',
+                                avatarStrokes: authUser.avatarStrokes,
+                                joinedAt: authUser.createdAt,
+                                lastSeen: Date.now(),
+                                cosmetics: authUser.cosmetics,
+                                level: XPService.getLevel(),
+                                xp: XPService.getXP(),
+                                stats: StatsService.getStats()
+                            };
+                            StorageService.saveSession(session);
+                            setPlayer(session);
                         }
-                        // If room exists, App.tsx's useRoom effect will handle routing
-                    } catch (e) {
-                        console.error('Failed to auto-rejoin', e);
+                    }
+                    onProgress?.('profile', 'completed');
+                }
+
+                if (session) {
+                    setPlayer(session);
+
+                    // Auto-rejoin logic
+                    const lastRoomCode = StorageService.getRoomCode();
+                    const lastActive = StorageService.getLastLocalActivity();
+                    const isRecent = Date.now() - lastActive < 10 * 60 * 1000; // 10 minutes
+
+                    if (lastRoomCode && isRecent) {
+                        onProgress?.('room', 'loading');
+                        setRoomCode(lastRoomCode);
+                        try {
+                            const room = await StorageService.joinRoom(lastRoomCode, session);
+                            if (!room) {
+                                StorageService.leaveRoom();
+                                setCurrentScreen('home');
+                            } else {
+                                onProgress?.('room', 'completed');
+                            }
+                        } catch (e) {
+                            console.error('Failed to auto-rejoin', e);
+                            setCurrentScreen('home');
+                        }
+                    } else {
                         setCurrentScreen('home');
                     }
-                } else {
-                    setCurrentScreen('home');
                 }
+            } finally {
+                // Signal completion regardless of path
+                if (onComplete) onComplete();
             }
         };
+
         initSession();
     }, [setCurrentScreen]);
 

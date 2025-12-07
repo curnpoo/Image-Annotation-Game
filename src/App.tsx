@@ -103,6 +103,9 @@ const App = () => {
       if (loadingScenario === 'initial') {
         updateLoadingStage(id, status);
       }
+    },
+    onComplete: () => {
+      setIsLoading(false);
     }
   });
 
