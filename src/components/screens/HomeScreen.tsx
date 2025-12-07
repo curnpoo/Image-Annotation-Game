@@ -18,6 +18,7 @@ interface HomeScreenProps {
         playerCount: number;
     } | null;
     onRejoin?: (code: string) => void;
+    isBrowsing?: boolean;
 }
 
 export const HomeScreen: React.FC<HomeScreenProps> = ({
@@ -28,7 +29,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     onStore,
     onCasino,
     lastGameDetails,
-    onRejoin
+    onRejoin,
+    isBrowsing = false
 }) => {
     const balance = CurrencyService.getCurrency();
     const [showAdminModal, setShowAdminModal] = useState(false);
@@ -36,12 +38,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     const cards = [
         {
             id: 'play',
-            label: 'PLAY',
-            emoji: '🎮',
-            color: 'from-green-400 to-emerald-600',
-            border: 'border-green-500',
-            onClick: onPlay,
-            description: 'Start a game'
+            label: isBrowsing ? 'RETURN' : 'PLAY',
+            emoji: isBrowsing ? '🔙' : '🎮',
+            color: isBrowsing ? 'from-orange-400 to-red-500' : 'from-green-400 to-emerald-600',
+            border: isBrowsing ? 'border-orange-500' : 'border-green-500',
+            onClick: isBrowsing && onRejoin && lastGameDetails ? () => onRejoin(lastGameDetails.roomCode) : onPlay,
+            description: isBrowsing ? 'Return to game' : 'Start a game'
         },
         {
             id: 'casino',

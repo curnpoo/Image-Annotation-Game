@@ -128,12 +128,40 @@ function App() {
   }, [player, currentScreen, isLoading, isInitialLoading]);
 
   const handleGoHome = async () => {
+    // Completely leave the game
     setRoomCode(null); // Stop listening in React
+    StorageService.leaveRoom();
     setCurrentScreen('home');
+  };
+
+  const handleMinimizeGame = () => {
+    // Just go to home screen but keep room connection alive
+    setIsBrowsing(true);
+    setCurrentScreen('home');
+  };
+
+  const handleResumeGame = () => {
+    // Return to the active game screen
+    setIsBrowsing(false);
+    // The useEffect for room status will automatically route us to the correct screen
+    // based on room.status
+    if (room?.status) {
+      if (room.status === 'lobby') setCurrentScreen('lobby');
+      else if (room.status === 'uploading') setCurrentScreen('uploading');
+      else if (room.status === 'drawing') setCurrentScreen('drawing');
+      else if (room.status === 'voting') setCurrentScreen('voting');
+      else if (room.status === 'results') setCurrentScreen('results');
+      else if (room.status === 'final') setCurrentScreen('final');
+    }
   };
 
   const handleRejoin = async (code: string) => {
     if (!player) return;
+    // If we are already connected to this room, just resume
+    if (roomCode === code && room) {
+      handleResumeGame();
+      return;
+    }
     handleJoinRoom(code);
   };
 
@@ -405,17 +433,25 @@ function App() {
 
   // Effect: Kicked / Removed check
   useEffect(() => {
-    if (roomCode && room && player && !isLoading && !isInitialLoading) {
+    // Only run check if we have a room, player, and data is fully loaded
+    if (roomCode && room && player && !isLoading && !isInitialLoading && !isBrowsing) {
+      // Add a small safety check - ensure players array is populated (not empty due to glitch)
+      // Taking a length of 0 seriously only if status is not 'lobby' maybe? 
+      // Actually, just checking if *I* am in there is enough, assuming array is correct.
+
       const amInPlayers = room.players.some(p => p.id === player.id);
       const amInWaiting = room.waitingPlayers?.some(p => p.id === player.id);
 
       if (!amInPlayers && !amInWaiting) {
+        // Double check - if we just created the room, we might not be in the list yet?
+        // But useRoom hook should handle that.
+
         // I was kicked
         setShowKicked(true);
         setKickCountdown(3);
       }
     }
-  }, [room, player, roomCode]);
+  }, [room, player, roomCode, isLoading, isInitialLoading, isBrowsing]);
 
   // Effect: Sync local timer state with server state (Auto-resume / Fix stuck state)
   useEffect(() => {
@@ -955,7 +991,7 @@ function App() {
           onUpdateProfile={handleUpdateProfile}
           onLeaveGame={roomCode ? () => handleLeaveGame('room-selection') : undefined}
           onEndGame={room?.hostId === player.id ? handleEndGame : undefined}
-          onGoHome={roomCode ? () => handleLeaveGame('home') : undefined}
+          onGoHome={roomCode ? handleMinimizeGame : undefined}
           onKick={async (playerId) => {
             if (!roomCode) return;
             try {
@@ -1069,6 +1105,7 @@ function App() {
           onSettings={() => setShowSettings(true)}
           lastGameDetails={lastGameDetails}
           onRejoin={handleRejoin}
+          isBrowsing={isBrowsing}
         />
       )}
 
@@ -1217,9 +1254,9 @@ function App() {
                       <div className="bg-green-500 text-white px-4 py-2 rounded-xl font-bold">
                         ✓ Submitted!
                       </div>
-                    ) : isMyTimerRunning && timerEndsAt ? (
+                    ) : isMyTimerRunning ? (
                       <div className="scale-90 origin-right">
-                        <Timer endsAt={timerEndsAt} onTimeUp={handleTimeUp} />
+                        <Timer endsAt={timerEndsAt || Date.now()} onTimeUp={handleTimeUp} />
                       </div>
                     ) : null}
                   </div>
@@ -1255,7 +1292,8 @@ function App() {
                   borderRadius: '1.5rem',
                   overflow: 'hidden',
                   boxShadow: '0 10px 30px -10px rgba(0,0,0,0.2)',
-                  border: '5px solid white'
+                  border: '5px solid white',
+                  backgroundColor: 'white'
                 }}>
                 {/* Base Image */}
                 <img
