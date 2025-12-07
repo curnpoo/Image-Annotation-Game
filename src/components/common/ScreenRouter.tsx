@@ -126,7 +126,6 @@ export const ScreenRouter: React.FC<ScreenRouterProps> = ({
     onUploadImage,
     onVote,
     onNextRound,
-    onPlayAgain,
     onShowRewards,
     onEquipTheme,
     onSabotageSelect,
