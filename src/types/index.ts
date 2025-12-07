@@ -221,4 +221,17 @@ export interface ToastState {
     type: 'error' | 'success' | 'info';
 }
 
-export type Screen = 'welcome' | 'login' | 'name-entry' | 'home' | 'room-selection' | 'store' | 'profile' | 'avatar-editor' | 'lobby' | 'waiting' | 'uploading' | 'drawing' | 'voting' | 'results' | 'final';
+export type Screen = 'welcome' | 'login' | 'name-entry' | 'home' | 'room-selection' | 'store' | 'profile' | 'avatar-editor' | 'lobby' | 'waiting' | 'uploading' | 'drawing' | 'voting' | 'results' | 'final' | 'stats';
+
+// Stats history for graphs over time
+export interface StatsHistoryEntry {
+    timestamp: number;
+    gamesPlayed: number;
+    gamesWon: number;
+    roundsWon: number;
+    roundsLost: number;
+    totalCurrencyEarned: number;
+    totalXPEarned: number;
+    level: number;
+    currency: number; // Current balance at snapshot
+}

@@ -2,23 +2,23 @@ import React, { useState } from 'react';
 import type { Player } from '../../types';
 import { AvatarDisplay } from '../common/AvatarDisplay';
 import { CurrencyService, formatCurrency } from '../../services/currency';
-import { StatsModal } from '../common/StatsModal';
 
 interface ProfileScreenProps {
     player: Player;
     onBack: () => void;
     onUpdateProfile: (updates: Partial<Player>) => void;
     onEditAvatar: () => void;
+    onShowStats?: () => void;
 }
 
 export const ProfileScreen: React.FC<ProfileScreenProps> = ({
     player,
     onBack,
     onUpdateProfile,
-    onEditAvatar
+    onEditAvatar,
+    onShowStats
 }) => {
     const [name, setName] = useState(player.name);
-    const [showStats, setShowStats] = useState(false);
 
     const balance = CurrencyService.getCurrency();
 
@@ -64,7 +64,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                 <h1 className="text-2xl font-black drop-shadow-lg" style={{ color: 'var(--theme-text)' }}>👤 PROFILE</h1>
                 <div className="flex items-center gap-2">
                     <button
-                        onClick={() => setShowStats(true)}
+                        onClick={onShowStats}
                         className="px-3 py-2 rounded-xl font-bold transition-all border-2"
                         style={{
                             backgroundColor: 'var(--theme-bg-secondary)',
@@ -147,12 +147,6 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                     Save Changes
                 </button>
             </div>
-
-            {/* Stats Modal */}
-            {showStats && <StatsModal onClose={() => setShowStats(false)} />}
-
-            {/* Stats Modal */}
-            {showStats && <StatsModal onClose={() => setShowStats(false)} />}
         </div>
     );
 };

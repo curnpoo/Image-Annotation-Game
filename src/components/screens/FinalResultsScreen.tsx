@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { XPService } from '../../services/xp';
 import { AuthService } from '../../services/auth';
 import { StatsService } from '../../services/stats';
+import { StatsHistoryService } from '../../services/statsHistory';
 import type { GameRoom } from '../../types';
 import { Confetti } from '../common/Confetti';
 import { vibrate, HapticPatterns } from '../../utils/haptics';
@@ -91,6 +92,9 @@ export const FinalResultsScreen: React.FC<FinalResultsScreenProps> = ({
                 });
 
                 showToast(`+${currencyEarned} Coins Earned! 🪙`, 'success');
+
+                // Record stats snapshot for history/trends
+                StatsHistoryService.recordSnapshot();
             }
         };
 

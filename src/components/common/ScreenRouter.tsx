@@ -15,6 +15,7 @@ import { DrawingScreen } from '../screens/DrawingScreen';
 import { VotingScreen } from '../screens/VotingScreen';
 import { ResultsScreen } from '../screens/ResultsScreen';
 import { FinalResultsScreen } from '../screens/FinalResultsScreen';
+import { StatsScreen } from '../screens/StatsScreen';
 import { Timer } from '../game/Timer';
 
 interface ScreenRouterProps {
@@ -286,6 +287,7 @@ export const ScreenRouter: React.FC<ScreenRouterProps> = ({
                 onBack={onBackToHome}
                 onUpdateProfile={onUpdateProfile}
                 onEditAvatar={() => onNavigate('avatar-editor')}
+                onShowStats={() => onNavigate('stats')}
             />;
 
         case 'avatar-editor':
@@ -373,6 +375,9 @@ export const ScreenRouter: React.FC<ScreenRouterProps> = ({
                 onGoHome={onLeaveGame}
                 showToast={showToast}
             />;
+
+        case 'stats':
+            return <StatsScreen onBack={onBackToHome} />;
 
         default:
             return null;
