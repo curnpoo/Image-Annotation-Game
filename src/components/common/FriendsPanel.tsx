@@ -50,10 +50,9 @@ export const FriendsPanel: React.FC<FriendsPanelProps> = ({ player: _player, ope
         setIsLoading(false);
     };
 
+    // Load data on mount to show counts immediately, and refresh when expanded
     useEffect(() => {
-        if (isExpanded) {
-            loadData();
-        }
+        loadData();
     }, [isExpanded]);
 
     const handleSearch = async () => {
