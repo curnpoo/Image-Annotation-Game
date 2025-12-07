@@ -1,5 +1,6 @@
 import React from 'react';
 import type { DrawingStroke } from '../../types';
+import { useAvatar } from '../../hooks/useAvatar';
 
 interface AvatarDisplayProps {
     strokes?: DrawingStroke[];
@@ -13,22 +14,33 @@ interface AvatarDisplayProps {
     backgroundColor?: string;
     size?: number; // pixel size (e.g. 48 for w-12)
     className?: string;
+    playerId?: string; // NEW: ID to fetch avatar for
 }
 
-export const AvatarDisplay: React.FC<AvatarDisplayProps> = ({
+const AvatarDisplayBase: React.FC<AvatarDisplayProps> = ({
     strokes,
     avatar,
     frame,
     color, // Used for border/text color usually
     backgroundColor = '#ffffff', // Default to white
     size = 48,
-    className = ''
+    className = '',
+    playerId
 }) => {
+    // If strokes are NOT provided, try to fetch them
+    const { strokes: fetchedStrokes, isLoading } = useAvatar(strokes ? undefined : playerId);
+
+    // Use provided strokes or fetched strokes
+    const displayStrokes = strokes || fetchedStrokes;
+
+    // Loading state (optional: show spinner or just fallback emoji)
+    // For now, we fall back to emoji while loading or if no strokes found
+
     // If no strokes, render emoji fallback
-    if (!strokes || strokes.length === 0) {
+    if (!displayStrokes || displayStrokes.length === 0) {
         return (
             <div
-                className={`rounded-2xl flex items-center justify-center shadow-sm ${frame || ''} ${className}`}
+                className={`rounded-2xl flex items-center justify-center shadow-sm ${frame || ''} ${className} ${isLoading ? 'animate-pulse' : ''}`}
                 style={{
                     color: color,
                     width: size,
@@ -60,7 +72,7 @@ export const AvatarDisplay: React.FC<AvatarDisplayProps> = ({
             >
 
 
-                {strokes.map((stroke, i) => {
+                {displayStrokes.map((stroke, i) => {
                     if (!stroke || !stroke.points || stroke.points.length === 0) return null;
 
                     if (stroke.points.length === 1) {
@@ -94,3 +106,5 @@ export const AvatarDisplay: React.FC<AvatarDisplayProps> = ({
         </div>
     );
 };
+
+export const AvatarDisplay = React.memo(AvatarDisplayBase);

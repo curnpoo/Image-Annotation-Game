@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 
-export const InstallPromptModal: React.FC = () => {
+interface InstallPromptModalProps {
+    onClose?: () => void;
+}
+
+export const InstallPromptModal: React.FC<InstallPromptModalProps> = ({ onClose }) => {
     const [show, setShow] = useState(false);
     const [expanded, setExpanded] = useState(false);
     const [isIOS, setIsIOS] = useState(false);
@@ -16,19 +20,43 @@ export const InstallPromptModal: React.FC = () => {
         const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
         setIsIOS(isIOSDevice);
 
-        // Show if not standalone
+        // Show immediately if onClose is provided (manual trigger), otherwise delay
         if (!standalone) {
-            // Small delay for effect
-            setTimeout(() => setShow(true), 1000);
+            if (onClose) {
+                setShow(true);
+                setExpanded(true); // Auto-expand if manually triggered
+            } else {
+                setTimeout(() => setShow(true), 1000);
+            }
         }
-    }, []);
+    }, [onClose]);
+
+    const handleClose = () => {
+        setShow(false);
+        if (onClose) setTimeout(onClose, 300); // Wait for animation
+    };
 
     if (!show || isStandalone) return null;
 
     return createPortal(
         <div className={`fixed bottom-0 left-0 right-0 z-[9999] transition-transform duration-500 ease-in-out transform ${show ? 'translate-y-0' : 'translate-y-full'} safe-area-padding`}>
+            {/* Backdrop for manual mode */}
+            {onClose && (
+                <div className="fixed inset-0 bg-black/20 backdrop-blur-sm -z-10" onClick={handleClose}></div>
+            )}
+
             <div className="mx-4 mb-6">
                 <div className="bg-white/95 backdrop-blur-xl border-2 border-purple-400/30 rounded-3xl shadow-2xl overflow-hidden max-w-md mx-auto relative slide-up">
+
+                    {/* Close Button (if manual) */}
+                    {onClose && (
+                        <button
+                            onClick={handleClose}
+                            className="absolute top-2 right-2 p-2 bg-gray-100/50 rounded-full hover:bg-gray-200/50 transition-colors z-10"
+                        >
+                            ✕
+                        </button>
+                    )}
 
                     {/* Header / Collapsed State */}
                     <div className="p-4 flex items-center justify-between gap-4 cursor-pointer" onClick={() => setExpanded(!expanded)}>
@@ -73,7 +101,6 @@ export const InstallPromptModal: React.FC = () => {
                                     Tap your browser menu (⋮) and select <strong>Install App</strong> or <strong>Add to Home Screen</strong>.
                                 </div>
                             )}
-
 
                         </div>
                     </div>

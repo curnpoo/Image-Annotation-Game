@@ -1,5 +1,5 @@
 // Friends Service - Friend management and game invitations
-import { ref, get, set, update, push, query, orderByChild, equalTo } from 'firebase/database';
+import { ref, get, set, update, push, query, orderByChild, equalTo, onValue } from 'firebase/database';
 import { database } from '../firebase';
 import type { UserAccount, GameInvite, FriendRequest } from '../types';
 import { AuthService } from './auth';
@@ -63,6 +63,45 @@ export const FriendsService = {
         }
 
         return friends;
+    },
+
+    // Subscribe to friends list updates
+    subscribeToFriends(onUpdate: (friends: UserAccount[]) => void): () => void {
+        const currentUser = AuthService.getCurrentUser();
+        if (!currentUser || !currentUser.friends || currentUser.friends.length === 0) {
+            onUpdate([]);
+            return () => { };
+        }
+
+        const friendsMap = new Map<string, UserAccount>();
+        const listeners: (() => void)[] = [];
+
+        // Helper to trigger update
+        const triggerUpdate = () => {
+            const friends = Array.from(friendsMap.values());
+            onUpdate(friends);
+        };
+
+        // Set up listeners for each friend
+        currentUser.friends.forEach(friendId => {
+            const friendRef = ref(database, `${USERS_PATH}/${friendId}`);
+
+            const unsubscribe = onValue(friendRef, (snapshot) => {
+                if (snapshot.exists()) {
+                    friendsMap.set(friendId, { ...snapshot.val(), id: friendId });
+                } else {
+                    friendsMap.delete(friendId);
+                }
+                triggerUpdate();
+            });
+
+            listeners.push(unsubscribe);
+        });
+
+        // Return unsubscribe function
+        return () => {
+            listeners.forEach(off => off());
+        };
     },
 
     // Add a friend
@@ -181,7 +220,8 @@ export const FriendsService = {
                 toUserId: toUserId,
                 roomCode: roomCode,
                 sentAt: Date.now(),
-                status: 'pending'
+                status: 'pending',
+                origin: window.location.origin
             };
 
             await set(inviteRef, invite);

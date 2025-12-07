@@ -7,19 +7,17 @@ import type { Player, Screen } from '../types';
 
 interface UsePlayerSessionProps {
     setCurrentScreen: (screen: Screen) => void;
+    onProgress?: (stageId: string, status: 'loading' | 'completed' | 'error') => void;
 }
 
-export const usePlayerSession = ({ setCurrentScreen }: UsePlayerSessionProps) => {
+export const usePlayerSession = ({ setCurrentScreen, onProgress }: UsePlayerSessionProps) => {
     const [player, setPlayer] = useState<Player | null>(null);
     const [roomCode, setRoomCode] = useState<string | null>(null);
     const [isInitialLoading, setIsInitialLoading] = useState(true);
 
-    // Initial 2s loading artificial delay (can be reduced if we want, but keeping for now)
+    // Initial loading state (removed artificial delay)
     useEffect(() => {
-        const timer = setTimeout(() => {
-            setIsInitialLoading(false);
-        }, 2000);
-        return () => clearTimeout(timer);
+        setIsInitialLoading(false);
     }, []);
 
     // Restore session
@@ -31,10 +29,13 @@ export const usePlayerSession = ({ setCurrentScreen }: UsePlayerSessionProps) =>
             });
 
             // 1. Sync with Auth
+            onProgress?.('auth', 'loading');
             const authUser = await AuthService.syncUser();
             let session = StorageService.getSession();
+            onProgress?.('auth', 'completed');
 
             if (authUser) {
+                onProgress?.('profile', 'loading');
                 if (!session || session.id !== authUser.id) {
                     if (authUser.avatarStrokes && authUser.color) {
                         session = {
@@ -54,6 +55,7 @@ export const usePlayerSession = ({ setCurrentScreen }: UsePlayerSessionProps) =>
                         setPlayer(session);
                     }
                 }
+                onProgress?.('profile', 'completed');
             }
 
             if (session) {
@@ -65,12 +67,15 @@ export const usePlayerSession = ({ setCurrentScreen }: UsePlayerSessionProps) =>
                 const isRecent = Date.now() - lastActive < 10 * 60 * 1000; // 10 minutes
 
                 if (lastRoomCode && isRecent) {
+                    onProgress?.('room', 'loading');
                     setRoomCode(lastRoomCode);
                     try {
                         const room = await StorageService.joinRoom(lastRoomCode, session);
                         if (!room) {
                             StorageService.leaveRoom();
                             setCurrentScreen('home');
+                        } else {
+                            onProgress?.('room', 'completed');
                         }
                         // If room exists, App.tsx's useRoom effect will handle routing
                     } catch (e) {

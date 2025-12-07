@@ -103,6 +103,7 @@ interface ScreenRouterProps {
     submittedCount: number;
     totalPlayers: number;
     timerEndsAt: number | null;
+    totalTimerDuration?: number; // Effective duration including bonuses
     onTimeUp: () => void;
 }
 
@@ -162,13 +163,21 @@ export const ScreenRouter: React.FC<ScreenRouterProps> = ({
     submittedCount,
     totalPlayers,
     timerEndsAt,
+    totalTimerDuration,
     onTimeUp
 }) => {
 
     // Helper to render Drawing Layout (wrapper)
     const renderDrawingLayout = () => {
         if (!room || !player) return null;
-        const timerDuration = room?.settings?.timerDuration || 20;
+        // Use effective duration if passed (calculated in App.tsx with bonuses), otherwise fallback to settings
+        const effectiveDuration = (timerEndsAt && isMyTimerRunning)
+            ? Math.ceil((timerEndsAt - (room.playerStates[player.id]?.timerStartedAt || Date.now())) / 1000)
+            : (room?.settings?.timerDuration || 20); // Fallback
+
+        // Better approach: Calculate effective duration based on room settings + bonuses
+        // But App.tsx already calculates 'bonusTime'. We should pass that or the total.
+        // Let's rely on App.tsx passing it down. I will add `totalDuration` prop to ScreenRouter.
 
         return (
             <div className="fixed inset-0 overflow-hidden">
@@ -223,8 +232,9 @@ export const ScreenRouter: React.FC<ScreenRouterProps> = ({
                             isReadying={isReadying}
                             onReady={onReady}
                             timerEndsAt={timerEndsAt}
+                            timerEndsAt={timerEndsAt}
                             onTimeUp={onTimeUp}
-                            timerDuration={timerDuration}
+                            timerDuration={totalTimerDuration || room.settings.timerDuration || 20}
                             brushColor={brushColor}
                             brushSize={brushSize}
                             brushType={brushType}
@@ -252,7 +262,7 @@ export const ScreenRouter: React.FC<ScreenRouterProps> = ({
     // Main Switch
     switch (currentScreen) {
         case 'welcome':
-            return <WelcomeScreen onPlay={onPlayNow} joiningRoomCode={joiningRoomCode} />;
+            return <WelcomeScreen onPlay={onPlayNow} onJoin={onJoinRoom} joiningRoomCode={joiningRoomCode} />;
 
         case 'login':
             return <LoginScreen onLogin={onLoginComplete} joiningRoomCode={joiningRoomCode} />;

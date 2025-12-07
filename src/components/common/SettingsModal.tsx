@@ -4,6 +4,7 @@ import { requestPushPermission, storePushToken, isPushSupported } from '../../se
 import { AuthService } from '../../services/auth';
 import { StorageService } from '../../services/storage';
 import './transitions.css';
+import { vibrate } from '../../utils/haptics';
 
 interface SettingsModalProps {
     player: Player;
@@ -29,9 +30,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     onLeaveGame,
     onEndGame,
     onGoHome,
-
     onKick,
-
 }) => {
     const [name, setName] = useState(player.name);
     const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
@@ -133,6 +132,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     };
 
     const toggleNotifications = () => {
+        vibrate();
         if (notificationsEnabled) {
             localStorage.setItem('notificationsDisabled', 'true');
             setNotificationsEnabled(false);
@@ -142,179 +142,148 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         }
     };
 
-    if (showLeaveConfirm) {
-        return (
-            <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-                <div className="relative z-10 rounded-3xl p-6 shadow-2xl w-full max-w-sm text-center pop-in" style={{ backgroundColor: 'var(--theme-card-bg)' }}>
-                    <div className="text-4xl mb-4">😰</div>
-                    <h3 className="text-2xl font-black mb-2" style={{ color: 'var(--theme-text)' }}>Leave Game?</h3>
-                    <p className="mb-6 font-medium" style={{ color: 'var(--theme-text-secondary)' }}>You'll lose your current progress!</p>
-                    <div className="flex gap-3">
-                        <button
-                            onClick={() => setShowLeaveConfirm(false)}
-                            className="flex-1 py-3 px-6 font-bold rounded-xl transition-colors"
-                            style={{ backgroundColor: 'var(--theme-bg-secondary)', color: 'var(--theme-text)' }}
-                        >
-                            Stay
-                        </button>
-                        <button
-                            onClick={() => {
-                                if (onLeaveGame) onLeaveGame();
-                                setShowLeaveConfirm(false);
-                                onClose();
-                            }}
-                            className="flex-1 py-3 px-6 bg-red-500 text-white font-bold rounded-xl shadow-lg hover:bg-red-600 active:scale-95 transition-all"
-                        >
-                            Leave
-                        </button>
-                    </div>
+    // Helper for nested modal structure
+    const ConfirmModal = ({
+        icon,
+        title,
+        message,
+        cancelText = "Cancel",
+        confirmText,
+        onCancel,
+        onConfirm,
+        isDanger = false
+    }: {
+        icon: string,
+        title: string,
+        message: React.ReactNode,
+        cancelText?: string,
+        confirmText: string,
+        onCancel: () => void,
+        onConfirm: () => void,
+        isDanger?: boolean
+    }) => (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-fade-in" onClick={onCancel}>
+            <div
+                className="relative z-10 glass-panel rounded-3xl p-8 shadow-2xl w-full max-w-sm text-center pop-in border border-white/20"
+                onClick={e => e.stopPropagation()}
+            >
+                <div className="text-5xl mb-4 animate-bounce-gentle">{icon}</div>
+                <h3 className="text-2xl font-black mb-2 text-white">{title}</h3>
+                <div className="mb-8 font-medium text-white/70 text-lg leading-snug">{message}</div>
+                <div className="flex gap-3">
+                    <button
+                        onClick={onCancel}
+                        className="flex-1 py-4 px-6 font-bold rounded-2xl transition-all bg-white/10 hover:bg-white/20 text-white border border-white/10 active:scale-95"
+                    >
+                        {cancelText}
+                    </button>
+                    <button
+                        onClick={onConfirm}
+                        className={`flex-1 py-4 px-6 font-black rounded-2xl shadow-lg active:scale-95 transition-all text-white border-2 border-white/20
+                            ${isDanger
+                                ? 'bg-gradient-to-br from-red-500 to-rose-600 shadow-red-500/30'
+                                : 'bg-gradient-to-br from-indigo-500 to-purple-600 shadow-indigo-500/30'}`}
+                    >
+                        {confirmText}
+                    </button>
                 </div>
             </div>
-        );
+        </div>
+    );
+
+    if (showLeaveConfirm) {
+        return <ConfirmModal
+            icon="😰"
+            title="Leave Game?"
+            message="You'll lose your current progress!"
+            cancelText="Stay"
+            confirmText="Leave"
+            onCancel={() => setShowLeaveConfirm(false)}
+            onConfirm={() => {
+                if (onLeaveGame) onLeaveGame();
+                setShowLeaveConfirm(false);
+                onClose();
+            }}
+            isDanger
+        />;
     }
 
     if (showEndGameConfirm) {
-        return (
-            <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-                <div className="relative z-10 rounded-3xl p-6 shadow-2xl w-full max-w-sm text-center pop-in" style={{ backgroundColor: 'var(--theme-card-bg)' }}>
-                    <div className="text-4xl mb-4">🛑</div>
-                    <h3 className="text-2xl font-black mb-2" style={{ color: 'var(--theme-text)' }}>End Game?</h3>
-                    <p className="mb-6 font-medium" style={{ color: 'var(--theme-text-secondary)' }}>This will kick everyone out and close the room.</p>
-                    <div className="flex gap-3">
-                        <button
-                            onClick={() => setShowEndGameConfirm(false)}
-                            className="flex-1 py-3 px-6 font-bold rounded-xl transition-colors"
-                            style={{ backgroundColor: 'var(--theme-bg-secondary)', color: 'var(--theme-text)' }}
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            onClick={() => {
-                                if (onEndGame) onEndGame();
-                                setShowEndGameConfirm(false);
-                                onClose();
-                            }}
-                            className="flex-1 py-3 px-6 bg-red-500 text-white font-bold rounded-xl shadow-lg hover:bg-red-600 active:scale-95 transition-all"
-                        >
-                            End Game
-                        </button>
-                    </div>
-                </div>
-            </div>
-        );
+        return <ConfirmModal
+            icon="🛑"
+            title="End Game?"
+            message="This will kick everyone out and close the room."
+            confirmText="End Game"
+            onCancel={() => setShowEndGameConfirm(false)}
+            onConfirm={() => {
+                if (onEndGame) onEndGame();
+                setShowEndGameConfirm(false);
+                onClose();
+            }}
+            isDanger
+        />;
     }
 
     if (showLogoutConfirm) {
-        return (
-            <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-                <div className="relative z-10 rounded-3xl p-6 shadow-2xl w-full max-w-sm text-center pop-in" style={{ backgroundColor: 'var(--theme-card-bg)' }}>
-                    <div className="text-4xl mb-4">👋</div>
-                    <h3 className="text-2xl font-black mb-2" style={{ color: 'var(--theme-text)' }}>Log Out?</h3>
-                    <p className="mb-6 font-medium" style={{ color: 'var(--theme-text-secondary)' }}>You will return to the welcome screen.</p>
-                    <div className="flex gap-3">
-                        <button
-                            onClick={() => setShowLogoutConfirm(false)}
-                            className="flex-1 py-3 px-6 font-bold rounded-xl transition-colors"
-                            style={{ backgroundColor: 'var(--theme-bg-secondary)', color: 'var(--theme-text)' }}
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            onClick={handleLogout}
-                            className="flex-1 py-3 px-6 bg-red-500 font-bold rounded-xl shadow-lg hover:bg-red-600 active:scale-95 transition-all"
-                            style={{ color: '#ffffff' }}
-                        >
-                            Log Out
-                        </button>
-                    </div>
-                </div>
-            </div>
-        );
+        return <ConfirmModal
+            icon="👋"
+            title="Log Out?"
+            message="You will return to the welcome screen."
+            confirmText="Log Out"
+            onCancel={() => setShowLogoutConfirm(false)}
+            onConfirm={handleLogout}
+            isDanger
+        />;
     }
 
     if (showDeleteConfirm) {
-        return (
-            <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-                <div className="relative z-10 rounded-3xl p-6 shadow-2xl w-full max-w-sm text-center pop-in" style={{ backgroundColor: 'var(--theme-card-bg)' }}>
-                    <div className="text-4xl mb-4">🗑️</div>
-                    <h3 className="text-2xl font-black mb-2" style={{ color: 'var(--theme-text)' }}>Delete Account?</h3>
-                    <p className="mb-6 font-medium" style={{ color: 'var(--theme-text-secondary)' }}>
-                        This will <span className="text-red-600 font-bold">permanently delete</span> all your stats, currency, and cosmetics.
-                        <br /><br />
-                        <span className="text-xs uppercase font-bold text-gray-400">This cannot be undone.</span>
-                    </p>
-                    <div className="flex gap-3">
-                        <button
-                            onClick={() => setShowDeleteConfirm(false)}
-                            className="flex-1 py-3 px-6 font-bold rounded-xl transition-colors"
-                            style={{ backgroundColor: 'var(--theme-bg-secondary)', color: 'var(--theme-text)' }}
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            onClick={handleDeleteAccount}
-                            className="flex-1 py-3 px-6 bg-red-600 text-white font-bold rounded-xl shadow-lg hover:bg-red-700 active:scale-95 transition-all"
-                        >
-                            Delete Forever
-                        </button>
-                    </div>
-                </div>
-            </div>
-        );
+        return <ConfirmModal
+            icon="🗑️"
+            title="Delete Account?"
+            message={<span>This will <span className="text-red-400 font-bold">permanently delete</span> all your stats. <br /><br /><span className="text-xs uppercase font-bold text-white/50 tracking-widest">Cannot be undone</span></span>}
+            confirmText="Delete Forever"
+            onCancel={() => setShowDeleteConfirm(false)}
+            onConfirm={handleDeleteAccount}
+            isDanger
+        />;
     }
 
     if (kickTarget) {
         const targetPlayer = players.find(p => p.id === kickTarget);
-        return (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-                <div className="relative z-10 rounded-3xl p-6 shadow-2xl w-full max-w-sm text-center pop-in" style={{ backgroundColor: 'var(--theme-card-bg)' }}>
-                    <div className="text-4xl mb-4">🥾</div>
-                    <h3 className="text-2xl font-black mb-2" style={{ color: 'var(--theme-text)' }}>Kick Player?</h3>
-                    <p className="mb-6 font-medium" style={{ color: 'var(--theme-text-secondary)' }}>
-                        Are you sure you want to kick <span className="text-purple-600 font-bold">{targetPlayer?.name}</span>?
-                    </p>
-                    <div className="flex gap-3">
-                        <button
-                            onClick={() => setKickTarget(null)}
-                            className="flex-1 py-3 px-6 font-bold rounded-xl transition-colors"
-                            style={{ backgroundColor: 'var(--theme-bg-secondary)', color: 'var(--theme-text)' }}
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            onClick={() => {
-                                if (onKick) onKick(kickTarget);
-                                setKickTarget(null);
-                            }}
-                            className="flex-1 py-3 px-6 bg-red-500 text-white font-bold rounded-xl shadow-lg hover:bg-red-600 active:scale-95 transition-all"
-                        >
-                            Kick
-                        </button>
-                    </div>
-                </div>
-            </div>
-        );
+        return <ConfirmModal
+            icon="🥾"
+            title="Kick Player?"
+            message={<span>Are you sure you want to kick <span className="text-purple-400 font-bold">{targetPlayer?.name}</span>?</span>}
+            confirmText="Kick"
+            onCancel={() => setKickTarget(null)}
+            onConfirm={() => {
+                if (onKick) onKick(kickTarget);
+                setKickTarget(null);
+            }}
+            isDanger
+        />;
     }
 
     return (
         <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center pointer-events-none">
             <div
-                className={`absolute inset-0 pointer-events-auto ${isClosing ? 'backdrop-blur-out' : 'backdrop-blur-in'}`}
+                className={`absolute inset-0 pointer-events-auto bg-black/40 backdrop-blur-sm transition-opacity duration-300 ${isClosing ? 'opacity-0' : 'opacity-100'}`}
                 onClick={handleAnimatedClose}
             />
             <div
-                className={`relative z-10 w-full sm:w-[500px] sm:rounded-3xl rounded-t-3xl p-6 shadow-2xl pointer-events-auto max-h-[90vh] overflow-y-auto ${isClosing ? 'modal-slide-down' : 'modal-slide-up'}`}
-                style={{ backgroundColor: 'var(--theme-card-bg, #fff)' }}
+                className={`relative z-10 w-full sm:w-[500px] sm:rounded-3xl rounded-t-3xl p-6 shadow-2xl pointer-events-auto max-h-[90vh] overflow-y-auto touch-scroll-allowed 
+                glass-panel border-t border-x border-white/20 sm:border !bg-black/80 backdrop-blur-xl
+                ${isClosing ? 'modal-slide-down' : 'modal-slide-up'}`}
             >
 
                 {/* Header */}
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center justify-between mb-8">
                     <div>
-                        <h2 className="text-2xl font-black" style={{ color: 'var(--theme-text)' }}>SETTINGS</h2>
+                        <h2 className="text-3xl font-black text-white tracking-tight drop-shadow-md">SETTINGS</h2>
                         {roomCode && (
-                            <div className="flex items-center gap-2 mt-1">
-                                <span className="text-sm font-bold text-gray-400 uppercase tracking-wider">Room Code:</span>
-                                <span className="text-lg font-black font-mono text-purple-600 bg-purple-100 px-2 py-0.5 rounded-lg select-all">
+                            <div className="flex items-center gap-2 mt-2">
+                                <span className="text-xs font-bold text-white/50 uppercase tracking-widest">Room Code</span>
+                                <span className="text-lg font-black font-mono text-purple-300 bg-purple-500/20 border border-purple-500/30 px-3 py-1 rounded-lg select-all shadow-inner">
                                     {roomCode}
                                 </span>
                             </div>
@@ -322,66 +291,48 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     </div>
                     <button
                         onClick={handleAnimatedClose}
-                        className="w-10 h-10 rounded-full flex items-center justify-center text-xl transition-colors"
-                        style={{
-                            backgroundColor: 'var(--theme-bg-secondary)',
-                            color: 'var(--theme-text)',
-                            border: '2px solid var(--theme-border)'
-                        }}
+                        className="w-12 h-12 rounded-full flex items-center justify-center text-xl transition-all bg-white/10 hover:bg-white/20 active:scale-90 border border-white/10 text-white"
                     >
                         ✕
                     </button>
                 </div>
 
-                <div className="space-y-6">
-                    {/* Game Actions (Only if in a game) */}
-
+                <div className="space-y-8">
                     {/* Name Edit */}
-                    <div className="space-y-2">
-                        <label className="text-sm font-bold uppercase tracking-wider" style={{ color: 'var(--theme-text-secondary)' }}>Display Name</label>
+                    <div className="space-y-3">
+                        <label className="text-xs font-bold uppercase tracking-widest text-white/50 ml-1">Display Name</label>
                         <input
                             type="text"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
                             maxLength={15}
-                            className="w-full px-4 py-3 rounded-xl border-2 focus:border-purple-500 focus:outline-none font-bold text-lg"
-                            style={{ backgroundColor: 'var(--theme-bg-secondary)', color: 'var(--theme-text)', borderColor: 'var(--theme-border)' }}
+                            className="w-full px-5 py-4 rounded-2xl bg-white/10 border-2 border-white/10 focus:border-purple-500/50 focus:bg-white/15 focus:outline-none font-bold text-xl text-white placeholder-white/20 transition-all"
                             placeholder="Enter name"
                         />
                     </div>
 
                     {/* Username Edit */}
                     {currentUser && (
-                        <div className="space-y-2">
-                            <label className="text-sm font-bold uppercase tracking-wider" style={{ color: 'var(--theme-text-secondary)' }}>Username</label>
+                        <div className="space-y-3">
+                            <label className="text-xs font-bold uppercase tracking-widest text-white/50 ml-1">Username</label>
                             {!isEditingUsername ? (
-                                <div className="flex items-center gap-2">
-                                    <div
-                                        className="flex-1 px-4 py-3 rounded-xl border-2 font-bold text-lg"
-                                        style={{
-                                            backgroundColor: 'var(--theme-bg-secondary)',
-                                            color: 'var(--theme-text)',
-                                            borderColor: 'var(--theme-border)'
-                                        }}
-                                    >
+                                <div className="flex items-center gap-3">
+                                    <div className="flex-1 px-5 py-4 rounded-2xl bg-white/5 border border-white/10 font-bold text-xl text-white/90">
                                         @{currentUser.username}
                                     </div>
                                     <button
                                         onClick={() => {
+                                            vibrate();
                                             setIsEditingUsername(true);
                                             setNewUsername(currentUser.username);
                                         }}
-                                        className="px-4 py-3 rounded-xl font-bold transition-colors"
-                                        style={{
-                                            backgroundColor: 'var(--theme-accent, #6366f1)',
-                                            color: 'white'
-                                        }}
+                                        className="px-6 py-4 rounded-2xl font-bold transition-all bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 hover:bg-indigo-500/30 active:scale-95"
                                     >
                                         ✏️ Edit
                                     </button>
                                 </div>
                             ) : (
-                                <div className="space-y-2">
+                                <div className="space-y-3 p-4 rounded-2xl bg-white/5 border border-white/10">
                                     <input
                                         type="text"
                                         value={newUsername}
@@ -390,52 +341,39 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                                             setUsernameError('');
                                         }}
                                         maxLength={20}
-                                        className="w-full px-4 py-3 rounded-xl border-2 focus:border-purple-500 focus:outline-none font-bold text-lg"
-                                        style={{
-                                            backgroundColor: 'var(--theme-bg-secondary)',
-                                            color: 'var(--theme-text)',
-                                            borderColor: usernameError ? '#ef4444' : 'var(--theme-border)'
-                                        }}
+                                        className="w-full px-5 py-4 rounded-xl bg-black/40 border-2 border-white/10 focus:border-indigo-500/50 focus:outline-none font-bold text-xl text-white placeholder-white/20"
                                         placeholder="new_username"
                                     />
-                                    <div className="text-xs font-medium" style={{ color: 'var(--theme-text-secondary)' }}>
-                                        Only lowercase letters, numbers, and underscores
+                                    <div className="text-xs font-medium text-white/40 px-1">
+                                        Lowercase letters, numbers, and underscores only
                                     </div>
                                     {usernameError && (
-                                        <div className="text-sm font-bold text-red-500">
+                                        <div className="text-sm font-bold text-red-400 px-1 animate-pulse">
                                             ❌ {usernameError}
                                         </div>
                                     )}
                                     {usernameSuccess && (
-                                        <div className="text-sm font-bold text-green-500">
+                                        <div className="text-sm font-bold text-green-400 px-1">
                                             ✅ Username changed! Reloading...
                                         </div>
                                     )}
-                                    <div className="flex gap-2">
+                                    <div className="flex gap-3 pt-2">
                                         <button
                                             onClick={() => {
                                                 setIsEditingUsername(false);
                                                 setNewUsername('');
                                                 setUsernameError('');
                                             }}
-                                            className="flex-1 py-2 px-4 rounded-xl font-bold transition-colors"
-                                            style={{
-                                                backgroundColor: 'var(--theme-bg-secondary)',
-                                                color: 'var(--theme-text)'
-                                            }}
+                                            className="flex-1 py-3 px-4 rounded-xl font-bold transition-all bg-white/10 hover:bg-white/20 text-white"
                                         >
                                             Cancel
                                         </button>
                                         <button
                                             onClick={handleUsernameChange}
                                             disabled={isSavingUsername || !newUsername.trim()}
-                                            className="flex-1 py-2 px-4 rounded-xl font-bold transition-colors disabled:opacity-50"
-                                            style={{
-                                                backgroundColor: '#22c55e',
-                                                color: 'white'
-                                            }}
+                                            className="flex-1 py-3 px-4 rounded-xl font-bold transition-all disabled:opacity-50 bg-green-500 text-white shadow-lg shadow-green-500/20 hover:bg-green-600 active:scale-95"
                                         >
-                                            {isSavingUsername ? 'Saving...' : 'Save Username'}
+                                            {isSavingUsername ? 'Saving...' : 'Save'}
                                         </button>
                                     </div>
                                 </div>
@@ -443,108 +381,46 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         </div>
                     )}
 
-                    <hr style={{ borderColor: 'var(--theme-border)' }} />
-
-                    {/* Theme Toggle */}
-                    <div className="space-y-2">
-                        <label className="text-sm font-bold text-white uppercase tracking-wider">App Theme</label>
-                        <div className="grid grid-cols-2 gap-3">
-                            <button
-                                onClick={() => onUpdateProfile({
-                                    cosmetics: {
-                                        ...player.cosmetics,
-                                        activeTheme: 'premium-light',
-                                        // Ensure defaults for required fields if they were somehow missing
-                                        brushesUnlocked: player.cosmetics?.brushesUnlocked || [],
-                                        colorsUnlocked: player.cosmetics?.colorsUnlocked || [],
-                                        badges: player.cosmetics?.badges || [],
-                                        purchasedItems: player.cosmetics?.purchasedItems || [],
-                                        activeBrush: player.cosmetics?.activeBrush,
-                                        activeColor: player.cosmetics?.activeColor
-                                    }
-                                })}
-                                className={`py-3 px-4 rounded-xl font-bold flex items-center justify-center gap-2 border-2 transition-all ${player.cosmetics?.activeTheme === 'premium-light' || player.cosmetics?.activeTheme === 'light'
-                                    ? 'bg-orange-100 border-orange-400 text-orange-600'
-                                    : 'bg-gray-50 border-gray-100 text-gray-400 hover:bg-gray-100'
-                                    }`}
-                            >
-                                ☀️ Light
-                            </button>
-                            <button
-                                onClick={() => onUpdateProfile({
-                                    cosmetics: {
-                                        ...player.cosmetics,
-                                        activeTheme: 'premium-dark',
-                                        // Ensure defaults for required fields
-                                        brushesUnlocked: player.cosmetics?.brushesUnlocked || [],
-                                        colorsUnlocked: player.cosmetics?.colorsUnlocked || [],
-                                        badges: player.cosmetics?.badges || [],
-                                        purchasedItems: player.cosmetics?.purchasedItems || [],
-                                        activeBrush: player.cosmetics?.activeBrush,
-                                        activeColor: player.cosmetics?.activeColor
-                                    }
-                                })}
-                                className={`py-3 px-4 rounded-xl font-bold flex items-center justify-center gap-2 border-2 transition-all ${(player.cosmetics?.activeTheme === 'premium-dark' || player.cosmetics?.activeTheme === 'dark' || !player.cosmetics?.activeTheme || player.cosmetics?.activeTheme === 'default')
-                                    ? 'bg-gray-800 border-gray-600 text-white'
-                                    : 'bg-gray-50 border-gray-100 text-gray-400 hover:bg-gray-100'
-                                    }`}
-                            >
-                                🌙 Dark
-                            </button>
-                        </div>
-                    </div>
-
-                    <hr className="border-gray-100" />
-
                     {/* Notifications */}
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center text-xl">
+                    <div className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/10">
+                        <div className="flex items-center gap-4">
+                            <div className={`w-12 h-12 rounded-full flex items-center justify-center text-2xl shadow-lg transition-all ${notificationsEnabled ? 'bg-purple-500/20 text-purple-300 shadow-purple-500/10' : 'bg-white/5 text-white/30'}`}>
                                 🔔
                             </div>
                             <div>
-                                <div className="font-bold" style={{ color: 'var(--theme-text)' }}>Notifications</div>
-                                <div className="text-xs" style={{ color: 'var(--theme-text-secondary)' }}>Get alerted for turns</div>
+                                <div className="font-bold text-lg text-white">Notifications</div>
+                                <div className="text-xs font-medium text-white/50">Get alerted for your turn</div>
                             </div>
                         </div>
                         <button
                             onClick={toggleNotifications}
-                            className={`w-14 h-8 rounded-full p-1 transition-colors duration-200 ease-in-out ${notificationsEnabled ? 'bg-green-500' : 'bg-gray-300'}`}
+                            className={`w-16 h-9 rounded-full p-1 transition-all duration-300 ease-out border-2 ${notificationsEnabled ? 'bg-green-500 border-green-500' : 'bg-transparent border-white/20'}`}
                         >
-                            <div className={`bg-white w-6 h-6 rounded-full shadow-sm transform transition-transform duration-200 ease-in-out ${notificationsEnabled ? 'translate-x-6' : 'translate-x-0'}`} />
+                            <div className={`bg-white w-6 h-6 rounded-full shadow-sm transform transition-transform duration-300 ${notificationsEnabled ? 'translate-x-7' : 'translate-x-0'}`} />
                         </button>
                     </div>
 
-                    <hr className="border-gray-100" />
-
                     {/* Host Controls - Kick Player */}
                     {isHost && roomCode && players.length > 1 && (
-                        <div className="space-y-2">
-                            <h3 className="text-sm font-bold uppercase tracking-wider" style={{ color: 'var(--theme-text-secondary)' }}>Manage Players</h3>
-                            <div className="rounded-xl p-2 space-y-2" style={{ backgroundColor: 'var(--theme-bg-secondary)' }}>
+                        <div className="space-y-3">
+                            <h3 className="text-xs font-bold uppercase tracking-widest text-white/50 ml-1">Manage Players</h3>
+                            <div className="rounded-2xl p-2 space-y-2 bg-black/20 border border-white/5 max-h-48 overflow-y-auto custom-scrollbar">
                                 {players.filter(p => p.id !== player.id).map(p => (
                                     <div
                                         key={p.id}
-                                        className="flex items-center justify-between p-2 rounded-lg"
-                                        style={{
-                                            backgroundColor: 'var(--theme-card-bg)',
-                                            border: '1px solid var(--theme-border)'
-                                        }}
+                                        className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors"
                                     >
-                                        <div className="flex items-center gap-2">
+                                        <div className="flex items-center gap-3">
                                             {p.avatar && (
-                                                <img
-                                                    src={p.avatar}
-                                                    alt={p.name}
-                                                    className="w-8 h-8 rounded-full object-cover"
-                                                    style={{ border: '2px solid var(--theme-border)' }}
-                                                />
+                                                <div className="w-8 h-8 rounded-full overflow-hidden border border-white/20">
+                                                    <img src={p.avatar} alt={p.name} className="w-full h-full object-cover" />
+                                                </div>
                                             )}
-                                            <span className="font-bold" style={{ color: 'var(--theme-text)' }}>{p.name}</span>
+                                            <span className="font-bold text-white text-sm">{p.name}</span>
                                         </div>
                                         <button
                                             onClick={() => setKickTarget(p.id)}
-                                            className="px-3 py-1 bg-red-500/20 text-red-400 text-xs font-bold rounded-lg hover:bg-red-500/30 transition-colors"
+                                            className="px-3 py-1.5 bg-red-500/20 text-red-300 text-xs font-bold rounded-lg border border-red-500/30 hover:bg-red-500/40 active:scale-95 transition-all"
                                         >
                                             Kick
                                         </button>
@@ -556,11 +432,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
                     {/* Game Actions */}
                     {roomCode && (
-                        <div className="space-y-3">
+                        <div className="space-y-3 pt-4 border-t border-white/10">
                             {/* Go Home - Available to everyone */}
                             <button
                                 onClick={() => {
-                                    // Ensure onGoHome is called before closing
+                                    vibrate();
                                     if (onGoHome) {
                                         onGoHome();
                                         onClose();
@@ -568,65 +444,75 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                                         onClose();
                                     }
                                 }}
-                                className="w-full py-3 px-4 bg-blue-50 text-blue-600 font-bold rounded-xl border-2 border-blue-100 hover:bg-blue-100 transition-colors flex items-center justify-center gap-2"
+                                className="w-full py-4 px-6 bg-blue-500/10 text-blue-300 font-black rounded-2xl border border-blue-500/30 hover:bg-blue-500/20 active:scale-95 transition-all flex items-center justify-center gap-2 uppercase tracking-wide text-sm"
                             >
-                                🏠 Go Home (Keep Game Running)
+                                🏠 Go Home (Background)
                             </button>
 
                             {/* Host: End Game / Player: Leave Game */}
                             {isHost ? (
                                 <button
-                                    onClick={() => setShowEndGameConfirm(true)}
-                                    className="w-full py-3 px-4 bg-red-50 text-red-600 font-bold rounded-xl border-2 border-red-100 hover:bg-red-100 transition-colors flex items-center justify-center gap-2"
+                                    onClick={() => {
+                                        vibrate();
+                                        setShowEndGameConfirm(true);
+                                    }}
+                                    className="w-full py-4 px-6 bg-red-500/10 text-red-400 font-black rounded-2xl border border-red-500/30 hover:bg-red-500/20 active:scale-95 transition-all flex items-center justify-center gap-2 uppercase tracking-wide text-sm"
                                 >
-                                    🛑 End Game & Kick Everyone
+                                    🛑 End Game & Kick All
                                 </button>
                             ) : (
                                 <button
-                                    onClick={() => setShowLeaveConfirm(true)}
-                                    className="w-full py-3 px-4 bg-gray-100 text-gray-600 font-bold rounded-xl hover:bg-gray-200 transition-colors"
+                                    onClick={() => {
+                                        vibrate();
+                                        setShowLeaveConfirm(true);
+                                    }}
+                                    className="w-full py-4 px-6 bg-white/5 text-white/70 font-black rounded-2xl border border-white/10 hover:bg-white/10 active:scale-95 transition-all uppercase tracking-wide text-sm"
                                 >
                                     👋 Leave Game
                                 </button>
                             )}
 
                         </div>
-
                     )}
 
                     {/* Main Save Button */}
                     <button
-                        onClick={handleSave}
-                        className="w-full py-4 bg-black text-white font-bold text-xl rounded-2xl shadow-lg hover:bg-gray-800 active:scale-95 transition-all"
+                        onClick={() => {
+                            vibrate();
+                            handleSave();
+                        }}
+                        className="w-full py-5 bg-gradient-to-r from-indigo-500 to-purple-600 border border-white/20 text-white font-black text-xl rounded-2xl shadow-xl shadow-indigo-500/20 hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-95 transition-all"
                     >
                         Save Settings
                     </button>
 
-                    <hr className="border-gray-100" />
-
-                    {/* Log Out Button - Universal */}
+                    {/* Log Out Button */}
                     <button
-                        onClick={() => setShowLogoutConfirm(true)}
-                        className="w-full py-3 px-4 bg-gray-100 text-gray-500 font-bold rounded-xl hover:bg-gray-200 transition-colors text-sm"
+                        onClick={() => {
+                            vibrate();
+                            setShowLogoutConfirm(true);
+                        }}
+                        className="w-full py-4 px-4 text-white/40 font-bold hover:text-white transition-colors text-sm uppercase tracking-wider"
                     >
                         Log Out
                     </button>
 
-                    {/* Delete Account - Danger zone, well separated */}
-                    <div className="pt-12 border-t border-red-100 mt-8">
-                        <p className="text-xs text-gray-400 text-center mb-3 uppercase tracking-widest">Danger Zone</p>
-                        <button
-                            onClick={() => window.location.reload()}
-                            className="w-full py-2 text-xs text-orange-400 hover:text-orange-600 font-bold transition-colors uppercase tracking-widest mb-2"
-                        >
-                            🔄 Refresh App
-                        </button>
-                        <button
-                            onClick={() => setShowDeleteConfirm(true)}
-                            className="w-full py-2 text-xs text-red-400 hover:text-red-600 font-bold transition-colors uppercase tracking-widest"
-                        >
-                            🗑️ Delete Account Permanently
-                        </button>
+                    {/* Danger Zone */}
+                    <div className="pt-8 mt-4 border-t border-white/5">
+                        <div className="flex flex-col gap-3">
+                            <button
+                                onClick={() => window.location.reload()}
+                                className="w-full py-3 text-xs text-orange-400/70 hover:text-orange-400 font-bold transition-colors uppercase tracking-widest border border-orange-500/20 rounded-xl hover:bg-orange-500/10"
+                            >
+                                🔄 Refresh App
+                            </button>
+                            <button
+                                onClick={() => setShowDeleteConfirm(true)}
+                                className="w-full py-3 text-xs text-red-500/50 hover:text-red-500 font-bold transition-colors uppercase tracking-widest border border-red-500/10 rounded-xl hover:bg-red-500/10"
+                            >
+                                🗑️ Delete Account
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>

@@ -38,7 +38,7 @@ interface PushTokenData {
 export const onInviteCreated = functions.database
     .ref('/invites/{inviteId}')
     .onCreate(async (snapshot, context) => {
-        const invite = snapshot.val() as GameInvite;
+        const invite = snapshot.val() as GameInvite & { origin?: string; notificationSent?: boolean };
         const inviteId = context.params.inviteId;
 
         console.log(`New invite created: ${inviteId}`, invite);
@@ -49,7 +49,17 @@ export const onInviteCreated = functions.database
             return null;
         }
 
+        // Idempotency Check: Don't send if already sent
+        if (invite.notificationSent) {
+            console.log('Notification already sent for this invite, skipping');
+            return null;
+        }
+
         try {
+            // Mark as sent immediately to prevent race conditions (idempotency)
+            // We use a transaction or simple update. Since this is onCreate, we might just update.
+            await snapshot.ref.update({ notificationSent: true });
+
             // Get the recipient's push token
             const tokenSnapshot = await db.ref(`/pushTokens/${invite.toUserId}`).once('value');
 
@@ -66,6 +76,16 @@ export const onInviteCreated = functions.database
                 return null;
             }
 
+            // DYNAMIC LINK GENERATION
+            // If origin is provided and valid (not localhost for prod links), use it.
+            // Otherwise fallback to production Vercel app.
+            let baseUrl = 'https://ano-game.vercel.app';
+            if (invite.origin && !invite.origin.includes('localhost') && !invite.origin.includes('127.0.0.1')) {
+                baseUrl = invite.origin;
+            }
+
+            const linkUrl = `${baseUrl}/?join=${invite.roomCode}`;
+
             // Build the notification payload
             const message: admin.messaging.Message = {
                 token: fcmToken,
@@ -80,11 +100,11 @@ export const onInviteCreated = functions.database
                     fromUserId: invite.fromUserId,
                     fromUsername: invite.fromUsername,
                     // Click action to open the app and navigate to the invite
-                    click_action: `https://ano-game.vercel.app/?join=${invite.roomCode}`
+                    click_action: linkUrl
                 },
                 webpush: {
                     fcmOptions: {
-                        link: `https://ano-game.vercel.app/?join=${invite.roomCode}`
+                        link: linkUrl
                     },
                     notification: {
                         icon: '/icons/icon-192x192.png',

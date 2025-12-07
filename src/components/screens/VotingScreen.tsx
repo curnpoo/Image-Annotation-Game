@@ -82,15 +82,16 @@ export const VotingScreen: React.FC<VotingScreenProps> = ({
         }
     };
 
-    // Show loading state while fetching drawings from separate path
     if (drawingsLoading) {
         return (
-            <div className="min-h-screen flex flex-col items-center justify-center"
-                style={{ backgroundColor: 'var(--theme-bg-primary)' }}>
-                <div className="animate-spin rounded-full h-12 w-12 border-4 border-t-transparent mb-4"
-                    style={{ borderColor: 'var(--theme-accent)', borderTopColor: 'transparent' }} />
-                <div className="text-lg font-bold" style={{ color: 'var(--theme-text)' }}>
-                    Loading drawings...
+            <div className="fixed inset-0 w-full h-[100dvh] flex flex-col items-center justify-center bg-black/5 overflow-hidden">
+                {/* Background Bubbles */}
+                <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+                    <div className="bubble bg-indigo-500/10 w-96 h-96 left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 animation-delay-0 blur-3xl rounded-full absolute animate-pulse-slow"></div>
+                </div>
+                <div className="animate-spin rounded-full h-16 w-16 border-4 border-t-transparent border-indigo-500 mb-6 z-10" />
+                <div className="text-xl font-bold text-white/80 z-10 animate-pulse">
+                    Collecting Masterpieces...
                 </div>
             </div>
         );
@@ -98,80 +99,84 @@ export const VotingScreen: React.FC<VotingScreenProps> = ({
 
     if (!currentDrawing) {
         return (
-            <div className="min-h-screen flex items-center justify-center"
-                style={{ backgroundColor: 'var(--theme-bg-primary)' }}>
-                <div className="text-2xl font-bold" style={{ color: 'var(--theme-text)' }}>
-                    No drawings to vote on!
+            <div className="fixed inset-0 w-full h-[100dvh] flex items-center justify-center bg-black/5">
+                <div className="glass-panel p-8 rounded-3xl text-center">
+                    <div className="text-4xl mb-4">🖼️</div>
+                    <div className="text-2xl font-bold text-white mb-2">
+                        No drawings found!
+                    </div>
+                    <p className="text-white/60">Did everyone forget to draw?</p>
                 </div>
             </div>
         );
     }
 
     return (
-        <div
-            className={`fixed inset-0 flex flex-col p-4 ${mounted ? 'pop-in' : 'opacity-0'} overflow-hidden touch-none`}
-            style={{
-                paddingTop: 'max(1rem, env(safe-area-inset-top) + 1rem)',
-                paddingBottom: 'max(1rem, env(safe-area-inset-bottom) + 1rem)',
-                backgroundColor: 'var(--theme-bg-primary)'
-            }}
-        >
-            {/* Header */}
-            <div className="text-center mb-4">
-                <h1 className="text-3xl font-black mb-2" style={{ color: 'var(--theme-text)' }}>
-                    🗳️ Vote Time!
+        <div className="fixed inset-0 w-full h-[100dvh] overflow-hidden flex flex-col items-center bg-black/5 safe-area-padding">
+
+            {/* Background Bubbles */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+                <div className="bubble bg-indigo-500/10 w-[500px] h-[500px] -right-20 -top-20 animation-delay-0 blur-3xl rounded-full absolute animate-float"></div>
+                <div className="bubble bg-purple-500/10 w-[400px] h-[400px] -left-20 -bottom-20 animation-delay-2000 blur-3xl rounded-full absolute animate-float-slow"></div>
+            </div>
+
+            {/* Header Area */}
+            <div className="w-full pt-4 pb-2 px-4 z-10 flex flex-col items-center safe-area-top-padding">
+                <h1 className="text-4xl font-black mb-2 rainbow-text drop-shadow-lg text-center animate-slide-down">
+                    Vote Time!
                 </h1>
-                <div className="inline-block px-4 py-2 rounded-full font-bold shadow-lg"
-                    style={{
-                        backgroundColor: 'var(--theme-card-bg)',
-                        color: 'var(--theme-accent)',
-                        border: '2px solid var(--theme-border)'
-                    }}>
-                    {votedCount}/{totalPlayers} voted
+
+                {/* Stats Bar */}
+                <div className="glass-panel px-4 py-2 rounded-full flex items-center gap-4 text-sm font-bold text-white/90 shadow-lg mb-2 backdrop-blur-md">
+                    <div className="flex items-center gap-2">
+                        <span className="text-indigo-300">🗳️ Voted:</span>
+                        <span className={votedCount === totalPlayers ? "text-green-400" : "text-white"}>
+                            {votedCount}/{totalPlayers}
+                        </span>
+                    </div>
                 </div>
 
-                {/* Sabotage victim reveal */}
+                {/* Sub-header info */}
                 {room.sabotageTargetId && (
-                    <div className="mt-3 bg-[#8B0000] text-[#FFaaaa] rounded-full px-4 py-2 font-bold text-sm inline-block animate-pulse shadow-md border border-red-900/30">
-                        ⚠️ {room.players.find(p => p.id === room.sabotageTargetId)?.name || 'Someone'} was SABOTAGED!
+                    <div className="bg-red-500/20 border border-red-500/40 text-red-200 rounded-full px-4 py-1 font-bold text-xs inline-flex items-center gap-2 animate-pulse shadow-md backdrop-blur-md">
+                        <span>⚠️</span>
+                        <span>{room.players.find(p => p.id === room.sabotageTargetId)?.name || 'Someone'} was SABOTAGED!</span>
                     </div>
                 )}
-
-                {/* Show missing voters if few remain */}
                 {(totalPlayers - votedCount) <= 2 && (totalPlayers - votedCount) > 0 && (
-                    <div className="mt-2 text-sm font-medium animate-pulse" style={{ color: 'var(--theme-text-secondary)' }}>
+                    <div className="text-xs font-medium text-white/50 animate-pulse mt-1">
                         Waiting for: {room.players.filter(p => !room.votes[p.id]).map(p => p.name).join(', ')}
                     </div>
                 )}
             </div>
 
-            {/* Drawing Display */}
-            <div className="flex-1 flex flex-col items-center justify-center">
-                {/* Player Name */}
-                <div className="rounded-[2rem] px-6 py-3 mb-4 pop-in flex items-center gap-3 shadow-xl"
-                    style={{
-                        backgroundColor: 'var(--theme-card-bg)', // Using theme card bg
-                        border: `3px solid ${currentDrawing.player.color}`
-                    }}>
-                    <AvatarDisplay
-                        strokes={currentDrawing.player.avatarStrokes}
-                        avatar={currentDrawing.player.avatar}
-                        frame={currentDrawing.player.frame}
-                        color={currentDrawing.player.color}
-                        backgroundColor={currentDrawing.player.backgroundColor}
-                        size={40}
-                    />
-                    <span className="text-xl font-bold" style={{ color: currentDrawing.player.color }}>
-                        {currentDrawing.player.name}
-                        {isOwnDrawing && <span className="ml-2 text-[var(--theme-text-secondary)] opacity-60">(You)</span>}
-                    </span>
+            {/* Main Content - Centered */}
+            <div className="flex-1 w-full max-w-md relative z-10 flex flex-col items-center justify-center -mt-8 min-h-0 px-4">
+
+                {/* Artist Card */}
+                <div className="bg-white/10 backdrop-blur-xl rounded-[2rem] p-2 mb-4 animate-slide-up flex items-center gap-3 pr-6 border border-white/20 shadow-xl transition-all" key={currentDrawing.player.id}>
+                    <div className="w-12 h-12 rounded-full overflow-hidden bg-white/20 shadow-inner">
+                        <AvatarDisplay
+                            strokes={currentDrawing.player.avatarStrokes}
+                            avatar={currentDrawing.player.avatar}
+                            frame={currentDrawing.player.frame}
+                            color={currentDrawing.player.color}
+                            backgroundColor={currentDrawing.player.backgroundColor}
+                            size={48}
+                            playerId={currentDrawing.player.id}
+                        />
+                    </div>
+                    <div className="flex flex-col">
+                        <span className="text-xs font-bold text-white/50 uppercase tracking-wider">Artist</span>
+                        <span className="text-xl font-bold text-white leading-none">
+                            {currentDrawing.player.name}
+                            {isOwnDrawing && <span className="ml-2 text-white/40 text-sm">(You)</span>}
+                        </span>
+                    </div>
                 </div>
 
-                {/* Drawing Canvas - Show the image with their drawing */}
-                <div className="relative w-full max-w-md aspect-square rounded-3xl overflow-hidden shadow-2xl"
-                    style={{
-                        border: '4px solid var(--theme-card-bg)' // Clean border
-                    }}>
+                {/* Drawing Display */}
+                <div className="relative w-full aspect-square bg-white rounded-[2rem] shadow-2xl overflow-hidden border-4 border-white/30 ring-4 ring-black/10 transition-all duration-500 group">
                     {/* Base image */}
                     <img
                         src={room.currentImage?.url}
@@ -196,15 +201,15 @@ export const VotingScreen: React.FC<VotingScreenProps> = ({
                         />
                     )}
 
-                    {/* Drawing overlay - use GameCanvas for proper eraser rendering */}
+                    {/* Drawing overlay */}
                     <div className="absolute inset-0 pointer-events-none">
                         <GameCanvas
                             imageUrl={room.currentImage?.url || ''}
-                            brushColor="#000000" // Dummy value, not used in read-only
-                            brushSize={10} // Dummy value
+                            brushColor="#000000"
+                            brushSize={10}
                             isDrawingEnabled={false}
                             strokes={currentDrawing.drawing.strokes || []}
-                            onStrokesChange={() => { }} // Read-only
+                            onStrokesChange={() => { }}
                             isEraser={false}
                         />
                     </div>
@@ -219,105 +224,77 @@ export const VotingScreen: React.FC<VotingScreenProps> = ({
                                 vibrate();
                                 setSelectedIndex(i);
                             }}
-                            className={`w-3 h-3 rounded-full transition-all duration-300 ${i === selectedIndex
-                                ? 'scale-125'
-                                : 'opacity-40 hover:opacity-100'
+                            className={`h-2 rounded-full transition-all duration-300 ${i === selectedIndex
+                                ? 'w-8 bg-white shadow-glow'
+                                : 'w-2 bg-white/30 hover:bg-white/50'
                                 }`}
-                            style={{
-                                backgroundColor: i === selectedIndex ? 'var(--theme-accent)' : 'var(--theme-text)'
-                            }}
                         />
                     ))}
                 </div>
             </div>
 
-            {/* Bottom Actions */}
-            <div className="mt-6 flex flex-col items-center gap-3">
-                {/* Navigation Arrows & Vote Button */}
-                <div className="flex items-center justify-between w-full max-w-sm px-2 gap-4">
+            {/* Bottom Controls Area */}
+            <div className="w-full pb-6 px-4 z-20 safe-area-bottom-padding">
+                <div className="max-w-md mx-auto flex items-center justify-between gap-4">
+                    {/* Prev Button */}
                     <button
                         onClick={() => {
                             vibrate();
                             setSelectedIndex(Math.max(0, selectedIndex - 1));
                         }}
                         disabled={selectedIndex === 0}
-                        className={`w-14 h-14 flex-shrink-0 rounded-full text-2xl transition-all flex items-center justify-center shadow-lg ${selectedIndex === 0
-                            ? 'opacity-30 cursor-not-allowed'
-                            : 'hover:scale-110 active:scale-95'
-                            }`}
-                        style={{
-                            backgroundColor: 'var(--theme-card-bg)',
-                            color: 'var(--theme-text)',
-                            border: '2px solid var(--theme-border)'
-                        }}
+                        className={`w-14 h-14 rounded-full flex items-center justify-center bg-white/10 backdrop-blur-md border border-white/20 text-white text-2xl transition-all ${selectedIndex === 0 ? 'opacity-30 cursor-not-allowed' : 'hover:bg-white/20 active:scale-95 shadow-lg'}`}
                     >
                         ←
                     </button>
 
-                    {/* Vote Button Area - Centered & Flexible */}
-                    <div className="flex-1 flex justify-center min-w-0">
+                    {/* Action Button */}
+                    <div className="flex-1 flex justify-center h-16">
                         {hasVoted ? (
-                            <div className="px-6 py-4 rounded-2xl font-bold text-lg shadow-lg whitespace-nowrap animate-bounce flex items-center justify-center gap-2"
-                                style={{ backgroundColor: '#22c55e', color: '#ffffff' }}>
-                                ✓ Voted!
+                            <div className="w-full h-full rounded-2xl bg-green-500/20 backdrop-blur-md border border-green-500/50 flex items-center justify-center gap-2 animate-bounce-gentle shadow-lg shadow-green-500/10">
+                                <span className="text-2xl">✅</span>
+                                <span className="font-bold text-green-300 text-lg uppercase tracking-wide">Voted</span>
                             </div>
                         ) : isOwnDrawing ? (
-                            <div className="px-6 py-4 rounded-2xl font-bold text-sm text-center shadow-inner leading-tight opacity-70"
-                                style={{
-                                    backgroundColor: 'var(--theme-bg-secondary)',
-                                    color: 'var(--theme-text)'
-                                }}>
-                                Your Drawing
+                            <div className="w-full h-full rounded-2xl bg-white/5 backdrop-blur-md border border-white/10 flex items-center justify-center text-white/50 font-bold uppercase tracking-widest text-sm italic">
+                                Your Masterpiece
                             </div>
                         ) : (
                             <button
                                 onClick={handleVote}
-                                className="w-full max-w-[200px] text-black py-4 rounded-2xl font-black text-xl shadow-xl transform transition-all hover:scale-105 active:scale-95"
-                                style={{
-                                    background: 'linear-gradient(135deg, var(--theme-accent) 0%, #FFD700 100%)',
-                                    textShadow: '0 2px 0 rgba(0,0,0,0.2)'
-                                }}
+                                className="w-full h-full rounded-2xl bg-gradient-to-r from-indigo-500 to-purple-600 border border-white/20 text-white font-black text-xl uppercase tracking-wider shadow-xl shadow-indigo-500/30 hover:shadow-indigo-500/50 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2 group"
                             >
-                                🗳️ VOTE
+                                <span className="text-2xl group-hover:rotate-12 transition-transform">⭐</span>
+                                Vote
                             </button>
                         )}
                     </div>
 
+                    {/* Next Button */}
                     <button
                         onClick={() => {
                             vibrate();
                             setSelectedIndex(Math.min(drawings.length - 1, selectedIndex + 1));
                         }}
                         disabled={selectedIndex === drawings.length - 1}
-                        className={`w-14 h-14 flex-shrink-0 rounded-full text-2xl transition-all flex items-center justify-center shadow-lg ${selectedIndex === drawings.length - 1
-                            ? 'opacity-30 cursor-not-allowed'
-                            : 'hover:scale-110 active:scale-95'
-                            }`}
-                        style={{
-                            backgroundColor: 'var(--theme-card-bg)',
-                            color: 'var(--theme-text)',
-                            border: '2px solid var(--theme-border)'
-                        }}
+                        className={`w-14 h-14 rounded-full flex items-center justify-center bg-white/10 backdrop-blur-md border border-white/20 text-white text-2xl transition-all ${selectedIndex === drawings.length - 1 ? 'opacity-30 cursor-not-allowed' : 'hover:bg-white/20 active:scale-95 shadow-lg'}`}
                     >
                         →
                     </button>
                 </div>
 
-                {hasVoted && (
-                    <p className="font-bold text-sm animate-pulse" style={{ color: 'var(--theme-text-secondary)' }}>
-                        Waiting for others to vote...
-                    </p>
-                )}
-
-                {/* Force Advance for Host */}
-                <ForceAdvanceButton
-                    isHost={isHost}
-                    onForceAdvance={() => StorageService.forceAdvanceRound(room.roomCode)}
-                    waitingForPlayers={waitingForVotes}
-                    phaseName="voting"
-                    timeoutSeconds={45}
-                />
+                {/* Host Force Advance */}
+                <div className="mt-4 flex justify-center">
+                    <ForceAdvanceButton
+                        isHost={isHost}
+                        onForceAdvance={() => StorageService.forceAdvanceRound(room.roomCode)}
+                        waitingForPlayers={waitingForVotes}
+                        phaseName="voting"
+                        timeoutSeconds={45}
+                    />
+                </div>
             </div>
+
         </div>
     );
 };

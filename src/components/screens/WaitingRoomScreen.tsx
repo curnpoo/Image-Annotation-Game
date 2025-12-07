@@ -49,6 +49,7 @@ export const WaitingRoomScreen: React.FC<WaitingRoomScreenProps> = ({
                         backgroundColor={me?.backgroundColor}
                         size={80}
                         className="shadow-lg"
+                        playerId={me?.id}
                     />
                 </div>
 

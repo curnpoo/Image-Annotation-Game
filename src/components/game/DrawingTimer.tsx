@@ -11,42 +11,34 @@ export const DrawingTimer: React.FC<DrawingTimerProps> = ({
     onTimeUp,
     totalDuration = 20
 }) => {
-    // Stabilize endsAt to prevent timer reset on every re-render
+    // Stabilize endsAt
     const stableEndsAtRef = useRef<number>(endsAt);
-
-    // Only update the stable ref if the value actually changed significantly (more than 500ms difference)
     if (Math.abs(endsAt - stableEndsAtRef.current) > 500) {
         stableEndsAtRef.current = endsAt;
     }
-
     const stableEndsAt = stableEndsAtRef.current;
 
     const [timeLeft, setTimeLeft] = useState(() => Math.max(0, (stableEndsAt - Date.now()) / 1000));
     const onTimeUpRef = useRef(onTimeUp);
     const hasCalledRef = useRef(false);
 
-    // Keep ref updated with latest callback
     useEffect(() => {
         onTimeUpRef.current = onTimeUp;
     }, [onTimeUp]);
 
-    // Track previous stableEndsAt to detect actual timer restarts
+    // Timer logic
     const prevEndsAtRef = useRef<number>(stableEndsAt);
-
     useEffect(() => {
-        // Only reset hasCalledRef if the timer was actually restarted (different endsAt)
         if (Math.abs(stableEndsAt - prevEndsAtRef.current) > 500) {
             hasCalledRef.current = false;
             prevEndsAtRef.current = stableEndsAt;
         }
 
-        // Reset timeLeft when stableEndsAt changes
         setTimeLeft(Math.max(0, (stableEndsAt - Date.now()) / 1000));
 
         const interval = setInterval(() => {
             const now = Date.now();
             const remaining = Math.max(0, (stableEndsAt - now) / 1000);
-
             setTimeLeft(remaining);
 
             if (remaining <= 0 && !hasCalledRef.current) {
@@ -59,7 +51,6 @@ export const DrawingTimer: React.FC<DrawingTimerProps> = ({
         return () => clearInterval(interval);
     }, [stableEndsAt]);
 
-    // Manual submit handler
     const handleDoneClick = () => {
         if (!hasCalledRef.current) {
             hasCalledRef.current = true;
@@ -67,70 +58,55 @@ export const DrawingTimer: React.FC<DrawingTimerProps> = ({
         }
     };
 
-    // Calculate progress percentage
     const progress = Math.min(100, (timeLeft / totalDuration) * 100);
-
-    // Color logic based on time remaining
-    const getVisuals = () => {
-        if (timeLeft > 10) return {
-            barColor: 'bg-gradient-to-r from-emerald-400 to-green-500',
-            textColor: 'text-emerald-600',
-            bgColor: 'bg-emerald-50',
-            borderColor: 'border-emerald-200',
-            glowColor: 'shadow-emerald-200/50'
-        };
-        if (timeLeft > 5) return {
-            barColor: 'bg-gradient-to-r from-amber-400 to-orange-500',
-            textColor: 'text-amber-600',
-            bgColor: 'bg-amber-50',
-            borderColor: 'border-amber-200',
-            glowColor: 'shadow-amber-200/50'
-        };
-        return {
-            barColor: 'bg-gradient-to-r from-red-500 to-pink-600',
-            textColor: 'text-red-600',
-            bgColor: 'bg-red-50',
-            borderColor: 'border-red-200',
-            glowColor: 'shadow-red-200/50'
-        };
-    };
-
-    const visuals = getVisuals();
     const isLowTime = timeLeft <= 5;
 
+    // Visual states
+    const getVisuals = () => {
+        if (timeLeft > 10) return {
+            barGradient: 'from-emerald-400 to-green-500',
+            textClass: 'text-emerald-400',
+            borderClass: 'border-emerald-500/30'
+        };
+        if (timeLeft > 5) return {
+            barGradient: 'from-amber-400 to-orange-500',
+            textClass: 'text-amber-400',
+            borderClass: 'border-amber-500/30'
+        };
+        return {
+            barGradient: 'from-red-500 to-pink-600',
+            textClass: 'text-red-400',
+            borderClass: 'border-red-500/30'
+        };
+    };
+    const visuals = getVisuals();
+
     return (
-        <div
-            className={`w-full rounded-2xl p-3 border-2 ${visuals.borderColor} ${visuals.bgColor} shadow-lg ${visuals.glowColor} transition-all duration-300 ${isLowTime ? 'animate-pulse' : ''}`}
-        >
-            <div className="flex items-center gap-3">
-                {/* Progress Bar Container */}
-                <div className="flex-1 relative">
-                    {/* Track */}
-                    <div className="h-5 bg-white rounded-full overflow-hidden shadow-inner border border-gray-100">
-                        {/* Progress */}
-                        <div
-                            className={`h-full ${visuals.barColor} rounded-full transition-all duration-100 ease-linear`}
-                            style={{ width: `${progress}%` }}
-                        />
-                    </div>
-                </div>
+        <div className={`glass-panel rounded-full p-2 flex items-center gap-3 w-full max-w-sm mx-auto shadow-lg backdrop-blur-xl border border-white/20 transition-all duration-300 ${isLowTime ? 'animate-pulse shadow-red-500/20' : ''}`}>
 
-                {/* Timer Number */}
-                <div className={`flex items-center justify-center min-w-[60px] h-12 rounded-xl ${visuals.bgColor} border-2 ${visuals.borderColor}`}>
-                    <span className={`text-2xl font-black ${visuals.textColor} tabular-nums`}>
-                        {Math.ceil(timeLeft)}
-                    </span>
-                    <span className={`text-sm font-bold ${visuals.textColor} ml-0.5 opacity-60`}>s</span>
-                </div>
-
-                {/* Done Button */}
-                <button
-                    onClick={handleDoneClick}
-                    className="px-4 h-12 bg-gradient-to-r from-purple-500 to-indigo-600 text-white font-bold rounded-xl shadow-lg hover:shadow-xl active:scale-95 transition-all text-sm"
-                >
-                    Done ✓
-                </button>
+            {/* Timer Icon & Value */}
+            <div className={`w-12 h-12 flex-shrink-0 rounded-full bg-black/20 flex flex-col items-center justify-center border ${visuals.borderClass}`}>
+                <span className={`text-lg font-black leading-none ${visuals.textClass} tabular-nums`}>
+                    {Math.ceil(timeLeft)}
+                </span>
+                <span className="text-[0.6rem] font-bold text-white/40 uppercase">sec</span>
             </div>
+
+            {/* Progress Bar */}
+            <div className="flex-1 h-3 bg-black/20 rounded-full overflow-hidden relative shadow-inner">
+                <div
+                    className={`absolute top-0 bottom-0 left-0 bg-gradient-to-r ${visuals.barGradient} transition-all duration-100 ease-linear rounded-full shadow-[0_0_10px_rgba(255,255,255,0.3)]`}
+                    style={{ width: `${progress}%` }}
+                />
+            </div>
+
+            {/* Done Button */}
+            <button
+                onClick={handleDoneClick}
+                className="h-10 px-5 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 transition-all border border-white/20 font-bold text-sm text-white flex items-center gap-1 shadow-md"
+            >
+                Done <span className="text-green-400">✓</span>
+            </button>
         </div>
     );
 };

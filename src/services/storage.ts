@@ -1,8 +1,9 @@
 import { ref, set, get, onValue, runTransaction, remove } from 'firebase/database';
 import { database } from '../firebase';
 import { ImageService } from './image';
-import type { GameRoom, Player, GameSettings, BlockInfo, PlayerState, PlayerDrawing, RoundResult, RoomHistoryEntry, ChatMessage, PlayerCosmetics } from '../types';
-import { generateId } from '../utils/id';
+import type { GameRoom, Player, GameSettings, BlockInfo, PlayerState, PlayerDrawing, RoundResult, RoomHistoryEntry, PlayerCosmetics } from '../types';
+import { AuthService } from './auth';
+import { AvatarService } from './avatarService';
 
 const ROOMS_PATH = 'rooms';
 
@@ -34,12 +35,27 @@ export const StorageService = {
         if (!data.roundResults) data.roundResults = [];
         else if (!Array.isArray(data.roundResults)) data.roundResults = Object.values(data.roundResults);
 
-        if (!data.chatEvents) data.chatEvents = [];
-        else if (!Array.isArray(data.chatEvents)) data.chatEvents = Object.values(data.chatEvents);
+        // if (!data.chatEvents) data.chatEvents = [];
+        // else if (!Array.isArray(data.chatEvents)) data.chatEvents = Object.values(data.chatEvents);
 
         if (!data.settings) data.settings = DEFAULT_SETTINGS;
 
         return data as GameRoom;
+    },
+
+    /**
+     * Helper to strip heavy data (avatar strokes) from player before adding to room
+     * and ensure it's uploaded to the separate avatars path
+     */
+    preparePlayerForRoom: async (player: Player): Promise<Player> => {
+        // Upload strokes if present
+        if (player.avatarStrokes && player.avatarStrokes.length > 0) {
+            await AvatarService.uploadAvatarStrokes(player.id, player.avatarStrokes);
+        }
+
+        // Return player object WITHOUT strokes
+        const { avatarStrokes, ...leanPlayer } = player;
+        return leanPlayer as Player;
     },
 
     // Generate random block for the image (50% of image size = 1/4 area)
@@ -117,9 +133,12 @@ export const StorageService = {
                     newScores[rank.playerId] = (newScores[rank.playerId] || 0) + rank.points;
                 });
 
+
                 const roundResult: RoundResult = {
                     roundNumber: room.roundNumber,
                     rankings
+                    // OPTIMIZATION: Drawings are NOT saved to history to keep room object small.
+                    // If we need to view old drawings, we can fetch them from drawings/[roomCode]/[round]
                 };
 
                 const isFinalRound = room.roundNumber >= room.settings.totalRounds;
@@ -249,6 +268,13 @@ export const StorageService = {
             // CKECK FOR ADVANCEMENT
             return StorageService.checkAndAdvanceState(room);
         });
+
+        // Clear user's room code
+        try {
+            await AuthService.updateUser(playerId, { currentRoomCode: null as any });
+        } catch (e) {
+            console.error("Failed to clear user room code on kick", e);
+        }
     },
 
     // --- History ---
@@ -323,7 +349,40 @@ export const StorageService = {
         await remove(roomRef);
     },
 
-    // Cleanup rooms older than 24 hours
+    getRoomPreview: async (roomCode: string): Promise<{ playerCount: number, roundNumber: number, totalRounds: number, status: string, hostName: string } | null> => {
+        try {
+            const roomSnap = await get(ref(database, `${ROOMS_PATH}/${roomCode}`));
+            if (!roomSnap.exists()) return null;
+
+            const room = roomSnap.val();
+            // Count players (array or object check)
+            let playerCount = 0;
+            let hostName = 'Unknown Host';
+
+            if (room.players) {
+                const playersList = Array.isArray(room.players) ? room.players : Object.values(room.players);
+                playerCount = playersList.length;
+
+                // Try to find host name
+                const host = playersList.find((p: any) => p.id === room.hostId);
+                if (host) hostName = host.name;
+            }
+
+            return {
+                playerCount,
+                roundNumber: room.roundNumber || 1,
+                totalRounds: room.settings?.totalRounds || 3,
+                status: room.status || 'lobby',
+                hostName
+            };
+        } catch (e) {
+            console.error("Failed to get room preview", e);
+            return null;
+        }
+    },
+
+    // --- Cleanup ---
+    // Auto-delete old rooms (> 24 hours)
     cleanupOldRooms: async (): Promise<{ deleted: number; errors: number }> => {
         const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
         const cutoffTime = Date.now() - TWENTY_FOUR_HOURS;
@@ -391,6 +450,13 @@ export const StorageService = {
 
     // --- Room Management ---
     createRoom: async (hostPlayer: Player): Promise<string> => {
+        // ONE ROOM POLICY: Check if host is already in a room
+        const currentUser = await AuthService.syncUser();
+        if (currentUser?.currentRoomCode) {
+            console.log(`[Policy] Leaving old room ${currentUser.currentRoomCode} before creating new one`);
+            await StorageService.removePlayerFromRoom(currentUser.currentRoomCode, hostPlayer.id);
+        }
+
         const roomCode = StorageService.generateRoomCode();
         const roomRef = ref(database, `rooms/${roomCode}`);
 
@@ -401,7 +467,7 @@ export const StorageService = {
         const newRoom: GameRoom = {
             roomCode: roomCode,
             hostId: hostPlayer.id,
-            players: [{ ...hostPlayer, cosmetics: hostPlayer.cosmetics || DEFAULT_COSMETICS }],
+            players: [await StorageService.preparePlayerForRoom({ ...hostPlayer, cosmetics: hostPlayer.cosmetics || DEFAULT_COSMETICS })],
             waitingPlayers: [],
             currentUploaderId: hostPlayer.id,
             status: 'lobby',
@@ -421,26 +487,13 @@ export const StorageService = {
         await set(roomRef, newRoom);
         StorageService.saveRoomCode(roomCode); // Save for persistence
         StorageService.saveRoomToHistory(newRoom);
-        return roomCode;
-    },
 
-    // Get room data for rejoin preview (lighter fetch?)
-    async getRoomPreview(roomCode: string): Promise<{ hostName: string; playerCount: number } | null> {
-        try {
-            const snapshot = await get(ref(database, `rooms/${roomCode}`));
-            if (!snapshot.exists()) return null;
-
-            const room = this.normalizeRoom(snapshot.val());
-            const host = room.players.find(p => p.id === room.hostId);
-
-            return {
-                hostName: host?.name || 'Unknown Host',
-                playerCount: room.players.length
-            };
-        } catch (error) {
-            console.error('Error fetching room preview:', error);
-            return null;
+        // Update User Status
+        if (currentUser) {
+            await AuthService.updateUser(hostPlayer.id, { currentRoomCode: roomCode });
         }
+
+        return roomCode;
     },
 
     getRoom: async (roomCode: string): Promise<GameRoom | null> => {
@@ -543,12 +596,22 @@ export const StorageService = {
         const room = await StorageService.getRoom(roomCode);
         if (!room) return null;
 
+        // ONE ROOM POLICY: Check if user is in a different room
+        const currentUser = await AuthService.syncUser();
+        // Don't leave if rejoining the SAME room
+        if (currentUser?.currentRoomCode && currentUser.currentRoomCode !== roomCode) {
+            console.log(`[Policy] Leaving old room ${currentUser.currentRoomCode} before joining ${roomCode}`);
+            await StorageService.removePlayerFromRoom(currentUser.currentRoomCode, player.id);
+        }
+
         // Check if already in players
         const existingPlayerIndex = room.players.findIndex(p => p.id === player.id);
         if (existingPlayerIndex >= 0) {
             room.players[existingPlayerIndex] = { ...player, lastSeen: Date.now() };
             await StorageService.saveRoom(room);
             StorageService.saveRoomToHistory(room);
+            // Ensure status is updated (might have been cleared if they were kicked)
+            if (currentUser) await AuthService.updateUser(player.id, { currentRoomCode: roomCode });
             return room;
         }
 
@@ -558,12 +621,13 @@ export const StorageService = {
             room.waitingPlayers[existingWaitingIndex] = { ...player, lastSeen: Date.now() };
             await StorageService.saveRoom(room);
             StorageService.saveRoomToHistory(room);
+            if (currentUser) await AuthService.updateUser(player.id, { currentRoomCode: roomCode });
             return room;
         }
 
         // New player
         if (room.status === 'lobby') {
-            room.players.push({ ...player, lastSeen: Date.now(), cosmetics: player.cosmetics || DEFAULT_COSMETICS });
+            room.players.push(await StorageService.preparePlayerForRoom({ ...player, lastSeen: Date.now(), cosmetics: player.cosmetics || DEFAULT_COSMETICS }));
             // Init state/score
             if (!room.playerStates[player.id]) {
                 room.playerStates[player.id] = { status: 'waiting' };
@@ -574,12 +638,16 @@ export const StorageService = {
         } else {
             // Game in progress -> Waiting Room
             if (!room.waitingPlayers) room.waitingPlayers = [];
-            room.waitingPlayers.push({ ...player, lastSeen: Date.now(), cosmetics: player.cosmetics || DEFAULT_COSMETICS });
+            room.waitingPlayers.push(await StorageService.preparePlayerForRoom({ ...player, lastSeen: Date.now(), cosmetics: player.cosmetics || DEFAULT_COSMETICS }));
         }
 
         await StorageService.saveRoom(room);
         StorageService.saveRoomCode(roomCode); // Save for persistence (Rejoin Card)
         StorageService.saveRoomToHistory(room);
+
+        // Update User Status
+        if (currentUser) await AuthService.updateUser(player.id, { currentRoomCode: roomCode });
+
         return room;
     },
 
@@ -629,6 +697,13 @@ export const StorageService = {
 
             return StorageService.checkAndAdvanceState(updatedRoom);
         });
+
+        // Clear user's room code
+        try {
+            await AuthService.updateUser(playerId, { currentRoomCode: null as any });
+        } catch (e) {
+            console.error("Failed to clear user room code on leave", e);
+        }
     },
 
     // Heartbeat to update lastSeen (Optimized: writes to presence path)
@@ -932,31 +1007,6 @@ export const StorageService = {
                 scores: {},
                 roundResults: []
             };
-        });
-    },
-
-    // --- Chat ---
-    sendChatMessage: async (roomCode: string, player: Player, text: string): Promise<void> => {
-        const message: ChatMessage = {
-            id: generateId(),
-            playerId: player.id,
-            playerName: player.name,
-            playerAvatar: player.avatar,
-            text: text.trim().slice(0, 100), // Limit length
-            timestamp: Date.now()
-        };
-
-        const roomRef = ref(database, `${ROOMS_PATH}/${roomCode}`);
-        // ...
-        await runTransaction(roomRef, (room) => {
-            if (!room) return null;
-
-            const chatEvents = room.chatEvents || [];
-            // Keep last 20 messages
-            const newEvents = [...chatEvents, message].slice(-20);
-
-            room.chatEvents = newEvents;
-            return room;
         });
     },
 

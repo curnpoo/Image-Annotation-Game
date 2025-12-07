@@ -1,10 +1,15 @@
-import { ref, uploadString, getDownloadURL } from 'firebase/storage';
-import { storage } from '../firebase';
+import { ref as storageRef, uploadString, getDownloadURL } from 'firebase/storage';
+import { ref, get, set, child } from 'firebase/database';
+import { storage, database } from '../firebase';
 import type { DrawingStroke } from '../types';
 
 /**
  * Service for rendering and managing avatar images
  */
+
+const AVATARS_PATH = 'avatars';
+const avatarCache: { [playerId: string]: DrawingStroke[] } = {};
+
 export const AvatarService = {
     /**
      * Render avatar strokes to a data URL (for preview or local use)
@@ -175,6 +180,71 @@ export const AvatarService = {
         return canvas.toDataURL('image/png');
     },
 
+    // --- Vector Avatar Storage (Realtime Database) ---
+
+    /**
+     * uploadAvatarStrokes
+     * Saves the avatar strokes to a separate path: avatars/{playerId}
+     */
+    uploadAvatarStrokes: async (playerId: string, strokes: DrawingStroke[]): Promise<void> => {
+        if (!playerId) return;
+
+        // Update Cache
+        avatarCache[playerId] = strokes;
+
+        // Upload to Firebase RTDB
+        const avatarRef = ref(database, `${AVATARS_PATH}/${playerId}`);
+        await set(avatarRef, strokes);
+    },
+
+    /**
+     * getAvatarStrokes
+     * Fetches avatar strokes for a player. Uses cache if available.
+     */
+    getAvatarStrokes: async (playerId: string): Promise<DrawingStroke[] | null> => {
+        if (!playerId) return null;
+
+        // 1. Check Cache
+        if (avatarCache[playerId]) {
+            return avatarCache[playerId];
+        }
+
+        // 2. Fetch from Firebase RTDB
+        try {
+            const snapshot = await get(child(ref(database), `${AVATARS_PATH}/${playerId}`));
+            if (snapshot.exists()) {
+                const strokes = snapshot.val() as DrawingStroke[];
+                // Cache it
+                avatarCache[playerId] = strokes;
+                return strokes;
+            }
+        } catch (error) {
+            console.error(`[AvatarService] Failed to fetch avatar for ${playerId}`, error);
+        }
+
+        return null;
+    },
+
+    /**
+     * prefetchAvatars
+     * Bulk fetches and caches avatars for a list of player IDs
+     */
+    prefetchAvatars: async (playerIds: string[]): Promise<void> => {
+        const uniqueIds = [...new Set(playerIds)].filter(id => !avatarCache[id]);
+        if (uniqueIds.length === 0) return;
+
+        // Parallel fetch
+        await Promise.all(uniqueIds.map(id => AvatarService.getAvatarStrokes(id)));
+    },
+
+    /**
+     * clearCache
+     * Clears the local avatar cache
+     */
+    clearCache: () => {
+        Object.keys(avatarCache).forEach(key => delete avatarCache[key]);
+    },
+
     /**
      * Render avatar and upload to Firebase Storage, return download URL
      */
@@ -191,7 +261,7 @@ export const AvatarService = {
 
         // Upload to Firebase Storage
         const fileName = `${Date.now()}.png`;
-        const storageRefPath = ref(storage, `avatars/${userId}/${fileName}`);
+        const storageRefPath = storageRef(storage, `avatars/${userId}/${fileName}`); // Fixed import name collision
 
         const snapshot = await uploadString(storageRefPath, dataUrl, 'data_url');
         const downloadUrl = await getDownloadURL(snapshot.ref);

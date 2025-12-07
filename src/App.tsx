@@ -38,22 +38,90 @@ import type { Player, GameSettings, PlayerDrawing, GameRoom, Screen } from './ty
 
 // Extended Screen type to include the new joining screen
 // Note: In a real app we'd update the type definition in types.ts, casting for now if needed or relying on string loose typing
+import { LoadingStage, RoomHistoryEntry } from './types';
 
 
-function App() {
+const App = () => {
   const [currentScreen, setCurrentScreen] = useState<Screen>('welcome');
+  const [lastGameDetails, setLastGameDetails] = useState<RoomHistoryEntry | null>(null);
+
+  // --- Smart Loading System ---
+  type LoadingScenario = 'initial' | 'join' | 'start' | 'upload' | 'results';
+  const [loadingScenario, setLoadingScenario] = useState<LoadingScenario | null>('initial');
+  const [loadingStages, setLoadingStages] = useState<LoadingStage[]>([]);
+
+  // Initialize checklist based on scenario
+  const startLoading = useCallback((scenario: LoadingScenario) => {
+    setLoadingScenario(scenario);
+    setIsLoading(true);
+
+    let stages: LoadingStage[] = [];
+    if (scenario === 'initial') {
+      stages = [
+        { id: 'auth', label: 'Connecting to account...', status: 'pending' },
+        { id: 'profile', label: 'Loading profile...', status: 'pending' },
+        { id: 'room', label: 'Rejoining room...', status: 'pending' }
+      ];
+    } else if (scenario === 'join') {
+      stages = [
+        { id: 'connect', label: 'Connecting to server...', status: 'loading' },
+        { id: 'sync', label: 'Syncing room data...', status: 'pending' },
+        { id: 'verify', label: 'Verifying entry...', status: 'pending' }
+      ];
+    } else if (scenario === 'start') {
+      stages = [
+        { id: 'init', label: 'Initializing round...', status: 'loading' },
+        { id: 'assign', label: 'Assigning roles...', status: 'pending' },
+        { id: 'sync', label: 'Syncing players...', status: 'pending' }
+      ];
+    } else if (scenario === 'upload') {
+      stages = [
+        { id: 'process', label: 'Processing image...', status: 'loading' },
+        { id: 'upload', label: 'Uploading to cloud...', status: 'pending' },
+        { id: 'verify', label: 'Verifying upload...', status: 'pending' }
+      ];
+    }
+    setLoadingStages(stages);
+  }, []);
+
+  const updateLoadingStage = useCallback((id: string, status: 'loading' | 'completed' | 'error') => {
+    setLoadingStages(prev => prev.map(stage =>
+      stage.id === id ? { ...stage, status } : stage
+    ));
+  }, []);
+
   const {
     player, setPlayer,
     roomCode, setRoomCode,
     isInitialLoading,
     handleUpdateProfile
-  } = usePlayerSession({ setCurrentScreen });
+  } = usePlayerSession({
+    setCurrentScreen,
+    onProgress: (id, status) => {
+      // Only update if we are in 'initial' scenario to avoid conflicts
+      if (loadingScenario === 'initial') {
+        updateLoadingStage(id, status);
+      }
+    }
+  });
+
+  // Initialize default loading stages on mount (for initial load)
+  useEffect(() => {
+    startLoading('initial');
+  }, [startLoading]);
 
   // Pending Room Code from URL
   const [pendingRoomCode, setPendingRoomCode] = useState<string | null>(null);
-
   const [isLoading, setIsLoading] = useState(false);
 
+  // --- HOOKS: ORDER MATTERS ---
+  // 1. Session & Player
+  // (Already called above: usePlayerSession)
+
+  // 2. Room Connection (Must be after player/roomCode)
+  const { room, error: roomError } = useRoom(roomCode, player?.id || null);
+
+  // 3. Notifications
   const {
     toast,
     showToast,
@@ -63,12 +131,7 @@ function App() {
     setShowNotificationPrompt
   } = useNotifications();
 
-  // Theme Transition Handler
-  const handleTransitionComplete = () => {
-    setIsTransitionActive(false);
-  };
-
-  // Drawing State
+  // 4. Drawing State
   const {
     brushColor, setBrushColor,
     brushSize, setBrushSize,
@@ -82,6 +145,7 @@ function App() {
     handleColorPick
   } = useDrawingState({ onToast: showToast });
 
+  // 5. Game Flow
   const {
     isMyTimerRunning, setIsMyTimerRunning,
     showHowToPlay, setShowHowToPlay,
@@ -90,8 +154,12 @@ function App() {
     showKicked, setShowKicked,
     endGameCountdown, setEndGameCountdown,
     kickCountdown, setKickCountdown,
-    lastGameDetails, setLastGameDetails
   } = useGameFlow();
+
+  // Theme Transition Handler
+  const handleTransitionComplete = () => {
+    setIsTransitionActive(false);
+  };
 
   const [showSettings, setShowSettings] = useState(false);
   const [showCasino, setShowCasino] = useState(false);
@@ -104,7 +172,6 @@ function App() {
   const lastStatusRef = useRef<string | null>(null);
   const lastRoundRef = useRef<number | null>(null);
   const lastWaitingRef = useRef<boolean>(false);
-
 
   const [pendingGameStats, setPendingGameStats] = useState<{ xp: number, coins: number, isWinner: boolean, action: 'home' | 'replay' } | null>(null);
   const [optimisticTimerStart, setOptimisticTimerStart] = useState<number | null>(null);
@@ -124,7 +191,6 @@ function App() {
         setLastGameDetails(null);
       }
     };
-
     checkLastGame();
   }, [currentScreen]);
 
@@ -136,56 +202,48 @@ function App() {
       const code = joinCode.toUpperCase();
       console.log('Found join code in URL:', code);
       setPendingRoomCode(code);
-
-      // Clear URL to prevent re-joining on reload (optional, but good UX)
+      // Clear URL
       window.history.replaceState({}, '', window.location.pathname);
     }
   }, []);
 
-  // Auto-join effect when we have a player AND a pending room code
+  // Timer Resilience: Optimistic Submission State
+  const [optimisticHasSubmitted, setOptimisticHasSubmitted] = useState(false);
+
+  // Reset optimistic state when round changes
+  useEffect(() => {
+    if (room?.roundNumber !== lastRoundRef.current) {
+      setOptimisticHasSubmitted(false);
+    }
+  }, [room?.roundNumber]);
+
+  // Auto-join effect
   useEffect(() => {
     if (player && pendingRoomCode && !isLoading && !roomCode) {
-      // If we are logged in and have a pending code, show joining screen and try to join
       setCurrentScreen('joining-game');
-
-      // Small delay to let the UI render
       const timer = setTimeout(() => {
         handleJoinRoom(pendingRoomCode);
-        // We don't clear pendingRoomCode immediately in case it fails, 
-        // but handleJoinRoom will handle success/failure toast
-        // If success -> roomCode set -> transition to lobby
-        // If fail -> toast -> stay on home/welcome? 
-        // actually handleJoinRoom catches errors.
-      }, 500); // 500ms delay for visual feedback
-
+      }, 500);
       return () => clearTimeout(timer);
     }
   }, [player, pendingRoomCode, isLoading, roomCode]);
 
-  // Auth Redirect: If no player and not in auth flow, go to welcome
+  // Auth Redirect
   useEffect(() => {
     if (!player && !isLoading && !isInitialLoading) {
-      // Allow browsing store as guest? No, store requires player usually.
-      // If we are deep in the app but have no player, kick out.
       if (!['welcome', 'login', 'name-entry'].includes(currentScreen)) {
         setCurrentScreen('welcome');
       }
     }
   }, [player, currentScreen, isLoading, isInitialLoading]);
 
-
-
   const handleMinimizeGame = () => {
-    // Just go to home screen but keep room connection alive
     setIsBrowsing(true);
     setCurrentScreen('home');
   };
 
-  const handleResumeGame = () => {
-    // Return to the active game screen
+  function handleResumeGame() {
     setIsBrowsing(false);
-    // The useEffect for room status will automatically route us to the correct screen
-    // based on room.status
     if (room?.status) {
       if (room.status === 'lobby') setCurrentScreen('lobby');
       else if (room.status === 'uploading') setCurrentScreen('uploading');
@@ -202,10 +260,9 @@ function App() {
     localStorage.setItem('has_seen_onboarding', 'true');
   };
 
-  // Onboarding Effect: Auto-show on Home if not seen
+  // Onboarding Effect
   useEffect(() => {
     if (currentScreen === 'home' && !localStorage.getItem('has_seen_onboarding') && !isInitialLoading) {
-      // Small delay to ensure smooth transition
       const timer = setTimeout(() => {
         setShowHowToPlay(true);
       }, 500);
@@ -213,21 +270,14 @@ function App() {
     }
   }, [currentScreen, isInitialLoading]);
 
-  const handleRejoin = async (code: string) => {
+  async function handleRejoin(code: string) {
     if (!player) return;
-    // If we are already connected to this room, just resume
     if (roomCode === code && room) {
       handleResumeGame();
       return;
     }
     handleJoinRoom(code);
   };
-
-
-
-
-
-  const { room, error: roomError } = useRoom(roomCode, player?.id || null);
 
 
 
@@ -339,23 +389,29 @@ function App() {
       myPlayerState: myState,
       hasSubmitted: submitted,
       timerEndsAt: endsAt,
+      effectiveTotalDuration: totalDuration + bonusTime, // Default if no room
       submittedCount: 0,
       totalPlayers: 0,
       unfinishedPlayers: []
     };
 
+    // Calculate effective duration for timer consistency
+    const effectiveTotalDuration = (totalDuration + bonusTime);
+
     return {
       myPlayerState: myState,
-      hasSubmitted: submitted,
+      hasSubmitted: submitted || optimisticHasSubmitted, // <--- Include optimistic state
       timerEndsAt: endsAt,
+      effectiveTotalDuration, // Export for ScreenRouter
       submittedCount: Object.values(room.playerStates || {}).filter(s => s.status === 'submitted').length,
       totalPlayers: room.players.length,
       unfinishedPlayers: room.players.filter(p => room.playerStates?.[p.id]?.status !== 'submitted')
     };
-  }, [room, player?.id]);
+  }, [room, player?.id, optimisticTimerStart, optimisticHasSubmitted]);
 
-  const { myPlayerState, hasSubmitted, timerEndsAt, submittedCount, totalPlayers } = stats;
+  const { myPlayerState, hasSubmitted, timerEndsAt, effectiveTotalDuration, submittedCount, totalPlayers } = stats;
 
+  // Sync screen with room status
   // Sync screen with room status
   useEffect(() => {
     if (roomCode && room && !isLoading && !isBrowsing) {
@@ -366,89 +422,57 @@ function App() {
       const roundChanged = round !== lastRoundRef.current;
       const waitingChanged = amWaiting !== lastWaitingRef.current;
 
-      // Initial load or no change - no transition
-      if (!lastStatusRef.current || (!statusChanged && !roundChanged && !waitingChanged)) {
-        lastStatusRef.current = status;
-        lastRoundRef.current = round;
-        lastWaitingRef.current = amWaiting;
-
-        // Update screen immediately if needed (e.g. initial load or waiting change without transition)
-        // If waiting status changed (e.g. joined game), update screen immediately without 1.5s delay
-        if (waitingChanged) {
-          if (status === 'lobby') setCurrentScreen('lobby');
-          else if (status === 'uploading') setCurrentScreen(shouldShowWaitingRoom ? 'waiting' : 'uploading');
-          else if (status === 'sabotage-selection') setCurrentScreen('sabotage-selection');
-          else if (status === 'drawing') {
-            if (shouldShowWaitingRoom) {
-              setCurrentScreen('waiting');
-            } else {
-              setCurrentScreen('drawing');
-              setStrokes([]);
-              setIsMyTimerRunning(false);
-            }
-          }
-          else if (status === 'voting') setCurrentScreen(shouldShowWaitingRoom ? 'waiting' : 'voting');
-          else if (status === 'results') setCurrentScreen('results'); // Everyone sees results
-          else if (status === 'final') setCurrentScreen('final');
-          return;
-        }
-
-        if (currentScreen === 'room-selection' || currentScreen === 'welcome' || currentScreen === 'name-entry') {
-          if (status === 'lobby') setCurrentScreen('lobby');
-          else if (status === 'uploading') setCurrentScreen(shouldShowWaitingRoom ? 'waiting' : 'uploading');
-          else if (status === 'sabotage-selection') setCurrentScreen('sabotage-selection');
-          else if (status === 'drawing') setCurrentScreen(shouldShowWaitingRoom ? 'waiting' : 'drawing');
-          else if (status === 'voting') setCurrentScreen(shouldShowWaitingRoom ? 'waiting' : 'voting');
-          else if (status === 'results') setCurrentScreen('results');
-          else if (status === 'final') setCurrentScreen('final');
-        }
-        return;
-      }
-
-
-      lastStatusRef.current = status;
-      lastRoundRef.current = round;
-      lastWaitingRef.current = amWaiting;
-
       // Reset optimistic timer on round change
       if (roundChanged) {
         setOptimisticTimerStart(null);
       }
 
-      // Send notifications (only when status actually changed)
+      // Handle Transitions
+      // 1. Waiting Status Change (Joined/Spectating updates)
+      if (waitingChanged) {
+        if (status === 'lobby') setCurrentScreen('lobby');
+        else if (status === 'uploading') setCurrentScreen(shouldShowWaitingRoom ? 'waiting' : 'uploading');
+        else if (status === 'sabotage-selection') setCurrentScreen('sabotage-selection');
+        else if (status === 'drawing') {
+          if (shouldShowWaitingRoom) {
+            setCurrentScreen('waiting');
+          } else {
+            setCurrentScreen('drawing');
+            setStrokes([]);
+            setIsMyTimerRunning(false);
+          }
+        }
+        else if (status === 'voting') setCurrentScreen(shouldShowWaitingRoom ? 'waiting' : 'voting');
+        else if (status === 'results') setCurrentScreen('results');
+        else if (status === 'final') setCurrentScreen('final');
+      }
+      // 2. Room Status Change (Navigation) - only if we are on a "joining" screen
+      else if (['room-selection', 'welcome', 'name-entry', 'joining-game'].includes(currentScreen)) {
+        if (status === 'lobby') setCurrentScreen('lobby');
+        // Check other statuses just in case we rejoin mid-game
+        else if (status === 'uploading') setCurrentScreen(shouldShowWaitingRoom ? 'waiting' : 'uploading');
+        else if (status === 'sabotage-selection') setCurrentScreen('sabotage-selection');
+        else if (status === 'drawing') setCurrentScreen(shouldShowWaitingRoom ? 'waiting' : 'drawing');
+        else if (status === 'voting') setCurrentScreen(shouldShowWaitingRoom ? 'waiting' : 'voting');
+        else if (status === 'results') setCurrentScreen('results');
+        else if (status === 'final') setCurrentScreen('final');
+      }
+      // Handle Notifications
       if (statusChanged) {
         if (status === 'uploading' && room?.currentUploaderId === player?.id) {
           notifyYourTurnToUpload();
         } else if (status === 'drawing' && !amWaiting) {
           notifyDrawingPhaseStarted();
-        } else if (status === 'voting' && !amWaiting) {
+        } else if (status === 'voting') {
           notifyVotingStarted();
         } else if (status === 'results') {
           notifyResultsReady();
-          handleRoundEndRewards(room);
+          if (room) handleRoundEndRewards(room);
         } else if (status === 'final') {
           notifyFinalResults();
-          handleGameEndRewards(room);
+          if (room) handleGameEndRewards(room);
         }
       }
-
-      // Routing Logic - Immediate transition, no fake delay
-      if (status === 'lobby') setCurrentScreen('lobby');
-      else if (status === 'uploading') setCurrentScreen(shouldShowWaitingRoom ? 'waiting' : 'uploading');
-      else if (status === 'sabotage-selection') setCurrentScreen('sabotage-selection');
-      else if (status === 'drawing') {
-        if (shouldShowWaitingRoom) {
-          setCurrentScreen('waiting');
-        } else {
-          setCurrentScreen('drawing');
-          setStrokes([]);
-          setIsMyTimerRunning(false);
-          setIsReadying(false);
-        }
-      }
-      else if (status === 'voting') setCurrentScreen(shouldShowWaitingRoom ? 'waiting' : 'voting');
-      else if (status === 'results') setCurrentScreen('results');
-      else if (room.status === 'final') setCurrentScreen('final');
 
       // If we successfully joined (room exists), clear pending code
       if (pendingRoomCode === roomCode) {
@@ -607,7 +631,7 @@ function App() {
 
 
   // --- XP & Stats Helpers ---
-  const handleRoundEndRewards = async (currentRoom: GameRoom) => {
+  async function handleRoundEndRewards(currentRoom: GameRoom) {
     if (!player) return;
 
     // Find results for the PREVIOUS round (since status just changed to 'results', the round number might be same)
@@ -655,7 +679,7 @@ function App() {
     }
   };
 
-  const handleGameEndRewards = async (currentRoom: GameRoom) => {
+  async function handleGameEndRewards(currentRoom: GameRoom) {
     if (!player) return;
 
     // Game Completion
@@ -694,7 +718,7 @@ function App() {
     }
   };
 
-  const handlePlayNow = () => {
+  function handlePlayNow() {
     // If we have a session, go to home (should cover edge cases)
     if (player) {
       setCurrentScreen('home');
@@ -705,7 +729,7 @@ function App() {
   };
 
   // Helper: Common Join Logic after Auth
-  const attemptPendingJoin = () => {
+  function attemptPendingJoin() {
     if (pendingRoomCode) {
       setCurrentScreen('joining-game');
       handleJoinRoom(pendingRoomCode);
@@ -714,12 +738,12 @@ function App() {
     }
   };
 
-  const handleCancelJoin = () => {
+  function handleCancelJoin() {
     setPendingRoomCode(null);
     setCurrentScreen('home');
   };
 
-  const handleLoginComplete = async () => {
+  async function handleLoginComplete() {
     const authUser = AuthService.getCurrentUser();
     if (authUser) {
       // Check if profile is set up
@@ -750,7 +774,7 @@ function App() {
     }
   };
 
-  const handleProfileComplete = (profileData: Omit<Player, 'id' | 'joinedAt' | 'lastSeen'>) => {
+  function handleProfileComplete(profileData: Omit<Player, 'id' | 'joinedAt' | 'lastSeen'>) {
     const authUser = AuthService.getCurrentUser();
 
     // If logged in, update the Auth User with this profile data
@@ -803,7 +827,7 @@ function App() {
 
 
 
-  const handleCreateRoom = async () => {
+  async function handleCreateRoom() {
     if (!player) return;
     setIsLoading(true);
     try {
@@ -819,34 +843,48 @@ function App() {
     setIsLoading(false);
   };
 
-  const handleJoinRoom = async (code: string) => {
+  async function handleJoinRoom(code: string) {
     if (!player) return;
-    setIsLoading(true);
+
+    startLoading('join'); // Smart Loading Checklist
+
+    // Explicitly update checklist for 'connect'
+    // (Already set to loading in startLoading)
+
     try {
-      const room = await StorageService.joinRoom(code.toUpperCase(), player);
-      if (room) {
+      // 1. Join Room
+      updateLoadingStage('connect', 'completed');
+      updateLoadingStage('sync', 'loading');
+
+      const newRoom = await StorageService.joinRoom(code.toUpperCase(), player);
+
+      if (newRoom) {
+        updateLoadingStage('sync', 'completed');
+        updateLoadingStage('verify', 'loading');
+
         setRoomCode(code.toUpperCase());
-        setIsBrowsing(false);
-        setCurrentScreen('lobby');
-        showToast('Joined room! 🎮', 'success');
-        // Clear pending code on success
-        if (code === pendingRoomCode) {
-          setPendingRoomCode(null);
-        }
+        // setRoom(newRoom); // Optimistic set to avoid flicker - useRoom hook handles this
+
+        // Wait a tick for verify
+        setTimeout(() => {
+          updateLoadingStage('verify', 'completed');
+          // Transition Logic is handled by useRoom effect
+          setIsLoading(false);
+        }, 500);
+
       } else {
-        showToast('Room not found! Check the code 🔍', 'error');
+        showError('Room not found or full');
+        setIsLoading(false);
       }
     } catch (err) {
-      console.error('Failed to join room:', err);
+      console.error(err);
+      updateLoadingStage('connect', 'error');
       showError(err);
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
-
-
-
-  const handleSettingsChange = async (settings: Partial<GameSettings>) => {
+  async function handleSettingsChange(settings: Partial<GameSettings>) {
     if (!roomCode) return;
     try {
       await StorageService.updateSettings(roomCode, settings);
@@ -856,31 +894,62 @@ function App() {
     }
   };
 
-  const handleStartGame = async () => {
-    if (!roomCode) return;
+  async function handleStartGame() {
+    if (!roomCode || !room) return;
+
+    startLoading('start'); // Smart Loading Checklist
+
     try {
-      await StorageService.initiateRound(roomCode);
+      updateLoadingStage('init', 'completed');
+      updateLoadingStage('assign', 'loading');
+
+      await StorageService.initiateRound(roomCode); // Changed from startGame to initiateRound
+
+      updateLoadingStage('assign', 'completed');
+      updateLoadingStage('sync', 'loading');
+
+      // Let the natural room updates clear the loading screen
+      // But ensure we clear it if update comes fast
+      setTimeout(() => setIsLoading(false), 800);
+
     } catch (err) {
       console.error('Failed to start game:', err);
+      updateLoadingStage('init', 'error');
       showError(err);
+      setIsLoading(false);
     }
   };
 
-  const handleUploadImage = async (file: File) => {
+  async function handleUploadImage(file: File) {
     if (!roomCode || !player) return;
-    setIsLoading(true);
+
+    startLoading('upload'); // Smart Loading Checklist
+
     try {
-      const imageUrl = await ImageService.processImage(file, roomCode);
+      // 1. Process
+      updateLoadingStage('process', 'completed');
+      updateLoadingStage('upload', 'loading');
+
+      const imageUrl = await ImageService.processImage(file, roomCode); // Changed from uploadImage to processImage
+
+      // 2. Upload
+      updateLoadingStage('upload', 'completed');
+      updateLoadingStage('verify', 'loading');
+
       await StorageService.startRound(roomCode, imageUrl, player.id);
-      showToast('Round started! 🎨', 'success');
+
+      updateLoadingStage('verify', 'completed');
+      // Loading cleared by room status update
+
     } catch (err: any) {
-      console.error('Failed to start round:', err);
-      showError(err);
+      console.error('Upload failed:', err);
+      updateLoadingStage('upload', 'error');
+      showError(err?.message || 'Failed to upload image');
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
-  const handleReady = async () => {
+  async function handleReady() {
     if (!roomCode || !player) return;
     try {
       setIsReadying(true); // Immediate feedback
@@ -910,8 +979,14 @@ function App() {
   const handleTimeUp = useCallback(async () => {
     if (!roomCode || !player || !room) return;
 
+    // IMMEDIATE: Optimistic Updates to prevent "Stuck" state
     setIsMyTimerRunning(false);
     setIsReadying(false);
+    setOptimisticHasSubmitted(true); // <--- Optimistic Update
+    showToast('Submitting drawing... ☁️', 'info'); // <--- Visual Feedback
+
+    // Force transition locally if needed? 
+    // Actually ScreenRouter uses `hasSubmitted` logic. We need to make sure `hasSubmitted` includes our optimistic state.
 
     const currentStrokes = strokesRef.current;
     const validStrokes = currentStrokes.filter(s => s && Array.isArray(s.points) && s.points.length > 0);
@@ -1140,152 +1215,9 @@ function App() {
   };
 
   return (
-    <div>
-      {/* Toast */}
-      {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          action={toast.action}
-          onClose={hideToast}
-        />
-      )}
-
-      {currentScreen === 'joining-game' && pendingRoomCode && (
-        <JoiningGameScreen
-          roomCode={pendingRoomCode}
-          onCancel={handleCancelJoin}
-        />
-      )}
-
-
-
-      {/* Transition Overlays */}
-      <TunnelTransition
-        isActive={showTunnelTransition}
-        isDarkMode={player?.cosmetics?.activeTheme?.includes('dark') || false}
-        onComplete={() => {
-          setShowTunnelTransition(false);
-          setCurrentScreen('room-selection');
-        }}
-      />
-      <CasinoTransition
-        isActive={showCasinoTransition}
-        onComplete={() => {
-          setShowCasinoTransition(false);
-          setShowCasino(true);
-        }}
-      />
-
-      {/* Casino Screen */}
-      {showCasino && (
-        <CasinoScreen onClose={() => setShowCasino(false)} />
-      )}
-
-      {showSettings && player && (
-        <SettingsModal
-          player={player}
-          players={room?.players}
-          roomCode={roomCode}
-          isHost={room?.hostId === player.id}
-          onClose={() => setShowSettings(false)}
-          onUpdateProfile={handleUpdateProfile}
-          onLeaveGame={roomCode ? () => handleLeaveGame('room-selection') : undefined}
-          onEndGame={room?.hostId === player.id ? handleEndGame : undefined}
-          onGoHome={roomCode ? handleMinimizeGame : undefined}
-          onKick={async (playerId) => {
-            if (!roomCode) return;
-            try {
-              await StorageService.kickPlayer(roomCode, playerId);
-              showToast('Player kicked 🥾', 'success');
-            } catch (err) {
-              showError(err);
-            }
-          }}
-        />
-      )}
-      {showHowToPlay && (
-        <HowToPlayModal
-          isOpen={showHowToPlay}
-          onClose={handleCloseHowToPlay}
-        />
-      )}
-
-      {/* Notification Prompt */}
-      <NotificationPromptModal
-        isOpen={showNotificationPrompt}
-        onEnable={async () => {
-          try {
-            // Check if FCM is supported
-            if (isPushSupported()) {
-              const token = await requestPushPermission();
-              if (token && player) {
-                await storePushToken(player.id, token);
-                showToast('Push notifications enabled! 🔔', 'success');
-              }
-            } else if ('Notification' in window) {
-              // Fallback to basic notifications
-              await Notification.requestPermission();
-            }
-          } catch (error) {
-            console.error('Failed to enable push notifications:', error);
-          }
-          setShowNotificationPrompt(false);
-          sessionStorage.setItem('seenNotificationPrompt', 'true');
-        }}
-        onLater={() => {
-          setShowNotificationPrompt(false);
-          sessionStorage.setItem('seenNotificationPrompt', 'true');
-        }}
-      />
-
-      {/* Game Ended Modal */}
-      {showGameEnded && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[100] flex items-center justify-center animate-fade-in">
-          <div className="bg-zinc-900 rounded-3xl p-8 text-center max-w-sm mx-4 shadow-2xl pop-in border-4 border-red-500">
-            <div className="text-6xl mb-4 animate-bounce">🛑</div>
-            <h3 className="text-2xl font-bold text-red-600 mb-2">Game Ended</h3>
-            <p className="text-white font-medium">The host has closed the room.</p>
-            <p className="text-gray-400 text-sm mt-4">Returning to lobby in {endGameCountdown}...</p>
-            <div className="mt-6 flex justify-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500"></div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Kicked Modal */}
-      {showKicked && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[100] flex items-center justify-center animate-fade-in">
-          <div className="bg-white rounded-3xl p-8 text-center max-w-sm mx-4 shadow-2xl pop-in border-4 border-orange-500">
-            <div className="text-6xl mb-4 animate-bounce">👢</div>
-            <h3 className="text-2xl font-bold text-orange-600 mb-2">You were Kicked</h3>
-            <p className="text-gray-600 font-medium">You have been removed from the room.</p>
-            <p className="text-gray-400 text-sm mt-4">Returning to lobby in {kickCountdown}...</p>
-            <div className="mt-6 flex justify-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Settings Button - Show only during active game rounds (excluding drawing which has its own) */}
-      {player && ['waiting', 'uploading', 'voting', 'results', 'final'].includes(currentScreen) && (
-        <div className="fixed left-4 z-50 flex items-center gap-2" style={{ top: 'max(1rem, env(safe-area-inset-top) + 1rem)' }}>
-          <button
-            onClick={() => setShowSettings(true)}
-            className="bg-white/90 backdrop-blur-sm p-3 rounded-xl shadow-lg border-2 border-purple-200 hover:border-purple-500 transition-all hover:scale-110"
-            title="Settings"
-          >
-            ⚙️
-          </button>
-        </div>
-      )}
-
-
-
-      {/* Screen Router handles all main views */}
-      <GlobalBlurTransition screenKey={currentScreen} duration={200}>
+    <div className="fixed inset-0 overflow-hidden bg-black text-white select-none touch-none">
+      {/* Main Router with Transitions */}
+      <GlobalBlurTransition screenKey={currentScreen}>
         <ScreenRouter
           currentScreen={currentScreen}
           player={player}
@@ -1300,7 +1232,10 @@ function App() {
           onShowCasino={() => setShowCasinoTransition(true)}
           onShowSettings={() => setShowSettings(true)}
           onRejoin={handleRejoin}
-          onPlayWithTransition={() => setShowTunnelTransition(true)}
+          onPlayWithTransition={() => {
+            setIsTransitionActive(true);
+            setTimeout(() => handlePlayNow(), 900);
+          }}
 
           onNavigate={setCurrentScreen}
           onBackToHome={() => setCurrentScreen('home')}
@@ -1327,6 +1262,7 @@ function App() {
           isMyTimerRunning={isMyTimerRunning}
           isReadying={isReadying}
           onReady={handleReady}
+
           brushColor={brushColor}
           brushSize={brushSize}
           brushType={brushType}
@@ -1348,17 +1284,109 @@ function App() {
           lastGameDetails={lastGameDetails as any}
           showToast={showToast}
 
-          hasSubmitted={hasSubmitted}
+          hasSubmitted={hasSubmitted || optimisticHasSubmitted}
           submittedCount={submittedCount}
           totalPlayers={totalPlayers}
           timerEndsAt={timerEndsAt}
+          totalTimerDuration={effectiveTotalDuration} // <--- Pass calculated duration
           onTimeUp={handleTimeUp}
         />
       </GlobalBlurTransition>
 
-      <ThemeTransition isActive={isTransitionActive} onComplete={handleTransitionComplete} />
+      {/* Legacy Join Screen Overlay - if stuck in join flow? */}
+      {currentScreen === 'joining-game' && pendingRoomCode && (
+        <div className="absolute inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center">
+          <JoiningGameScreen
+            roomCode={pendingRoomCode}
+            onCancel={handleCancelJoin}
+          />
+        </div>
+      )}
 
-      {/* Universal Game Rewards Modal */}
+      {/* Global Loading Screen with Smart Stages */}
+      {(isLoading || isInitialLoading) && (
+        <LoadingScreen
+          onGoHome={handleSafeReset}
+          stages={isInitialLoading ? loadingStages : undefined}
+        />
+      )}
+
+      {/* Toast Notifications */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          action={toast.action}
+          onClose={hideToast}
+        />
+      )}
+
+      {/* Modals & Overlays */}
+      {showSettings && player && (
+        <SettingsModal
+          player={player}
+          players={room?.players}
+          roomCode={roomCode}
+          isHost={room?.hostId === player?.id}
+          onClose={() => setShowSettings(false)}
+          onUpdateProfile={handleUpdateProfile}
+          onLeaveGame={roomCode ? () => handleLeaveGame('room-selection') : undefined}
+          onEndGame={room?.hostId === player?.id ? handleEndGame : undefined}
+          onGoHome={roomCode ? handleMinimizeGame : undefined}
+          onKick={handleKickPlayer}
+        />
+      )}
+
+      {showHowToPlay && (
+        <HowToPlayModal
+          isOpen={showHowToPlay}
+          onClose={handleCloseHowToPlay}
+        />
+      )}
+
+      <NotificationPromptModal
+        isOpen={showNotificationPrompt}
+        onEnable={requestPushPermission}
+        onLater={() => setShowNotificationPrompt(false)}
+      />
+
+      {/* Casino Overlay */}
+      {showCasino && player && (
+        <CasinoScreen
+          onClose={() => setShowCasino(false)}
+        />
+      )}
+
+      {/* Game Ended & Kicked Modals */}
+      {showGameEnded && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[100] flex items-center justify-center animate-fade-in">
+          <div className="bg-zinc-900 rounded-3xl p-8 text-center max-w-sm mx-4 shadow-2xl pop-in border-4 border-red-500">
+            <div className="text-6xl mb-4 animate-bounce">🛑</div>
+            <h3 className="text-2xl font-bold text-red-600 mb-2">Game Ended</h3>
+            <p className="text-white font-medium">The host has closed the room.</p>
+            <p className="text-gray-400 text-sm mt-4">Returning to lobby in {endGameCountdown}...</p>
+            <div className="mt-6 flex justify-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500"></div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showKicked && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[100] flex items-center justify-center animate-fade-in">
+          <div className="bg-white rounded-3xl p-8 text-center max-w-sm mx-4 shadow-2xl pop-in border-4 border-orange-500">
+            <div className="text-6xl mb-4 animate-bounce">👢</div>
+            <h3 className="text-2xl font-bold text-orange-600 mb-2">You were Kicked</h3>
+            <p className="text-gray-600 font-medium">You have been removed from the room.</p>
+            <p className="text-gray-400 text-sm mt-4">Returning to lobby in {kickCountdown}...</p>
+            <div className="mt-6 flex justify-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Game Rewards Modal */}
       {pendingGameStats && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[100] pop-in">
           <div className="rounded-3xl p-8 w-full max-w-sm mx-4 text-center border-4 shadow-2xl relative overflow-hidden"
@@ -1425,6 +1453,25 @@ function App() {
           </div>
         </div>
       )}
+
+      {/* Transition Effects */}
+      <ThemeTransition isActive={isTransitionActive} onComplete={handleTransitionComplete} />
+      <TunnelTransition
+        isActive={showTunnelTransition}
+        isDarkMode={player?.cosmetics?.activeTheme?.includes('dark') || false}
+        onComplete={() => {
+          setShowTunnelTransition(false);
+          setCurrentScreen('room-selection');
+        }}
+      />
+      <CasinoTransition
+        isActive={showCasinoTransition}
+        onComplete={() => {
+          setShowCasinoTransition(false);
+          setShowCasino(true);
+        }}
+      />
+
     </div>
   );
 }

@@ -8,7 +8,7 @@ interface GameSettingsPanelProps {
 }
 
 const TIMER_OPTIONS = [10, 20, 30, 60];
-const ROUND_OPTIONS = [3, 5, 7, 10];
+const ROUND_OPTIONS = [1, 3, 5, 7];
 
 export const GameSettingsPanel: React.FC<GameSettingsPanelProps> = ({
     settings,

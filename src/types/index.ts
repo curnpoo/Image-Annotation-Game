@@ -81,6 +81,7 @@ export interface UserAccount {
     usernameHistory?: string[]; // Last 3 usernames (most recent first)
     lastUsernameChange?: number; // Timestamp for rate limiting
     lastInviteTimes?: { [userId: string]: number }; // Track invite cooldowns per user
+    currentRoomCode?: string; // Code of the room the user is currently in (One Room Policy)
 }
 
 
@@ -178,7 +179,7 @@ export interface RoundResult {
         playerName: string;
         playerColor: string;
         strokes: DrawingStroke[];
-    }[];
+    }[]; // Optional: May be stripped for history optimization
 }
 
 
@@ -205,8 +206,8 @@ export interface GameRoom {
     waitingPlayers?: Player[]; // Players waiting for next round
     playerStates: { [playerId: string]: PlayerState };
 
-    // Chat
-    chatEvents?: ChatMessage[];
+    // Chat - MOVED TO SEPARATE PATH (ChatService)
+    // chatEvents?: ChatMessage[];
 
     // Voting
     votes: { [voterId: string]: string }; // voterId -> votedForId
@@ -287,6 +288,13 @@ export interface ToastState {
 }
 
 export type Screen = 'welcome' | 'login' | 'name-entry' | 'home' | 'room-selection' | 'store' | 'profile' | 'avatar-editor' | 'lobby' | 'waiting' | 'joining-game' | 'uploading' | 'sabotage-selection' | 'drawing' | 'voting' | 'results' | 'final' | 'stats' | 'level-progress' | 'gallery';
+
+export interface LoadingStage {
+    id: string;
+    label: string;
+    status: 'pending' | 'loading' | 'completed' | 'error';
+    error?: string;
+}
 
 // Stats history for graphs over time
 export interface StatsHistoryEntry {

@@ -54,24 +54,74 @@ const TIPS = [
     "💡 Tip: Don't worry, be happy. And draw something funny."
 ];
 
+import { LoadingStage } from '../../types';
+
 interface LoadingScreenProps {
     onGoHome?: () => void;
+    stages?: LoadingStage[];
 }
 
-export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onGoHome }) => {
+export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onGoHome, stages }) => {
     const [tip, setTip] = useState('');
     const [showStuckButton, setShowStuckButton] = useState(false);
+    const [isReallySlow, setIsReallySlow] = useState(false);
 
     useEffect(() => {
         setTip(TIPS[Math.floor(Math.random() * TIPS.length)]);
 
-        // Show stuck button after 5 seconds
+        // Show stuck button after 8 seconds (increased for realism)
         const timer = setTimeout(() => {
             setShowStuckButton(true);
+        }, 8000);
+
+        // Slow network warning after 5 seconds if showing stages
+        const slowTimer = setTimeout(() => {
+            if (stages && stages.some(s => s.status === 'loading')) {
+                setIsReallySlow(true);
+            }
         }, 5000);
 
-        return () => clearTimeout(timer);
+        return () => {
+            clearTimeout(timer);
+            clearTimeout(slowTimer);
+        };
     }, []);
+
+    // Render Checklist Mode
+    const renderChecklist = () => {
+        if (!stages || stages.length === 0) return null;
+
+        return (
+            <div className="mt-6 w-full space-y-3 font-medium">
+                {stages.map((stage) => {
+                    let icon = '⬜'; // Pending
+                    let color = 'text-gray-400';
+                    let animate = '';
+
+                    if (stage.status === 'completed') {
+                        icon = '✅';
+                        color = 'text-green-600';
+                    } else if (stage.status === 'loading') {
+                        icon = '⏳';
+                        color = 'text-[var(--theme-accent)]';
+                        animate = 'animate-pulse';
+                    } else if (stage.status === 'error') {
+                        icon = '❌';
+                        color = 'text-red-500';
+                    }
+
+                    return (
+                        <div key={stage.id} className={`flex items-center gap-3 transition-colors ${color} ${animate}`}>
+                            <span className="text-xl">{icon}</span>
+                            <span className={stage.status === 'pending' ? 'opacity-60' : 'font-bold'}>
+                                {stage.label}
+                            </span>
+                        </div>
+                    );
+                })}
+            </div>
+        );
+    };
 
     return (
         <div className="fixed inset-0 flex flex-col items-center justify-center z-50 overflow-hidden"
@@ -109,24 +159,44 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onGoHome }) => {
 
             {/* Content Card */}
             <div
-                className="relative backdrop-blur-sm p-8 rounded-[2rem] shadow-2xl max-w-md w-full mx-4 animate-bounce-in"
+                className="relative backdrop-blur-sm p-8 rounded-[2rem] shadow-2xl max-w-md w-full mx-4 animate-bounce-in flex flex-col items-center"
                 style={{
                     background: 'var(--theme-card-bg, rgba(255,255,255,0.95))',
                     border: '3px solid var(--theme-accent, #FFB74D)'
                 }}
             >
-                <h2 className="text-2xl font-black mb-4 animate-pulse tracking-wider text-center"
+                <div className="text-4xl mb-2 animate-spin-slow">
+                    🔃
+                </div>
+                <h2 className="text-2xl font-black mb-2 animate-pulse tracking-wider text-center"
                     style={{ color: 'var(--theme-text, #333)' }}>
-                    Loading...
+                    {stages ? 'Connecting...' : 'Loading...'}
                 </h2>
 
-                <p className="font-bold text-base italic text-center"
-                    style={{ color: 'var(--theme-text-secondary, #666)' }}>
-                    {tip}
-                </p>
+                {/* Progress Checklist */}
+                {renderChecklist()}
+
+                {/* Tip Section (Only show if not showing full checklist, or push to bottom) */}
+                {!stages && (
+                    <p className="font-bold text-base italic text-center mt-4"
+                        style={{ color: 'var(--theme-text-secondary, #666)' }}>
+                        {tip}
+                    </p>
+                )}
+
+                {/* Slow Network Warning */}
+                {isReallySlow && stages && (
+                    <div className="mt-6 bg-yellow-50 border-2 border-yellow-200 rounded-xl p-3 flex items-center gap-3 animate-fade-in">
+                        <span className="text-2xl">🐢</span>
+                        <div className="text-sm font-bold text-yellow-800 text-left">
+                            Taking longer than usual...
+                            <div className="font-normal text-xs opacity-80">Check your internet connection</div>
+                        </div>
+                    </div>
+                )}
 
                 {showStuckButton && onGoHome && (
-                    <div className="animate-fade-in pt-4 border-t mt-4 text-center"
+                    <div className="animate-fade-in pt-4 border-t mt-6 text-center w-full"
                         style={{ borderColor: 'var(--theme-border, #e0e0e0)' }}>
                         <p className="text-sm mb-2" style={{ color: 'var(--theme-text-secondary, #888)' }}>
                             Taking a while?

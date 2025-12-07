@@ -24,6 +24,7 @@
 
   /* Typography */
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  scrollbar-gutter: stable;
 }
 
 body {
@@ -60,13 +61,44 @@ body {
   min-height: 100vh;
   font-family: var(--font-main);
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  overflow-x: hidden;
-
   /* Apply Theme Variables */
   background: var(--bg-primary);
   color: var(--text-primary);
-  transition: background 0.5s ease, color 0.5s ease, font-family 0.3s ease;
+  transition: background 0.5s ease, color 0.5s ease;
+
+  /* Default Glass Variables (Dark Mode Default) */
+  --glass-bg: rgba(0, 0, 0, 0.4);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-text: #ffffff;
+  --glass-text-secondary: rgba(255, 255, 255, 0.6);
+}
+
+/* Light Mode Override (if body has .light-mode class) */
+body.light-mode {
+  --glass-bg: rgba(255, 255, 255, 0.2);
+  --glass-border: rgba(255, 255, 255, 0.3);
+  --glass-text: #1a1a1a;
+  --glass-text-secondary: rgba(0, 0, 0, 0.6);
+}
+
+/* Semantic Glass Utilities */
+.glass-panel {
+  @apply backdrop-blur-md shadow-xl border;
+  background-color: var(--glass-bg);
+  border-color: var(--glass-border);
+  color: var(--glass-text);
+}
+
+.glass-button {
+  @apply backdrop-blur-sm border transition-all active:scale-95;
+  background-color: var(--glass-bg);
+  border-color: var(--glass-border);
+  color: var(--glass-text);
+}
+
+.glass-button:hover {
+  background-color: var(--glass-border);
+  /* Slightly lighter on hover */
 }
 
 /* Base Card Style Override */

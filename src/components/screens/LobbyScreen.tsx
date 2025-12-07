@@ -2,14 +2,11 @@ import React, { useState, useEffect } from 'react';
 import type { GameRoom, GameSettings } from '../../types';
 import { SettingsModal } from '../common/SettingsModal';
 import { GameSettingsPanel } from '../game/GameSettingsPanel';
-import { AvatarDisplay } from '../common/AvatarDisplay';
+import { LobbyPlayerRow } from '../game/LobbyPlayerRow';
 import { ShareDropdown } from '../common/ShareDropdown';
 import { InviteFriendsModal } from '../common/InviteFriendsModal';
 import { StorageService } from '../../services/storage';
 import { usePresence } from '../../hooks/usePresence';
-import { XPService } from '../../services/xp';
-import { BadgeService } from '../../services/badgeService';
-import { formatCurrency } from '../../services/currency';
 
 interface LobbyScreenProps {
     room: GameRoom;
@@ -91,6 +88,18 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
         );
     }
 
+    const [isStarting, setIsStarting] = useState(false);
+
+    const handleStartGame = async () => {
+        setIsStarting(true);
+        try {
+            await onStartGame();
+        } catch (error) {
+            console.error("Failed to start game", error);
+            setIsStarting(false);
+        }
+    };
+
     return (
         <div className="min-h-screen flex flex-col pb-safe overflow-y-auto px-4"
             style={{ paddingTop: 'max(1rem, env(safe-area-inset-top) + 0.5rem)' }}>
@@ -100,7 +109,7 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                 <div className="flex justify-between gap-4">
                     <button
                         onClick={onBack}
-                        className="flex-1 bg-white p-4 rounded-2xl border-2 border-white/10 hover:bg-white/10 transition-all flex flex-col items-center justify-center gap-1 shadow-lg"
+                        className="flex-1 bg-white p-4 rounded-2xl border-2 border-white/10 hover:bg-white/10 transition-all flex flex-col items-center justify-center gap-1 shadow-lg active:scale-95"
                         style={{ borderColor: 'var(--theme-border)', backgroundColor: 'var(--theme-card-bg)' }}
                     >
                         <span className="text-2xl">🏠</span>
@@ -108,7 +117,7 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                     </button>
                     <button
                         onClick={() => setShowSettings(true)}
-                        className="flex-1 bg-white p-4 rounded-2xl border-2 border-white/10 hover:bg-white/10 transition-all flex flex-col items-center justify-center gap-1 shadow-lg"
+                        className="flex-1 bg-white p-4 rounded-2xl border-2 border-white/10 hover:bg-white/10 transition-all flex flex-col items-center justify-center gap-1 shadow-lg active:scale-95"
                         style={{ borderColor: 'var(--theme-border)', backgroundColor: 'var(--theme-card-bg)' }}
                     >
                         <span className="text-2xl">⚙️</span>
@@ -133,7 +142,7 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                         <ShareDropdown
                             roomCode={room.roomCode}
                             className="flex-shrink-0"
-                            buttonClassName="w-12 h-12 flex items-center justify-center text-2xl rounded-xl border-2 transition-colors"
+                            buttonClassName="w-12 h-12 flex items-center justify-center text-2xl rounded-xl border-2 transition-colors active:scale-95"
                             buttonStyle={{
                                 backgroundColor: 'var(--theme-button-bg)',
                                 borderColor: 'var(--theme-border)',
@@ -178,93 +187,26 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                     </div>
 
                     <div className="space-y-3 flex-1 overflow-y-auto max-h-[400px]">
+
+                        {/* ... (existing imports, no changes there, handled by replacing block) */}
+
+                        {/* ... */}
+
                         {Array.isArray(room.players) && room.players.map((p) => {
-                            const tier = XPService.getTierForLevel(p.level || 0);
-                            const activeBadgeInfo = p.cosmetics?.activeBadge ? BadgeService.getBadgeInfo(p.cosmetics.activeBadge) : null;
-                            const cardColor = p.cosmetics?.activeCardColor;
+                            const playerStatus = room.playerStates && room.playerStates[p.id]?.status === 'ready' ? 'ready' : 'waiting';
 
                             return (
-                                <div key={p.id}
-                                    className="flex items-center justify-between p-4 rounded-2xl mb-3 relative overflow-hidden transition-all shadow-sm"
-                                    style={{
-                                        backgroundColor: 'var(--theme-highlight)',
-                                        borderLeft: cardColor ? `8px solid ${cardColor}` : 'none',
-                                        background: cardColor ? `linear-gradient(90deg, ${cardColor}22, var(--theme-highlight) 30%)` : 'var(--theme-highlight)'
-                                    }}>
-                                    <div className="flex items-center gap-4 relative z-10">
-                                        <div className="relative">
-                                            <AvatarDisplay
-                                                strokes={p.avatarStrokes}
-                                                avatar={p.avatar}
-                                                // frame={p.frame}
-                                                color={p.color}
-                                                size={56}
-                                            />
-                                            {p.id === room.hostId && (
-                                                <span className="absolute -top-2 -right-2 text-xl filter drop-shadow-md">👑</span>
-                                            )}
-                                        </div>
-                                        <div>
-                                            <div className="flex items-center gap-2">
-                                                <div className="font-bold text-lg text-[var(--theme-text)] leading-tight">{p.name}</div>
-                                                {/* Badge */}
-                                                {activeBadgeInfo && (
-                                                    <span title={activeBadgeInfo.name} className="text-xl drop-shadow-md cursor-help">
-                                                        {activeBadgeInfo.emoji}
-                                                    </span>
-                                                )}
-                                            </div>
-
-                                            <div className="flex items-center gap-2 mt-0.5">
-                                                {/* Dynamic Stat Display */}
-                                                {(p.cosmetics?.activeStat === 'wins' && p.stats) ? (
-                                                    <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-black/5 dark:bg-white/10" title="Games Won">
-                                                        <span className="text-xs">🏆</span>
-                                                        <span className="text-[10px] font-black opacity-70 uppercase">{p.stats.gamesWon} Wins</span>
-                                                    </div>
-                                                ) : (p.cosmetics?.activeStat === 'earnings' && p.stats) ? (
-                                                    <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-black/5 dark:bg-white/10" title="Total Earnings">
-                                                        <span className="text-xs">💰</span>
-                                                        <span className="text-[10px] font-black opacity-70 uppercase">{formatCurrency(p.stats.totalCurrencyEarned)}</span>
-                                                    </div>
-                                                ) : (p.cosmetics?.activeStat === 'none') ? (
-                                                    null
-                                                ) : (
-                                                    <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-black/5 dark:bg-white/10" title={tier.name}>
-                                                        <span className="text-xs">{tier.icon}</span>
-                                                        <span className="text-[10px] font-black opacity-70 uppercase">Lvl {p.level || 0}</span>
-                                                    </div>
-                                                )}
-
-                                                {p.id === currentPlayerId && (
-                                                    <div className="text-[10px] font-bold tracking-wider opacity-60 text-[var(--theme-text)]">YOU</div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center gap-2 relative z-10">
-                                        <div className={`px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest ${isIdle(p.id) ? 'opacity-50' : ''
-                                            }`}
-                                            style={{ backgroundColor: '#D97706', color: '#3E2723' }}>
-                                            {room.playerStates && room.playerStates[p.id]?.status === 'ready'
-                                                ? 'READY!'
-                                                : isIdle(p.id)
-                                                    ? 'AWAY...'
-                                                    : 'WAITING...'}
-                                        </div>
-                                        {isHost && p.id !== currentPlayerId && (
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    setKickTarget(p.id);
-                                                }}
-                                                className="bg-red-100 text-red-500 w-7 h-7 rounded-full hover:bg-red-500 hover:text-white transition-colors flex items-center justify-center text-sm"
-                                            >
-                                                ✕
-                                            </button>
-                                        )}
-                                    </div>
-                                </div>
+                                <LobbyPlayerRow
+                                    key={p.id}
+                                    player={p}
+                                    isHost={p.id === room.hostId}
+                                    isCurrentPlayer={p.id === currentPlayerId}
+                                    isIdle={isIdle(p.id)}
+                                    playerStatus={playerStatus}
+                                    cardColor={p.cosmetics?.activeCardColor}
+                                    onKickStart={() => setKickTarget(p.id)}
+                                    showKickButton={isHost && p.id !== currentPlayerId}
+                                />
                             );
                         })}
                     </div>
@@ -285,19 +227,28 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                 {/* Footer Status Card */}
                 {isHost ? (
                     <button
-                        onClick={onStartGame}
-                        disabled={room.players.length < 2}
-                        className={`w-full p-6 rounded-[2rem] text-center shadow-xl transition-all ${room.players.length < 2 ? 'opacity-50 cursor-not-allowed' : 'hover:scale-[1.02]'
+                        onClick={handleStartGame}
+                        disabled={room.players.length < 2 || isStarting}
+                        className={`w-full p-6 rounded-[2rem] text-center shadow-xl transition-all ${room.players.length < 2 || isStarting ? 'opacity-50 cursor-not-allowed' : 'hover:scale-[1.02] active:scale-95'
                             }`}
                         style={{
                             backgroundColor: 'var(--theme-card-bg)',
                             border: '2px solid var(--theme-border)'
                         }}
                     >
-                        <div className="text-4xl mb-2">🚀</div>
-                        <h3 className="text-xl font-bold text-[var(--theme-text)]">
-                            {room.players.length < 2 ? 'Waiting for players...' : 'Start Game!'}
-                        </h3>
+                        {isStarting ? (
+                            <>
+                                <div className="text-4xl mb-2 animate-spin">⏳</div>
+                                <h3 className="text-xl font-bold text-[var(--theme-text)]">Starting...</h3>
+                            </>
+                        ) : (
+                            <>
+                                <div className="text-4xl mb-2">🚀</div>
+                                <h3 className="text-xl font-bold text-[var(--theme-text)]">
+                                    {room.players.length < 2 ? 'Waiting for players...' : 'Start Game!'}
+                                </h3>
+                            </>
+                        )}
                     </button>
                 ) : (
                     <div className="w-full p-6 rounded-[2rem] text-center shadow-xl"
