@@ -67,9 +67,20 @@ export const ImageService = {
                         console.log('Image uploaded successfully:', downloadURL);
                         resolve(downloadURL);
 
-                    } catch (error) {
+                    } catch (error: any) {
                         console.error('Error processing/uploading image:', error);
-                        reject(new Error('Failed to upload image'));
+
+                        // Check for Firebase Storage permission errors
+                        if (error?.code === 'storage/unauthorized' ||
+                            error?.message?.includes('403') ||
+                            error?.message?.includes('Forbidden') ||
+                            error?.serverResponse?.includes('403')) {
+                            reject(new Error('Storage permission denied. Please check Firebase Storage rules.'));
+                        } else if (error?.code === 'storage/unknown') {
+                            reject(new Error('Storage error. Please try again.'));
+                        } else {
+                            reject(new Error(error?.message || 'Failed to upload image'));
+                        }
                     }
                 };
 

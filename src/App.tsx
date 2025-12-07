@@ -535,6 +535,29 @@ function App() {
     return () => clearTimeout(timer);
   }, [showGameEnded, endGameCountdown, showToast]);
 
+  // Effect: Safeguard against stuck loading screen on game screens
+  // If we're on a game screen but room data hasn't loaded after 10 seconds, reset to home
+  useEffect(() => {
+    const gameScreens = ['lobby', 'waiting', 'uploading', 'drawing', 'voting', 'results', 'final'];
+    const isGameScreen = gameScreens.includes(currentScreen);
+
+    // Only run if we're on a game screen, have a roomCode, but room is null (not loaded)
+    if (isGameScreen && roomCode && !room && !isLoading && !isInitialLoading) {
+      const timer = setTimeout(() => {
+        // Double-check: still on game screen without room data
+        if (!room) {
+          console.warn('Room data failed to load after timeout, resetting to home screen');
+          setRoomCode(null);
+          StorageService.leaveRoom();
+          setCurrentScreen('home');
+          showToast('Connection lost. Please rejoin the game.', 'error');
+        }
+      }, 10000); // 10 second timeout
+
+      return () => clearTimeout(timer);
+    }
+  }, [currentScreen, roomCode, room, isLoading, isInitialLoading, showToast]);
+
 
   // Notification Effect & Prompt
   useEffect(() => {
