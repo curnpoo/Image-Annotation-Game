@@ -275,7 +275,7 @@ function App() {
 
   // Sync screen with room status
   useEffect(() => {
-    if (room && !isLoading && !isBrowsing) {
+    if (roomCode && room && !isLoading && !isBrowsing) {
       const status = room.status;
       const round = room.roundNumber;
 
