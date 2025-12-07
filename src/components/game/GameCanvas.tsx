@@ -222,7 +222,8 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
             style={{
                 touchAction: 'none',
                 userSelect: 'none',
-                WebkitUserSelect: 'none'
+                WebkitUserSelect: 'none',
+                zIndex: 20
             }}
         >
             <canvas
