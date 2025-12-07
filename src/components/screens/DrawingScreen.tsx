@@ -86,16 +86,19 @@ export const DrawingScreen: React.FC<DrawingScreenProps> = ({
 
     // Effect: Manage transition sequence
     useEffect(() => {
-
         if (transitionState === 'countdown') {
             if (countdownValue > 0) {
+                // Show current number, then decrement after 1 second
                 const timer = setTimeout(() => {
                     setCountdownValue(prev => prev - 1);
                 }, 1000);
                 return () => clearTimeout(timer);
             } else {
-                // Countdown finished (hit 0), show "GO!" briefly then start
-                setTransitionState('go');
+                // countdownValue is 0, wait a moment then show GO
+                const timer = setTimeout(() => {
+                    setTransitionState('go');
+                }, 800);
+                return () => clearTimeout(timer);
             }
         }
 
