@@ -52,12 +52,17 @@ export const Toolbar: React.FC<ToolbarProps> = ({
         { id: 'default', name: 'Simple', emoji: '🖊️' }
     ];
 
+    // Consistent button style for toolbar
+    const toolButtonBase = "w-12 h-12 rounded-xl shadow-md flex items-center justify-center text-xl active:scale-95 transition-all";
+    const toolButtonDefault = `${toolButtonBase} bg-gray-50 border-2 border-gray-200 text-gray-600 hover:bg-gray-100`;
+    const toolButtonDanger = `${toolButtonBase} bg-red-50 border-2 border-red-200 text-red-600 hover:bg-red-100`;
+
     return (
         <div className="flex flex-col items-center gap-2 w-full max-w-md mx-auto pointer-events-auto">
 
             {/* Brushes Row (if more than 1) - ABOVE colors */}
             {effectiveBrushes.length > 1 && onTypeChange && (
-                <div className="bg-white rounded-2xl p-2 shadow-xl border-2 border-purple-500 w-full animate-slide-up overflow-x-auto no-scrollbar touch-scroll-allowed">
+                <div className="rounded-2xl p-2 shadow-xl w-full animate-slide-up overflow-x-auto no-scrollbar touch-scroll-allowed" style={{ backgroundColor: 'var(--theme-card-bg)', border: '2px solid var(--theme-accent)' }}>
                     <div className="flex gap-2 justify-center min-w-min">
                         {effectiveBrushes.map(brush => (
                             <button
@@ -66,12 +71,16 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                                     vibrate();
                                     onTypeChange(brush.id);
                                 }}
-                                className={`px-3 py-1 rounded-xl flex items-center gap-1 transition-all whitespace-nowrap ${brushType === brush.id && !isEraser
-                                    ? 'bg-purple-500 text-white shadow-md'
-                                    : 'bg-gray-50 text-gray-600 hover:bg-gray-100'}`}
+                                className={`px-4 py-2 rounded-xl flex items-center gap-2 transition-all whitespace-nowrap font-bold ${brushType === brush.id && !isEraser
+                                    ? 'text-white shadow-lg'
+                                    : 'hover:opacity-80'}`}
+                                style={{
+                                    backgroundColor: brushType === brush.id && !isEraser ? 'var(--theme-accent)' : 'var(--theme-bg-secondary)',
+                                    color: brushType === brush.id && !isEraser ? '#000' : 'var(--theme-text-secondary)'
+                                }}
                             >
                                 <span className="text-lg">{brush.emoji}</span>
-                                <span className="text-xs font-bold">{brush.name}</span>
+                                <span className="text-sm">{brush.name}</span>
                             </button>
                         ))}
                     </div>
@@ -79,35 +88,36 @@ export const Toolbar: React.FC<ToolbarProps> = ({
             )}
 
             {/* Colors - 2-Row Grid for Fast Access */}
-            <div className="bg-white rounded-2xl px-3 py-2 shadow-xl border-2 border-purple-500 w-full animate-slide-up">
-                <div className="grid grid-cols-[repeat(5,auto)] gap-y-3 justify-between">
-                    {effectiveColors.map((color) => (
-                        <button
-                            key={color}
-                            onClick={() => {
-                                vibrate();
-                                onColorChange(color);
-                            }}
-                            className={`rounded-full transition-all flex-shrink-0 ${!isEraser && brushColor === color
-                                ? 'scale-105 ring-2 ring-purple-400 ring-offset-2'
-                                : 'hover:scale-105 active:scale-95'
-                                }`}
-                            style={{
-                                backgroundColor: color,
-                                border: color === '#FFFFFF' ? '2px solid #ccc' : '2px solid rgba(0,0,0,0.1)',
-                                boxShadow: !isEraser && brushColor === color ? '0 0 8px rgba(155, 89, 182, 0.5)' : 'none',
-                                width: '40px',
-                                height: '40px',
-                            }}
-                        />
-                    ))}
+            <div className="rounded-2xl px-3 py-3 shadow-xl w-full animate-slide-up" style={{ backgroundColor: 'var(--theme-card-bg)', border: '2px solid var(--theme-accent)' }}>
+                <div className="grid grid-cols-5 gap-3 justify-items-center">
+                    {effectiveColors.map((color) => {
+                        const isSelected = !isEraser && brushColor === color;
+                        return (
+                            <button
+                                key={color}
+                                onClick={() => {
+                                    vibrate();
+                                    onColorChange(color);
+                                }}
+                                className="rounded-full transition-all flex-shrink-0"
+                                style={{
+                                    backgroundColor: color,
+                                    border: isSelected ? '3px solid white' : (color === '#FFFFFF' ? '2px solid #aaa' : '2px solid rgba(0,0,0,0.15)'),
+                                    boxShadow: isSelected ? '0 0 0 3px var(--theme-accent), 0 4px 12px rgba(0,0,0,0.3)' : '0 2px 4px rgba(0,0,0,0.1)',
+                                    width: isSelected ? '48px' : '40px',
+                                    height: isSelected ? '48px' : '40px',
+                                    transform: isSelected ? 'scale(1.15)' : 'scale(1)',
+                                }}
+                            />
+                        );
+                    })}
                 </div>
             </div>
 
             {/* Controls Bar */}
-            <div className="bg-white rounded-2xl p-2 flex items-center justify-between w-full shadow-lg border-2 border-purple-200">
+            <div className="rounded-2xl p-3 flex items-center justify-between w-full shadow-lg" style={{ backgroundColor: 'var(--theme-card-bg)', border: '2px solid var(--theme-border)' }}>
                 {/* Sizes */}
-                <div className="flex gap-1">
+                <div className="flex gap-2">
                     {SIZES.map((s) => (
                         <button
                             key={s.label}
@@ -115,10 +125,13 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                                 vibrate();
                                 onSizeChange(s.size);
                             }}
-                            className={`w-9 h-9 rounded-xl font-bold flex items-center justify-center transition-all ${brushSize === s.size
-                                ? 'bg-purple-500 text-white shadow-md'
-                                : 'bg-gray-50 text-gray-400 hover:bg-gray-100'
-                                }`}
+                            className="w-12 h-12 rounded-xl font-bold flex items-center justify-center transition-all text-lg"
+                            style={{
+                                backgroundColor: brushSize === s.size ? 'var(--theme-accent)' : 'var(--theme-bg-secondary)',
+                                color: brushSize === s.size ? '#000' : 'var(--theme-text-secondary)',
+                                border: brushSize === s.size ? '2px solid var(--theme-accent)' : '2px solid var(--theme-border)',
+                                boxShadow: brushSize === s.size ? '0 4px 8px rgba(0,0,0,0.2)' : 'none'
+                            }}
                         >
                             {s.emoji}
                         </button>
@@ -126,16 +139,16 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                 </div>
 
                 {/* Divider */}
-                <div className="w-px h-8 bg-gray-200 mx-1" />
+                <div className="w-px h-10 mx-2" style={{ backgroundColor: 'var(--theme-border)' }} />
 
                 {/* Action Tools */}
-                <div className="flex gap-1">
+                <div className="flex gap-2">
                     <button
                         onClick={() => {
                             vibrate();
                             onUndo();
                         }}
-                        className="w-10 h-10 bg-white rounded-xl shadow-md flex items-center justify-center text-lg active:scale-95 transition-transform border border-gray-100"
+                        className={toolButtonDefault}
                         title="Undo"
                     >
                         ↩️
@@ -145,7 +158,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                             vibrate();
                             onClear();
                         }}
-                        className="w-10 h-10 bg-red-50 text-red-600 rounded-xl shadow-md flex items-center justify-center text-lg active:scale-95 transition-transform border border-red-100"
+                        className={toolButtonDanger}
                         title="Clear All"
                     >
                         🗑️
@@ -153,19 +166,21 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                 </div>
 
                 {/* Divider */}
-                <div className="w-px h-8 bg-gray-200 mx-1" />
+                <div className="w-px h-10 mx-2" style={{ backgroundColor: 'var(--theme-border)' }} />
 
                 {/* Selection Tools */}
-                <div className="flex gap-1">
+                <div className="flex gap-2">
                     <button
                         onClick={() => {
                             vibrate();
                             onEyedropperToggle();
                         }}
-                        className={`w-10 h-10 rounded-xl shadow-md flex items-center justify-center text-lg active:scale-95 transition-all border ${isEyedropper
-                            ? 'bg-cyan-100 border-cyan-400 ring-2 ring-cyan-300'
-                            : 'bg-white border-gray-100'
-                            }`}
+                        className={`${toolButtonBase} border-2`}
+                        style={{
+                            backgroundColor: isEyedropper ? '#cffafe' : 'var(--theme-bg-secondary)',
+                            borderColor: isEyedropper ? '#22d3ee' : 'var(--theme-border)',
+                            boxShadow: isEyedropper ? '0 0 0 2px #22d3ee' : 'none'
+                        }}
                         title="Eyedropper"
                     >
                         👁️
@@ -175,10 +190,12 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                             vibrate();
                             onEraserToggle();
                         }}
-                        className={`w-10 h-10 rounded-xl shadow-md flex items-center justify-center text-lg active:scale-95 transition-all border ${isEraser
-                            ? 'bg-pink-100 border-pink-400 ring-2 ring-pink-300'
-                            : 'bg-white border-gray-100'
-                            }`}
+                        className={`${toolButtonBase} border-2`}
+                        style={{
+                            backgroundColor: isEraser ? '#fce7f3' : 'var(--theme-bg-secondary)',
+                            borderColor: isEraser ? '#f472b6' : 'var(--theme-border)',
+                            boxShadow: isEraser ? '0 0 0 2px #f472b6' : 'none'
+                        }}
                         title="Eraser"
                     >
                         🧼

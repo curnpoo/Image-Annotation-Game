@@ -15,6 +15,14 @@ const PLAYER_COLORS = [
     { id: '#EF4444', name: 'Red' }
 ];
 
+const BACKGROUND_COLORS = [
+    { id: '#ffffff', name: 'White' },
+    { id: '#f3f4f6', name: 'Light Gray' },
+    { id: '#e5e7eb', name: 'Gray' },
+    { id: '#000000', name: 'Black' },
+    { id: '#EF4444', name: 'Red' }
+];
+
 const FRAMES = [
     { id: 'none', name: 'Simple', class: 'border-2 border-current' },
     { id: 'glow', name: 'Glow', class: 'shadow-[0_0_15px_currentColor]' },
@@ -85,10 +93,10 @@ export const ProfileSetupScreen: React.FC<ProfileSetupScreenProps> = ({ onComple
                         <div className="space-y-4">
                             <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider text-center">Draw Your Avatar</label>
 
-                            {/* Canvas Container */}
-                            <div className="flex justify-center">
+                            {/* Canvas Container - Larger with horizontal margins */}
+                            <div className="flex justify-center px-4">
                                 <div
-                                    className={`relative w-48 h-48 rounded-3xl overflow-hidden shadow-lg transition-all ${FRAMES.find(f => f.id === frame)?.class}`}
+                                    className={`relative w-56 h-56 rounded-3xl overflow-hidden shadow-lg transition-all ${FRAMES.find(f => f.id === frame)?.class}`}
                                     style={{
                                         color: color,
                                         backgroundColor: backgroundColor
@@ -96,7 +104,7 @@ export const ProfileSetupScreen: React.FC<ProfileSetupScreenProps> = ({ onComple
                                 >
                                     <GameCanvas
                                         imageUrl={TRANSPARENT_PIXEL}
-                                        brushColor={color === '#FFFFFF' && backgroundColor === '#FFFFFF' ? '#000000' : color} // Auto-contrast if white-on-white
+                                        brushColor={color === '#FFFFFF' && backgroundColor === '#FFFFFF' ? '#000000' : color}
                                         brushSize={5}
                                         isDrawingEnabled={true}
                                         strokes={strokes}
@@ -128,10 +136,10 @@ export const ProfileSetupScreen: React.FC<ProfileSetupScreenProps> = ({ onComple
 
                         {/* Styling Options */}
                         <div className="bg-gray-50 rounded-3xl p-5 space-y-6">
-                            {/* Color Selection */}
+                            {/* Drawing Color Selection */}
                             <div className="space-y-3">
                                 <div className="flex items-center justify-between">
-                                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Paint Color</label>
+                                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">🎨 Drawing Color</label>
                                     <span className="text-xs font-bold text-gray-900">{PLAYER_COLORS.find(c => c.id === color)?.name}</span>
                                 </div>
                                 <div className="flex justify-between gap-2">
@@ -140,47 +148,45 @@ export const ProfileSetupScreen: React.FC<ProfileSetupScreenProps> = ({ onComple
                                             key={c.id}
                                             type="button"
                                             onClick={() => setColor(c.id)}
-                                            className={`w-10 h-10 rounded-full transition-all flex items-center justify-center ${color === c.id ? 'scale-110 shadow-md ring-2 ring-purple-500 ring-offset-2' : 'hover:scale-105 opacity-80 hover:opacity-100'}`}
+                                            className={`w-12 h-12 rounded-full transition-all flex items-center justify-center border-2 border-black/30 ${color === c.id ? 'scale-110 shadow-lg ring-2 ring-purple-500 ring-offset-2' : 'hover:scale-105'}`}
                                             style={{
-                                                backgroundColor: c.id,
-                                                border: c.id === '#FFFFFF' ? '1px solid #e5e7eb' : 'none'
+                                                backgroundColor: c.id
                                             }}
                                         >
                                             {color === c.id && (
-                                                <span className={`text-xs ${c.id === '#FFFFFF' ? 'text-black' : 'text-white'}`}>✓</span>
+                                                <span className={`text-sm font-bold ${c.id === '#FFFFFF' || c.id === '#f3f4f6' || c.id === '#e5e7eb' ? 'text-black' : 'text-white'}`}>✓</span>
                                             )}
                                         </button>
                                     ))}
                                 </div>
                             </div>
 
-                            {/* Background Color Selection (Simpler version for setup) */}
+                            {/* Background Color Selection */}
                             <div className="space-y-3">
                                 <div className="flex items-center justify-between">
-                                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Background</label>
+                                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">🖼️ Background Color</label>
+                                    <span className="text-xs font-bold text-gray-900">{BACKGROUND_COLORS.find(c => c.id === backgroundColor)?.name}</span>
                                 </div>
-                                <div className="flex gap-2 justify-center">
-                                    {[
-                                        '#ffffff', // White
-                                        '#f3f4f6', // Gray-100
-                                        '#e5e7eb', // Gray-200
-                                        '#000000', // Black
-                                        '#1e1b4b', // Dark Indigo
-                                    ].map(bg => (
+                                <div className="flex justify-between gap-2">
+                                    {BACKGROUND_COLORS.map(bg => (
                                         <button
-                                            key={bg}
+                                            key={bg.id}
                                             type="button"
-                                            onClick={() => setBackgroundColor(bg)}
-                                            className={`w-8 h-8 rounded-full border border-gray-200 transition-all ${backgroundColor === bg ? 'scale-110 shadow-md ring-2 ring-purple-500 ring-offset-1' : 'opacity-70 hover:opacity-100'}`}
-                                            style={{ backgroundColor: bg }}
-                                        />
+                                            onClick={() => setBackgroundColor(bg.id)}
+                                            className={`w-12 h-12 rounded-full transition-all flex items-center justify-center border-2 border-black/30 ${backgroundColor === bg.id ? 'scale-110 shadow-lg ring-2 ring-purple-500 ring-offset-2' : 'hover:scale-105'}`}
+                                            style={{ backgroundColor: bg.id }}
+                                        >
+                                            {backgroundColor === bg.id && (
+                                                <span className={`text-sm font-bold ${bg.id === '#FFFFFF' || bg.id === '#f3f4f6' || bg.id === '#e5e7eb' ? 'text-black' : 'text-white'}`}>✓</span>
+                                            )}
+                                        </button>
                                     ))}
                                 </div>
                             </div>
 
                             {/* Frame Selection */}
                             <div className="space-y-3">
-                                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider text-center">Frame Style</label>
+                                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider text-center">🖼️ Frame Style</label>
                                 <div className="grid grid-cols-3 gap-2">
                                     {FRAMES.map(f => (
                                         <button
@@ -193,10 +199,10 @@ export const ProfileSetupScreen: React.FC<ProfileSetupScreenProps> = ({ onComple
                                             `}
                                         >
                                             <div
-                                                className={`w-8 h-8 rounded-full bg-white flex items-center justify-center border border-gray-100 ${f.class}`}
-                                                style={{ color: color }}
+                                                className={`w-8 h-8 rounded-full flex items-center justify-center border border-gray-100 ${f.class}`}
+                                                style={{ color: color, backgroundColor: backgroundColor }}
                                             >
-                                                <div className="w-4 h-4 rounded-full bg-gray-100" />
+                                                <div className="w-4 h-4 rounded-full" style={{ backgroundColor: color }} />
                                             </div>
                                             <span className={`text-[10px] font-bold ${frame === f.id ? 'text-purple-600' : 'text-gray-500'}`}>
                                                 {f.name}
@@ -224,3 +230,4 @@ export const ProfileSetupScreen: React.FC<ProfileSetupScreenProps> = ({ onComple
         </div>
     );
 };
+

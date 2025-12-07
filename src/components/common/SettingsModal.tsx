@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import type { Player } from '../../types';
 import { requestPushPermission, storePushToken, isPushSupported } from '../../services/pushNotifications';
 import { AuthService } from '../../services/auth';
 import { StorageService } from '../../services/storage';
+import './transitions.css';
 
 interface SettingsModalProps {
     player: Player;
@@ -39,6 +40,15 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     const [notificationsEnabled, setNotificationsEnabled] = useState(false);
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [isClosing, setIsClosing] = useState(false);
+
+    // Animated close handler - triggers exit animation before calling onClose
+    const handleAnimatedClose = useCallback(() => {
+        setIsClosing(true);
+        setTimeout(() => {
+            onClose();
+        }, 200); // Match animation duration
+    }, [onClose]);
 
     useEffect(() => {
         if ('Notification' in window) {
@@ -52,7 +62,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             onUpdateProfile({
                 name: name.trim()
             });
-            onClose();
+            handleAnimatedClose();
         }
     };
 
@@ -253,8 +263,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
     return (
         <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center pointer-events-none">
-            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm pointer-events-auto" onClick={onClose} />
-            <div className="relative z-10 w-full sm:w-[500px] sm:rounded-3xl rounded-t-3xl p-6 shadow-2xl pointer-events-auto max-h-[90vh] overflow-y-auto animate-slide-up" style={{ backgroundColor: 'var(--theme-card-bg, #fff)' }}>
+            <div
+                className={`absolute inset-0 pointer-events-auto ${isClosing ? 'backdrop-blur-out' : 'backdrop-blur-in'}`}
+                onClick={handleAnimatedClose}
+            />
+            <div
+                className={`relative z-10 w-full sm:w-[500px] sm:rounded-3xl rounded-t-3xl p-6 shadow-2xl pointer-events-auto max-h-[90vh] overflow-y-auto ${isClosing ? 'modal-slide-down' : 'modal-slide-up'}`}
+                style={{ backgroundColor: 'var(--theme-card-bg, #fff)' }}
+            >
 
                 {/* Header */}
                 <div className="flex items-center justify-between mb-6">
@@ -270,7 +286,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         )}
                     </div>
                     <button
-                        onClick={onClose}
+                        onClick={handleAnimatedClose}
                         className="w-10 h-10 rounded-full flex items-center justify-center text-xl transition-colors"
                         style={{
                             backgroundColor: 'var(--theme-bg-secondary)',

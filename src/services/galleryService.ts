@@ -3,7 +3,7 @@ import { ref as storageRef, uploadString, getDownloadURL } from 'firebase/storag
 import { database, storage } from '../firebase';
 import { AuthService } from './auth';
 import type { GalleryGame, GalleryRound, GalleryDrawing, DrawingStroke, GameRoom } from '../types';
-import { generateId } from '../utils/id';
+
 
 const GALLERY_PATH = 'gallery';
 const MAX_GALLERY_GAMES = 3;
@@ -16,9 +16,12 @@ export const GalleryService = {
         const currentUser = AuthService.getCurrentUser();
         if (!currentUser) return;
 
-        // Build gallery game data
-        const gameId = generateId();
+        // Use deterministic gameId based on roomCode and round count
+        // This ensures all players write to the same record
+        const gameId = `game_${room.roomCode}_r${room.roundResults?.length || 0}`;
         const playerIds = room.players.map(p => p.id);
+
+
 
         // Build rounds with drawings
         const rounds: GalleryRound[] = [];
@@ -80,13 +83,17 @@ export const GalleryService = {
             }
         };
 
-        // Save to current user's gallery only
-        const galleryRef = ref(database, `${GALLERY_PATH}/${currentUser.id}/${gameId}`);
-        await set(galleryRef, galleryGame);
+        // Save to ALL participants' galleries (server-side for everyone)
+        const savePromises = playerIds.map(async (playerId) => {
+            const galleryRef = ref(database, `${GALLERY_PATH}/${playerId}/${gameId}`);
+            await set(galleryRef, galleryGame);
+            // Prune old games for each player (keep only last 3)
+            await GalleryService.pruneOldGames(playerId);
+        });
 
-        // Prune old games (keep only last 3)
-        await GalleryService.pruneOldGames(currentUser.id);
+        await Promise.all(savePromises);
     },
+
 
     /**
      * Get all gallery games for the current player

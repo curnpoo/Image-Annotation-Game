@@ -228,17 +228,19 @@ export const GalleryScreen: React.FC<GalleryScreenProps> = ({ onBack, showToast 
                                 {/* Expanded rounds */}
                                 {expandedGameId === game.gameId && (
                                     <div className="px-4 pb-4 space-y-3 animate-fade-in">
-                                        {game.rounds.map((round, roundIndex) => (
+                                        {(game.rounds || []).map((round, roundIndex) => (
                                             <div key={roundIndex} className="rounded-xl p-3"
                                                 style={{ backgroundColor: 'rgba(255,255,255,0.05)' }}>
                                                 <h4 className="font-bold mb-2 text-sm" style={{ color: 'var(--theme-text)' }}>
-                                                    Round {round.roundNumber} — Winner: {round.winner.playerName} 🏆
+                                                    Round {round.roundNumber || roundIndex + 1} — Winner: {round.winner?.playerName || 'Unknown'} 🏆
                                                 </h4>
+
 
 
                                                 {/* Drawing thumbnails */}
                                                 <div className="flex gap-2 overflow-x-auto pb-2">
-                                                    {round.drawings.map((drawing, drawingIndex) => (
+                                                    {(round.drawings || []).map((drawing, drawingIndex) => (
+
                                                         <button
                                                             key={drawingIndex}
                                                             onClick={() => setSelectedDrawing({ game, round, drawing })}
@@ -246,10 +248,11 @@ export const GalleryScreen: React.FC<GalleryScreenProps> = ({ onBack, showToast 
                                                             style={{
                                                                 width: 80,
                                                                 height: 80,
-                                                                border: drawing.playerId === round.winner.playerId
+                                                                border: drawing.playerId === round.winner?.playerId
                                                                     ? '3px solid gold'
                                                                     : '2px solid var(--theme-border)'
                                                             }}
+
                                                         >
                                                             <DrawingThumbnail
                                                                 baseImageUrl={round.imageUrl}

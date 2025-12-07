@@ -38,6 +38,7 @@ interface ScreenRouterProps {
     onShowCasino: () => void;
     onShowSettings: () => void;
     onRejoin: (code: string) => void;
+    onPlayWithTransition: () => void;
 
     // Navigation Handlers
     onNavigate: (screen: Screen) => void; // Generic navigate
@@ -115,6 +116,7 @@ export const ScreenRouter: React.FC<ScreenRouterProps> = ({
     onShowCasino,
     onShowSettings,
     onRejoin,
+    onPlayWithTransition,
     onNavigate,
     onBackToHome,
     onStoreBack,
@@ -267,7 +269,7 @@ export const ScreenRouter: React.FC<ScreenRouterProps> = ({
             if (!player) return null;
             return <HomeScreen
                 player={player}
-                onPlay={() => onNavigate('room-selection')}
+                onPlay={onPlayWithTransition}
                 onCasino={onShowCasino}
                 onStore={() => onNavigate('store')}
                 onProfile={() => onNavigate('profile')}

@@ -1,0 +1,326 @@
+/* Screen Transition Animations */
+
+/* ========================== */
+/* MODAL ANIMATIONS           */
+/* ========================== */
+
+/* Settings Modal - Slide from Bottom */
+@keyframes modal-slide-up {
+    from {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes modal-slide-down {
+    from {
+        transform: translateY(0);
+        opacity: 1;
+    }
+
+    to {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+}
+
+/* Backdrop Blur Animation */
+@keyframes backdrop-blur-in {
+    from {
+        backdrop-filter: blur(0px);
+        background-color: transparent;
+    }
+
+    to {
+        backdrop-filter: blur(12px);
+        background-color: rgba(0, 0, 0, 0.5);
+    }
+}
+
+@keyframes backdrop-blur-out {
+    from {
+        backdrop-filter: blur(12px);
+        background-color: rgba(0, 0, 0, 0.5);
+    }
+
+    to {
+        backdrop-filter: blur(0px);
+        background-color: transparent;
+    }
+}
+
+.modal-slide-up {
+    animation: modal-slide-up 250ms cubic-bezier(0.32, 0.72, 0, 1) forwards;
+}
+
+.modal-slide-down {
+    animation: modal-slide-down 200ms cubic-bezier(0.32, 0.72, 0, 1) forwards;
+}
+
+.backdrop-blur-in {
+    animation: backdrop-blur-in 250ms ease-out forwards;
+}
+
+.backdrop-blur-out {
+    animation: backdrop-blur-out 200ms ease-in forwards;
+}
+
+/* ========================== */
+/* CASINO TRANSITION          */
+/* ========================== */
+
+@keyframes casino-entrance {
+    0% {
+        transform: scale(0) rotate(-180deg);
+        opacity: 0;
+    }
+
+    60% {
+        transform: scale(1.15) rotate(10deg);
+        opacity: 1;
+    }
+
+    100% {
+        transform: scale(1) rotate(0deg);
+        opacity: 1;
+    }
+}
+
+@keyframes casino-exit {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    100% {
+        transform: scale(0);
+        opacity: 0;
+    }
+}
+
+@keyframes rotate-dashes {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.casino-entrance {
+    animation: casino-entrance 280ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.casino-exit {
+    animation: casino-exit 200ms ease-in forwards;
+}
+
+.rotate-dashes {
+    animation: rotate-dashes 2s linear infinite;
+}
+
+/* ========================== */
+/* TUNNEL TRANSITION          */
+/* ========================== */
+
+@keyframes tunnel-zoom-out {
+    0% {
+        transform: scale(1) translateZ(0);
+        opacity: 1;
+    }
+
+    100% {
+        transform: scale(20) translateZ(500px);
+        opacity: 0;
+    }
+}
+
+@keyframes tunnel-text-zoom {
+    0% {
+        transform: scale(0.8);
+        opacity: 0;
+    }
+
+    20% {
+        opacity: 1;
+    }
+
+    100% {
+        transform: scale(50);
+        opacity: 0;
+    }
+}
+
+@keyframes tunnel-ring {
+    0% {
+        transform: scale(0.5);
+        opacity: 0.8;
+    }
+
+    100% {
+        transform: scale(15);
+        opacity: 0;
+    }
+}
+
+.tunnel-zoom {
+    animation: tunnel-zoom-out 280ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.tunnel-text {
+    animation: tunnel-text-zoom 280ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.tunnel-ring {
+    animation: tunnel-ring 280ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* ========================== */
+/* SCREEN TRANSITIONS         */
+/* ========================== */
+
+@keyframes screen-fade-in {
+    from {
+        opacity: 0;
+        transform: scale(0.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes screen-fade-out {
+    from {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    to {
+        opacity: 0;
+        transform: scale(1.02);
+    }
+}
+
+@keyframes screen-slide-left {
+    from {
+        transform: translateX(30px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes screen-slide-right {
+    from {
+        transform: translateX(-30px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.screen-fade-in {
+    animation: screen-fade-in 200ms ease-out forwards;
+}
+
+.screen-fade-out {
+    animation: screen-fade-out 150ms ease-in forwards;
+}
+
+.screen-slide-left {
+    animation: screen-slide-left 200ms cubic-bezier(0.32, 0.72, 0, 1) forwards;
+}
+
+.screen-slide-right {
+    animation: screen-slide-right 200ms cubic-bezier(0.32, 0.72, 0, 1) forwards;
+}
+
+/* ========================== */
+/* POPUP/SCALE ANIMATIONS     */
+/* ========================== */
+
+@keyframes popup-scale-in {
+    from {
+        transform: scale(0.9);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes popup-scale-out {
+    from {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    to {
+        transform: scale(0.9);
+        opacity: 0;
+    }
+}
+
+.popup-scale-in {
+    animation: popup-scale-in 200ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.popup-scale-out {
+    animation: popup-scale-out 150ms ease-in forwards;
+}
+
+/* ========================== */
+/* UTILITY CLASSES            */
+/* ========================== */
+
+.transition-container {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+}
+
+.transition-active {
+    pointer-events: all;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+
+    .modal-slide-up,
+    .modal-slide-down,
+    .backdrop-blur-in,
+    .backdrop-blur-out,
+    .casino-entrance,
+    .casino-exit,
+    .tunnel-zoom,
+    .tunnel-text,
+    .tunnel-ring,
+    .screen-fade-in,
+    .screen-fade-out,
+    .screen-slide-left,
+    .screen-slide-right,
+    .popup-scale-in,
+    .popup-scale-out {
+        animation-duration: 0.01ms !important;
+    }
+}

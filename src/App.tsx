@@ -20,6 +20,7 @@ import { Toast } from './components/common/Toast';
 import { LoadingScreen } from './components/common/LoadingScreen';
 import { NotificationPromptModal } from './components/common/NotificationPromptModal';
 import { SettingsModal } from './components/common/SettingsModal';
+import { TunnelTransition, CasinoTransition } from './components/common/ScreenTransition';
 import {
   notifyYourTurnToUpload,
   notifyDrawingPhaseStarted,
@@ -94,6 +95,8 @@ function App() {
 
   const [showSettings, setShowSettings] = useState(false);
   const [showCasino, setShowCasino] = useState(false);
+  const [showTunnelTransition, setShowTunnelTransition] = useState(false);
+  const [showCasinoTransition, setShowCasinoTransition] = useState(false);
   const [isTransitionActive, setIsTransitionActive] = useState(false);
   const [isLoadingTransition, setIsLoadingTransition] = useState(false);
   const [isBrowsing, setIsBrowsing] = useState(false);
@@ -1145,6 +1148,24 @@ function App() {
           joiningRoomCode={pendingRoomCode}
         />
       )}
+
+      {/* Transition Overlays */}
+      <TunnelTransition
+        isActive={showTunnelTransition}
+        isDarkMode={player?.cosmetics?.activeTheme?.includes('dark') || false}
+        onComplete={() => {
+          setShowTunnelTransition(false);
+          setCurrentScreen('room-selection');
+        }}
+      />
+      <CasinoTransition
+        isActive={showCasinoTransition}
+        onComplete={() => {
+          setShowCasinoTransition(false);
+          setShowCasino(true);
+        }}
+      />
+
       {/* Casino Screen */}
       {showCasino && (
         <CasinoScreen onClose={() => setShowCasino(false)} />
@@ -1263,9 +1284,10 @@ function App() {
         onProfileComplete={handleProfileComplete}
         onUpdateProfile={handleUpdateProfile}
 
-        onShowCasino={() => setShowCasino(true)}
+        onShowCasino={() => setShowCasinoTransition(true)}
         onShowSettings={() => setShowSettings(true)}
         onRejoin={handleRejoin}
+        onPlayWithTransition={() => setShowTunnelTransition(true)}
 
         onNavigate={setCurrentScreen}
         onBackToHome={() => setCurrentScreen('home')}

@@ -34,6 +34,7 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
 }) => {
     const [showSettings, setShowSettings] = useState(false);
     const [, setTick] = useState(0); // Force update for idle timer
+    const [kickTarget, setKickTarget] = useState<string | null>(null); // Player being kicked
 
     // Theme Support
     // const currentUser = AuthService.getCurrentUser();
@@ -241,9 +242,7 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    if (window.confirm(`Kick ${p.name}?`)) {
-                                                        onKick(p.id);
-                                                    }
+                                                    setKickTarget(p.id);
                                                 }}
                                                 className="bg-red-100 text-red-500 w-7 h-7 rounded-full hover:bg-red-500 hover:text-white transition-colors flex items-center justify-center text-sm"
                                             >
@@ -303,6 +302,40 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                     <span>✨</span> Annotate photos, vote for the best! <span>✨</span>
                 </div>
             </div>
+
+            {/* Kick Player Confirmation Modal */}
+            {kickTarget && (() => {
+                const targetPlayer = room.players.find(p => p.id === kickTarget);
+                return (
+                    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+                        <div className="relative z-10 rounded-3xl p-6 shadow-2xl w-full max-w-sm text-center pop-in" style={{ backgroundColor: 'var(--theme-card-bg)' }}>
+                            <div className="text-4xl mb-4">🥾</div>
+                            <h3 className="text-2xl font-black mb-2" style={{ color: 'var(--theme-text)' }}>Kick Player?</h3>
+                            <p className="mb-6 font-medium" style={{ color: 'var(--theme-text-secondary)' }}>
+                                Are you sure you want to kick <span className="text-purple-600 font-bold">{targetPlayer?.name}</span>?
+                            </p>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => setKickTarget(null)}
+                                    className="flex-1 py-3 px-6 font-bold rounded-xl transition-colors"
+                                    style={{ backgroundColor: 'var(--theme-bg-secondary)', color: 'var(--theme-text)' }}
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        onKick(kickTarget);
+                                        setKickTarget(null);
+                                    }}
+                                    className="flex-1 py-3 px-6 bg-red-500 text-white font-bold rounded-xl shadow-lg hover:bg-red-600 active:scale-95 transition-all"
+                                >
+                                    Kick
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                );
+            })()}
 
             {showSettings && currentPlayer && (
                 <SettingsModal

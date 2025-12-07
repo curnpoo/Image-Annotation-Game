@@ -37,7 +37,7 @@ interface DrawingScreenProps {
     strokes: DrawingStroke[];
 }
 
-type TransitionState = 'idle' | 'countdown' | 'go';
+type TransitionState = 'idle' | 'countdown' | 'go' | 'fading' | 'drawing';
 
 export const DrawingScreen: React.FC<DrawingScreenProps> = ({
     room,
@@ -132,20 +132,33 @@ export const DrawingScreen: React.FC<DrawingScreenProps> = ({
                 }, 1000);
                 return () => clearTimeout(timer);
             } else {
-                // countdownValue is 0, wait a moment then show GO
+                // countdownValue is 0, show GO
                 const timer = setTimeout(() => {
                     setTransitionState('go');
-                }, 800);
+                }, 600);
                 return () => clearTimeout(timer);
             }
         }
 
         if (transitionState === 'go') {
-            // Immediately start
+            // Call onReady and start fading
             if (!hasCalledReadyRef.current) {
                 hasCalledReadyRef.current = true;
                 onReady();
             }
+            // After a brief moment, start fading out the overlay
+            const timer = setTimeout(() => {
+                setTransitionState('fading');
+            }, 400);
+            return () => clearTimeout(timer);
+        }
+
+        if (transitionState === 'fading') {
+            // After fade animation completes, fully transition to drawing
+            const timer = setTimeout(() => {
+                setTransitionState('drawing');
+            }, 500);
+            return () => clearTimeout(timer);
         }
     }, [transitionState, countdownValue, onReady]);
 
@@ -169,26 +182,37 @@ export const DrawingScreen: React.FC<DrawingScreenProps> = ({
         : "";
     const containerClass = `${baseContainerClass} ${sabotageClass}`;
 
-    const canvasBlurClass = "transition-all duration-500";
+    // Determine if we should show UI elements (timer/toolbar)
+    const showDrawingUI = isMyTimerRunning && !hasSubmitted;
 
     return (
         <div className={containerClass}>
-            {/* Blurrable Canvas Content */}
-            <div className={`flex-1 relative w-full max-w-lg mx-auto flex flex-col justify-center items-center min-h-0 ${canvasBlurClass}`}>
+            {/* Canvas Content Area */}
+            <div className="flex-1 relative w-full max-w-lg mx-auto flex flex-col justify-center items-center min-h-0 transition-all duration-300">
 
-                {/* Timer directly attached to canvas - only show when running */}
-                {isMyTimerRunning && !hasSubmitted && (
-                    <div className="w-full mb-3 shrink-0 z-10 px-1">
+                {/* Timer - always in DOM but animated */}
+                <div
+                    className="w-full mb-3 shrink-0 z-10 px-1 transition-all duration-500 ease-out"
+                    style={{
+                        opacity: showDrawingUI && transitionState === 'drawing' ? 1 : 0,
+                        transform: showDrawingUI && transitionState === 'drawing' ? 'translateY(0)' : 'translateY(-20px)',
+                        pointerEvents: showDrawingUI && transitionState === 'drawing' ? 'auto' : 'none',
+                        height: showDrawingUI ? 'auto' : '0',
+                        marginBottom: showDrawingUI ? '0.75rem' : '0',
+                        overflow: 'hidden'
+                    }}
+                >
+                    {showDrawingUI && (
                         <DrawingTimer
                             endsAt={timerEndsAt || Date.now()}
                             onTimeUp={onTimeUp}
                             totalDuration={timerDuration}
                         />
-                    </div>
-                )}
+                    )}
+                </div>
 
                 {/* Canvas Area */}
-                <div className="relative w-full z-0 bg-white rounded-3xl shadow-2xl overflow-hidden border-4 border-gray-100 aspect-square">
+                <div className="relative w-full z-0 bg-white rounded-3xl shadow-2xl overflow-hidden border-4 border-gray-100 aspect-square transition-all duration-300">
 
                     {/* Base Image */}
                     {room.currentImage && (
@@ -258,80 +282,88 @@ export const DrawingScreen: React.FC<DrawingScreenProps> = ({
                 </div>
             </div>
 
-            {/* Transition Overlays - OUTSIDE the blurred content */}
-            {!isMyTimerRunning && !hasSubmitted && (
-                <>
-                    {/* Idle State: Show "I'm Ready" modal */}
-                    {transitionState === 'idle' && (
-                        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
-                            <div className="bg-white rounded-3xl p-8 text-center max-w-sm mx-4 shadow-2xl pop-in border-4 border-purple-500">
-                                <div className="text-6xl mb-4 animate-bounce">🎨</div>
-                                <h3 className="text-2xl font-bold text-purple-600 mb-2">It's Drawing Time!</h3>
-                                <p className="text-gray-500 mb-6">You have {room.settings.timerDuration} seconds to draw.</p>
-                                <button
-                                    onClick={handleReadyClick}
-                                    disabled={isReadying}
-                                    className="w-full btn-90s bg-gradient-to-r from-lime-400 to-emerald-500 text-black px-8 py-4 rounded-xl font-bold text-xl jelly-hover shadow-lg disabled:opacity-70 disabled:grayscale"
-                                >
-                                    I'M READY! 🚀
-                                </button>
-                            </div>
-                        </div>
-                    )}
-
-
-
-                    {/* Countdown State: Large numbers */}
-                    {transitionState === 'countdown' && countdownValue > 0 && (
-                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-50 animate-fade-in">
-                            <div className="text-9xl font-black text-white drop-shadow-2xl animate-ping-once" key={countdownValue}>
-                                {countdownValue}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* GO! State */}
-                    {transitionState === 'go' && (
-                        <div className="absolute inset-0 bg-gradient-to-br from-lime-500/70 to-emerald-600/70 flex items-center justify-center z-50 animate-fade-in">
-                            <div className="text-8xl font-black text-white drop-shadow-2xl animate-ping-once">
-                                GO! 🚀
-                            </div>
-                        </div>
-                    )}
-                </>
-            )}
-
-            {/* Toolbar - BELOW the image */}
-            {isMyTimerRunning && !hasSubmitted && (
-                <div className="flex-shrink-0 z-30 pb-4 px-2 pop-in pointer-events-auto w-full max-w-lg mx-auto">
-                    <Toolbar
-                        brushColor={brushColor}
-                        brushSize={brushSize}
-                        brushType={brushType}
-                        isEraser={isEraser}
-                        onColorChange={(color) => {
-                            setBrushColor(color);
-                            setIsEraser(false);
-                            setIsEyedropper(false);
-                        }}
-                        onSizeChange={setBrushSize}
-                        onTypeChange={(type) => {
-                            if (setBrushType) {
-                                setBrushType(type);
-                                setIsEraser(false);
-                                setIsEyedropper(false);
-                            }
-                        }}
-                        onEraserToggle={handleEraserToggle}
-                        onUndo={handleUndo}
-                        onClear={handleClear}
-                        isEyedropper={isEyedropper}
-                        onEyedropperToggle={handleEyedropperToggle}
-                        availableColors={effectiveAvailableColors}
-                        availableBrushes={availableBrushes}
-                    />
+            {/* Transition Overlays */}
+            {/* Idle State: Show "I'm Ready" modal */}
+            {transitionState === 'idle' && !isMyTimerRunning && !hasSubmitted && (
+                <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in">
+                    <div className="bg-white rounded-3xl p-8 text-center max-w-sm mx-4 shadow-2xl pop-in border-4 border-purple-500">
+                        <div className="text-6xl mb-4 animate-bounce">🎨</div>
+                        <h3 className="text-2xl font-bold text-purple-600 mb-2">It's Drawing Time!</h3>
+                        <p className="text-gray-500 mb-6">You have {room.settings.timerDuration} seconds to draw.</p>
+                        <button
+                            onClick={handleReadyClick}
+                            disabled={isReadying}
+                            className="w-full btn-90s bg-gradient-to-r from-lime-400 to-emerald-500 text-black px-8 py-4 rounded-xl font-bold text-xl jelly-hover shadow-lg disabled:opacity-70 disabled:grayscale"
+                        >
+                            I'M READY! 🚀
+                        </button>
+                    </div>
                 </div>
             )}
+
+            {/* Countdown State: Large numbers */}
+            {transitionState === 'countdown' && countdownValue > 0 && (
+                <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-50 animate-fade-in">
+                    <div className="text-9xl font-black text-white drop-shadow-2xl animate-ping-once" key={countdownValue}>
+                        {countdownValue}
+                    </div>
+                </div>
+            )}
+
+            {/* GO! State with fade-out */}
+            {(transitionState === 'go' || transitionState === 'fading') && (
+                <div
+                    className="absolute inset-0 bg-gradient-to-br from-lime-500/70 to-emerald-600/70 flex items-center justify-center z-50 transition-opacity duration-500"
+                    style={{ opacity: transitionState === 'fading' ? 0 : 1 }}
+                >
+                    <div
+                        className="text-8xl font-black text-white drop-shadow-2xl transition-all duration-500"
+                        style={{
+                            transform: transitionState === 'fading' ? 'scale(1.5)' : 'scale(1)',
+                            opacity: transitionState === 'fading' ? 0 : 1
+                        }}
+                    >
+                        GO! 🚀
+                    </div>
+                </div>
+            )}
+
+            {/* Toolbar - always in DOM but animated */}
+            <div
+                className="flex-shrink-0 z-30 pb-4 px-2 pointer-events-auto w-full max-w-lg mx-auto transition-all duration-500 ease-out"
+                style={{
+                    opacity: showDrawingUI && transitionState === 'drawing' ? 1 : 0,
+                    transform: showDrawingUI && transitionState === 'drawing' ? 'translateY(0)' : 'translateY(30px)',
+                    pointerEvents: showDrawingUI && transitionState === 'drawing' ? 'auto' : 'none'
+                }}
+            >
+                <Toolbar
+                    brushColor={brushColor}
+                    brushSize={brushSize}
+                    brushType={brushType}
+                    isEraser={isEraser}
+                    onColorChange={(color) => {
+                        setBrushColor(color);
+                        setIsEraser(false);
+                        setIsEyedropper(false);
+                    }}
+                    onSizeChange={setBrushSize}
+                    onTypeChange={(type) => {
+                        if (setBrushType) {
+                            setBrushType(type);
+                            setIsEraser(false);
+                            setIsEyedropper(false);
+                        }
+                    }}
+                    onEraserToggle={handleEraserToggle}
+                    onUndo={handleUndo}
+                    onClear={handleClear}
+                    isEyedropper={isEyedropper}
+                    onEyedropperToggle={handleEyedropperToggle}
+                    availableColors={effectiveAvailableColors}
+                    availableBrushes={availableBrushes}
+                />
+            </div>
         </div>
     );
 };
