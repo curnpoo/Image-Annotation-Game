@@ -38,12 +38,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     const cards = [
         {
             id: 'play',
-            label: isBrowsing ? 'RETURN' : 'PLAY',
-            emoji: isBrowsing ? '🔙' : '🎮',
-            color: isBrowsing ? 'from-orange-400 to-red-500' : 'from-green-400 to-emerald-600',
-            border: isBrowsing ? 'border-orange-500' : 'border-green-500',
-            onClick: isBrowsing && onRejoin && lastGameDetails ? () => onRejoin(lastGameDetails.roomCode) : onPlay,
-            description: isBrowsing ? 'Return to game' : 'Start a game'
+            label: 'PLAY',
+            emoji: '🎮',
+            color: 'from-green-400 to-emerald-600',
+            border: 'border-green-500',
+            onClick: onPlay,
+            description: 'Start a game'
         },
         {
             id: 'casino',
