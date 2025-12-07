@@ -11,7 +11,17 @@ export const DrawingTimer: React.FC<DrawingTimerProps> = ({
     onTimeUp,
     totalDuration = 20
 }) => {
-    const [timeLeft, setTimeLeft] = useState(() => Math.max(0, (endsAt - Date.now()) / 1000));
+    // Stabilize endsAt to prevent timer reset on every re-render
+    const stableEndsAtRef = useRef<number>(endsAt);
+
+    // Only update the stable ref if the value actually changed significantly (more than 500ms difference)
+    if (Math.abs(endsAt - stableEndsAtRef.current) > 500) {
+        stableEndsAtRef.current = endsAt;
+    }
+
+    const stableEndsAt = stableEndsAtRef.current;
+
+    const [timeLeft, setTimeLeft] = useState(() => Math.max(0, (stableEndsAt - Date.now()) / 1000));
     const onTimeUpRef = useRef(onTimeUp);
     const hasCalledRef = useRef(false);
 
@@ -21,11 +31,15 @@ export const DrawingTimer: React.FC<DrawingTimerProps> = ({
     }, [onTimeUp]);
 
     useEffect(() => {
+        // Only reset hasCalledRef if the timer was actually restarted (significantly different endsAt)
         hasCalledRef.current = false;
+
+        // Reset timeLeft when stableEndsAt changes
+        setTimeLeft(Math.max(0, (stableEndsAt - Date.now()) / 1000));
 
         const interval = setInterval(() => {
             const now = Date.now();
-            const remaining = Math.max(0, (endsAt - now) / 1000);
+            const remaining = Math.max(0, (stableEndsAt - now) / 1000);
 
             setTimeLeft(remaining);
 
@@ -37,7 +51,15 @@ export const DrawingTimer: React.FC<DrawingTimerProps> = ({
         }, 100);
 
         return () => clearInterval(interval);
-    }, [endsAt]);
+    }, [stableEndsAt]);
+
+    // Manual submit handler
+    const handleDoneClick = () => {
+        if (!hasCalledRef.current) {
+            hasCalledRef.current = true;
+            onTimeUpRef.current();
+        }
+    };
 
     // Calculate progress percentage
     const progress = Math.min(100, (timeLeft / totalDuration) * 100);
@@ -72,13 +94,13 @@ export const DrawingTimer: React.FC<DrawingTimerProps> = ({
 
     return (
         <div
-            className={`w-full rounded-2xl p-4 border-2 ${visuals.borderColor} ${visuals.bgColor} shadow-lg ${visuals.glowColor} transition-all duration-300 ${isLowTime ? 'animate-pulse' : ''}`}
+            className={`w-full rounded-2xl p-3 border-2 ${visuals.borderColor} ${visuals.bgColor} shadow-lg ${visuals.glowColor} transition-all duration-300 ${isLowTime ? 'animate-pulse' : ''}`}
         >
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
                 {/* Progress Bar Container */}
                 <div className="flex-1 relative">
                     {/* Track */}
-                    <div className="h-6 bg-white rounded-full overflow-hidden shadow-inner border border-gray-100">
+                    <div className="h-5 bg-white rounded-full overflow-hidden shadow-inner border border-gray-100">
                         {/* Progress */}
                         <div
                             className={`h-full ${visuals.barColor} rounded-full transition-all duration-100 ease-linear`}
@@ -88,12 +110,20 @@ export const DrawingTimer: React.FC<DrawingTimerProps> = ({
                 </div>
 
                 {/* Timer Number */}
-                <div className={`flex items-center justify-center min-w-[80px] h-16 rounded-xl ${visuals.bgColor} border-2 ${visuals.borderColor}`}>
-                    <span className={`text-3xl font-black ${visuals.textColor} tabular-nums`}>
+                <div className={`flex items-center justify-center min-w-[60px] h-12 rounded-xl ${visuals.bgColor} border-2 ${visuals.borderColor}`}>
+                    <span className={`text-2xl font-black ${visuals.textColor} tabular-nums`}>
                         {Math.ceil(timeLeft)}
                     </span>
-                    <span className={`text-lg font-bold ${visuals.textColor} ml-1 opacity-60`}>s</span>
+                    <span className={`text-sm font-bold ${visuals.textColor} ml-0.5 opacity-60`}>s</span>
                 </div>
+
+                {/* Done Button */}
+                <button
+                    onClick={handleDoneClick}
+                    className="px-4 h-12 bg-gradient-to-r from-purple-500 to-indigo-600 text-white font-bold rounded-xl shadow-lg hover:shadow-xl active:scale-95 transition-all text-sm"
+                >
+                    Done ✓
+                </button>
             </div>
         </div>
     );

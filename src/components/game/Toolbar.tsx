@@ -78,9 +78,9 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                 </div>
             )}
 
-            {/* Colors - Single Row Grid for Fast Access */}
+            {/* Colors - 2-Row Grid for Fast Access */}
             <div className="bg-white rounded-2xl px-3 py-2 shadow-xl border-2 border-purple-500 w-full animate-slide-up">
-                <div className="grid gap-2 justify-items-center" style={{ gridTemplateColumns: `repeat(${Math.min(effectiveColors.length, 10)}, 1fr)` }}>
+                <div className="grid grid-cols-5 gap-3 justify-items-center">
                     {effectiveColors.map((color) => (
                         <button
                             key={color}
@@ -89,17 +89,15 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                                 onColorChange(color);
                             }}
                             className={`rounded-full transition-all flex-shrink-0 ${!isEraser && brushColor === color
-                                ? 'scale-110 ring-2 ring-purple-400 ring-offset-1'
-                                : 'hover:scale-105'
+                                ? 'scale-105 ring-2 ring-purple-400 ring-offset-2'
+                                : 'hover:scale-105 active:scale-95'
                                 }`}
                             style={{
                                 backgroundColor: color,
                                 border: color === '#FFFFFF' ? '2px solid #ccc' : '2px solid rgba(0,0,0,0.1)',
                                 boxShadow: !isEraser && brushColor === color ? '0 0 8px rgba(155, 89, 182, 0.5)' : 'none',
-                                width: '28px',
-                                height: '28px',
-                                minWidth: '28px',
-                                minHeight: '28px',
+                                width: '40px',
+                                height: '40px',
                             }}
                         />
                     ))}
