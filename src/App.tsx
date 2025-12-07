@@ -438,6 +438,7 @@ function App() {
           setCurrentScreen('drawing');
           setStrokes([]);
           setIsMyTimerRunning(false);
+          setIsReadying(false);
         }
       }
       else if (status === 'voting') setCurrentScreen(shouldShowWaitingRoom ? 'waiting' : 'voting');
@@ -880,6 +881,7 @@ function App() {
     if (!roomCode || !player || !room) return;
 
     setIsMyTimerRunning(false);
+    setIsReadying(false);
 
     const currentStrokes = strokesRef.current;
     const validStrokes = currentStrokes.filter(s => s && Array.isArray(s.points) && s.points.length > 0);
@@ -1174,10 +1176,10 @@ function App() {
       {/* Game Ended Modal */}
       {showGameEnded && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[100] flex items-center justify-center animate-fade-in">
-          <div className="bg-white rounded-3xl p-8 text-center max-w-sm mx-4 shadow-2xl pop-in border-4 border-red-500">
+          <div className="bg-zinc-900 rounded-3xl p-8 text-center max-w-sm mx-4 shadow-2xl pop-in border-4 border-red-500">
             <div className="text-6xl mb-4 animate-bounce">🛑</div>
             <h3 className="text-2xl font-bold text-red-600 mb-2">Game Ended</h3>
-            <p className="text-gray-600 font-medium">The host has closed the room.</p>
+            <p className="text-white font-medium">The host has closed the room.</p>
             <p className="text-gray-400 text-sm mt-4">Returning to lobby in {endGameCountdown}...</p>
             <div className="mt-6 flex justify-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500"></div>

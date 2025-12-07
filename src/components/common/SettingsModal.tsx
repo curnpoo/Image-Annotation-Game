@@ -450,8 +450,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
                     )}
 
-                    {/* Main Save Button */},
-
                     {/* Main Save Button */}
                     <button
                         onClick={handleSave}

@@ -63,13 +63,23 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
     // If somehow we are in LobbyScreen but the game is active, show Rejoin
     if (room.status !== 'lobby') {
         return (
-            <div className="min-h-screen bg-90s-animated flex flex-col items-center justify-center p-4">
-                <div className="bg-white rounded-2xl p-8 shadow-2xl text-center max-w-md w-full">
-                    <h2 className="text-2xl font-bold mb-4 text-purple-600">Game in Progress!</h2>
-                    <p className="mb-6 text-gray-600">The game is currently in the <strong>{room.status}</strong> phase.</p>
+            <div className="min-h-screen flex flex-col items-center justify-center p-4"
+                style={{ backgroundColor: 'var(--theme-bg-primary)' }}>
+                <div className="rounded-[2rem] p-8 shadow-2xl text-center max-w-md w-full"
+                    style={{
+                        backgroundColor: 'var(--theme-card-bg)',
+                        border: '2px solid var(--theme-border)'
+                    }}>
+                    <h2 className="text-2xl font-bold mb-4" style={{ color: 'var(--theme-text)' }}>Game in Progress!</h2>
+                    <p className="mb-6 font-medium" style={{ color: 'var(--theme-text-secondary)' }}>
+                        The game is currently in the <strong style={{ color: 'var(--theme-accent)' }}>{room.status}</strong> phase.
+                    </p>
                     <button
                         onClick={onJoinGame}
-                        className="w-full bg-gradient-to-r from-green-400 to-emerald-500 text-black font-bold py-4 rounded-xl shadow-lg hover:scale-105 transition-transform"
+                        className="w-full text-white font-bold py-4 rounded-xl shadow-lg hover:scale-105 transition-transform"
+                        style={{
+                            backgroundColor: 'var(--theme-accent)'
+                        }}
                     >
                         🚀 Rejoin Game
                     </button>

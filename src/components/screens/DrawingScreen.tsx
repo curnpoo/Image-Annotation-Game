@@ -84,6 +84,8 @@ export const DrawingScreen: React.FC<DrawingScreenProps> = ({
         setCountdownValue(3);
     }, []);
 
+    const hasCalledReadyRef = React.useRef(false);
+
     // Effect: Manage transition sequence
     useEffect(() => {
         if (transitionState === 'countdown') {
@@ -104,7 +106,10 @@ export const DrawingScreen: React.FC<DrawingScreenProps> = ({
 
         if (transitionState === 'go') {
             // Immediately start
-            onReady();
+            if (!hasCalledReadyRef.current) {
+                hasCalledReadyRef.current = true;
+                onReady();
+            }
         }
     }, [transitionState, countdownValue, onReady]);
 

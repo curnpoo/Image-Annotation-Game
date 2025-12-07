@@ -63,13 +63,20 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         const width = canvas.width;
         const height = canvas.height;
 
-        // Clear canvas to ensure transparency
+        // Clear canvas
         ctx.clearRect(0, 0, width, height);
+
+        const toScreen = (p: { x: number, y: number }) => ({
+            x: (p.x / 100) * width,
+            y: (p.y / 100) * height
+        });
 
         const renderStroke = (stroke: DrawingStroke) => {
             if (stroke.points.length === 0) return;
 
-            ctx.beginPath();
+            const points = stroke.points.map(toScreen);
+
+            // Default settings
             ctx.lineCap = 'round';
             ctx.lineJoin = 'round';
             ctx.strokeStyle = stroke.color;
@@ -78,71 +85,185 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
             ctx.globalCompositeOperation = stroke.isEraser ? 'destination-out' : 'source-over';
             ctx.shadowBlur = 0;
             ctx.shadowColor = 'transparent';
-
-            // Special Brush Styles
-            if (!stroke.isEraser) {
-                switch (stroke.type) {
-                    case 'marker':
-                        ctx.globalAlpha = 0.5; // Transparent overlay effect
-                        break;
-                    case 'neon':
-                        ctx.shadowBlur = 10;
-                        ctx.shadowColor = stroke.color;
-                        ctx.lineWidth = stroke.size * 0.8; // Slightly thinner core
-                        break;
-                    case 'pixel':
-                        ctx.lineCap = 'square';
-                        ctx.lineJoin = 'miter';
-                        ctx.imageSmoothingEnabled = false;
-                        break;
-                    case 'calligraphy':
-                        ctx.lineCap = 'butt';
-                        // We'll simulate calligraphy by drawing flattened ovals along the path? 
-                        // Or just simple flattened line interaction. 
-                        // Easier: use a flattened scaling for the context if possible, or just change lineCap.
-                        // For simple implementation:
-                        ctx.save();
-                        ctx.lineWidth = stroke.size;
-                        // A simple hack for calligraphy in standard 2D canvas path is hard without manual point drawing loop.
-                        // Let's stick to standard path but maybe variable width logic is too complex for this step.
-                        // Just use butt cap for now.
-                        break;
-                    case 'spray':
-                        // Spray is complex to re-render from path alone without storing particle data.
-                        // We will approximate it by drawing a fuzzy line.
-                        ctx.shadowBlur = stroke.size;
-                        ctx.shadowColor = stroke.color;
-                        ctx.lineWidth = stroke.size * 0.5;
-                        break;
-                    default:
-                        ctx.globalAlpha = 1.0;
-                        break;
-                }
-            }
-
-            // Draw Path
-            if (stroke.points.length === 1) {
-                const x = stroke.points[0].x / 100 * width;
-                const y = stroke.points[0].y / 100 * height;
-                if (stroke.type === 'pixel') {
-                    ctx.fillRect(x - stroke.size / 2, y - stroke.size / 2, stroke.size, stroke.size);
-                } else {
-                    ctx.arc(x, y, stroke.size / 2, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-            } else {
-                ctx.moveTo(stroke.points[0].x / 100 * width, stroke.points[0].y / 100 * height);
-                for (let i = 1; i < stroke.points.length; i++) {
-                    ctx.lineTo(stroke.points[i].x / 100 * width, stroke.points[i].y / 100 * height);
-                }
-                ctx.stroke();
-            }
-
-            // Reset Context Styles
             ctx.globalAlpha = 1.0;
-            ctx.shadowBlur = 0;
-            if (stroke.type === 'calligraphy') ctx.restore();
             ctx.imageSmoothingEnabled = true;
+
+            if (stroke.isEraser) {
+                ctx.beginPath();
+                if (points.length === 1) {
+                    ctx.arc(points[0].x, points[0].y, stroke.size / 2, 0, Math.PI * 2);
+                    ctx.fill();
+                } else {
+                    ctx.moveTo(points[0].x, points[0].y);
+                    for (let i = 1; i < points.length; i++) ctx.lineTo(points[i].x, points[i].y);
+                    ctx.stroke();
+                }
+                return;
+            }
+
+            switch (stroke.type) {
+                case 'marker':
+                    // Marker: Semi-transparent to simulate ink build-up. 
+                    // Note: 'multiply' would be ideal for color mixing but risks invisibility on transparent layers.
+                    // We use 'source-over' with low alpha to allow manual darkening by layering.
+                    ctx.globalAlpha = 0.5;
+                    ctx.globalCompositeOperation = 'source-over';
+                    // We simulate "mkarker on paper" by having a slightly fuzzy edge but solid core
+                    ctx.shadowBlur = stroke.size * 0.2;
+                    ctx.shadowColor = stroke.color;
+
+                    ctx.beginPath();
+                    if (points.length === 1) {
+                        ctx.arc(points[0].x, points[0].y, stroke.size / 2, 0, Math.PI * 2);
+                        ctx.fill();
+                    } else {
+                        ctx.moveTo(points[0].x, points[0].y);
+                        for (let i = 1; i < points.length; i++) ctx.lineTo(points[i].x, points[i].y);
+                        ctx.stroke();
+                    }
+                    break;
+
+                case 'neon':
+                    // Neon: Intense glow + Core
+                    ctx.globalCompositeOperation = 'lighter'; // Additive blending for glow
+
+                    // 1. Wide diffuse glow
+                    ctx.shadowBlur = 30;
+                    ctx.shadowColor = stroke.color;
+                    ctx.globalAlpha = 0.5;
+                    ctx.lineWidth = stroke.size * 1.5;
+
+                    ctx.beginPath();
+                    if (points.length === 1) {
+                        ctx.arc(points[0].x, points[0].y, stroke.size / 2, 0, Math.PI * 2);
+                        ctx.fill();
+                    } else {
+                        ctx.moveTo(points[0].x, points[0].y);
+                        for (let i = 1; i < points.length; i++) ctx.lineTo(points[i].x, points[i].y);
+                        ctx.stroke();
+                    }
+
+                    // 2. Tighter bright glow
+                    ctx.shadowBlur = 10;
+                    ctx.globalAlpha = 0.8;
+                    ctx.lineWidth = stroke.size;
+                    ctx.stroke();
+
+                    // 3. White Core
+                    ctx.globalCompositeOperation = 'source-over';
+                    ctx.shadowBlur = 5;
+                    ctx.shadowColor = 'white';
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = Math.max(1, stroke.size / 3);
+                    ctx.globalAlpha = 1.0;
+                    ctx.stroke();
+                    break;
+
+                case 'pixel':
+                    // Pixel: Snap to grid based on brush size
+                    ctx.imageSmoothingEnabled = false;
+                    const gridSize = Math.max(1, Math.floor(stroke.size));
+
+                    const drawPixel = (px: number, py: number) => {
+                        // Snap to grid
+                        const snapX = Math.floor(px / gridSize) * gridSize;
+                        const snapY = Math.floor(py / gridSize) * gridSize;
+                        ctx.fillRect(snapX, snapY, gridSize, gridSize);
+                    };
+
+                    points.forEach((p, i) => {
+                        if (i === 0) {
+                            drawPixel(p.x, p.y);
+                        } else {
+                            const prev = points[i - 1];
+                            const dist = Math.hypot(p.x - prev.x, p.y - prev.y);
+                            const steps = Math.ceil(dist / gridSize * 2); // Oversample to catch diagonals
+                            for (let s = 1; s <= steps; s++) {
+                                const t = s / steps;
+                                drawPixel(
+                                    prev.x + (p.x - prev.x) * t,
+                                    prev.y + (p.y - prev.y) * t
+                                );
+                            }
+                        }
+                    });
+                    break;
+
+                case 'calligraphy':
+                    // Calligraphy: Fixed Angle Pen (45 degrees)
+                    const angle = -45 * Math.PI / 180;
+                    const penWidth = stroke.size;
+
+                    ctx.fillStyle = stroke.color;
+                    ctx.strokeStyle = stroke.color;
+                    ctx.lineWidth = 1; // Minimal width for the filler lines
+
+                    points.forEach((p, i) => {
+                        if (i > 0) {
+                            const prev = points[i - 1];
+                            const dx = (penWidth / 2) * Math.cos(angle);
+                            const dy = (penWidth / 2) * Math.sin(angle);
+
+                            ctx.beginPath();
+                            ctx.moveTo(prev.x - dx, prev.y - dy); // Top-Left
+                            ctx.lineTo(p.x - dx, p.y - dy);       // Top-Right
+                            ctx.lineTo(p.x + dx, p.y + dy);       // Bottom-Right
+                            ctx.lineTo(prev.x + dx, prev.y + dy); // Bottom-Left
+                            ctx.closePath();
+                            ctx.fill();
+                            ctx.stroke(); // Fill gaps to avoid aliasing artifacts
+                        }
+                    });
+                    break;
+
+                case 'spray':
+                    // Spray: Large, noisy, falloff
+                    const radiusS = stroke.size * 3; // Larger spread
+                    const dotCountS = Math.floor(stroke.size * 1.5); // More dots
+
+                    points.forEach((p, i) => {
+                        const prev = i > 0 ? points[i - 1] : p;
+                        const dist = Math.hypot(p.x - prev.x, p.y - prev.y);
+                        // Interpolate heavily to avoid "clumping" at points
+                        const steps = Math.max(1, Math.ceil(dist / (stroke.size * 0.1)));
+
+                        for (let s = 0; s < steps; s++) {
+                            const t = s / steps;
+                            const cx = prev.x + (p.x - prev.x) * t;
+                            const cy = prev.y + (p.y - prev.y) * t;
+
+                            for (let d = 0; d < dotCountS; d++) {
+                                // Random angle
+                                const a = Math.random() * Math.PI * 2;
+                                // Random radius with Bias towards center (Gaussian-ish)
+                                // r = radius * (1 - sqrt(random)) gives center bias? 
+                                // Or use Box-Muller for real gaussian.
+                                // Simple approximation: r = radius * rand^2
+                                const r = radiusS * Math.pow(Math.random(), 2);
+
+                                const px = cx + Math.cos(a) * r;
+                                const py = cy + Math.sin(a) * r;
+
+                                // Noise texture: Draw tiny rectangles/dots
+                                ctx.fillRect(px, py, 1, 1);
+                            }
+                        }
+                    });
+                    break;
+
+                default:
+                    // Standard
+                    ctx.beginPath();
+                    if (points.length === 1) {
+                        ctx.arc(points[0].x, points[0].y, stroke.size / 2, 0, Math.PI * 2);
+                        ctx.fill();
+                    } else {
+                        ctx.moveTo(points[0].x, points[0].y);
+                        for (let i = 1; i < points.length; i++) ctx.lineTo(points[i].x, points[i].y);
+                        ctx.stroke();
+                    }
+                    break;
+            }
         };
 
         strokes.forEach(renderStroke);
@@ -151,6 +272,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
             renderStroke(currentStroke);
         }
 
+        // Restore context
         ctx.globalCompositeOperation = 'source-over';
     }, [strokes, currentStroke]);
 

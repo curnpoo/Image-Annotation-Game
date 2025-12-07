@@ -196,8 +196,8 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                             <ColorWheel
                                 color={backgroundColor}
                                 onChange={setBackgroundColor}
-                                size={200}
-                                className="mb-4"
+                                size={220}
+                                className="mb-4 w-full"
                             />
 
                             {/* Color Preview Badge */}
@@ -280,13 +280,13 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 
 
                             {/* Card Color */}
-                            <div className="flex flex-col items-center">
+                            <div className="flex flex-col items-center w-full">
                                 <label className="block text-sm font-bold mb-4" style={{ color: 'var(--theme-text-secondary)' }}>CARD COLOR</label>
                                 <ColorWheel
                                     color={cardColor}
                                     onChange={setCardColor}
-                                    size={150}
-                                    className="mb-4"
+                                    size={220}
+                                    className="mb-4 w-full"
                                 />
                                 <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 border border-white/20">
                                     <div className="w-6 h-6 rounded-full border border-gray-200" style={{ backgroundColor: cardColor }} />

@@ -1,5 +1,5 @@
 export const UNLOCKABLE_BRUSHES = [
-    { id: 'default', name: 'Standard', emoji: '🖊️', price: 0 },
+    { id: 'default', name: 'Simple', emoji: '🖊️', price: 0 },
     { id: 'marker', name: 'Marker', emoji: '🖍️', price: 15 },
     { id: 'calligraphy', name: 'Ink Pen', emoji: '✒️', price: 15 },
     { id: 'pixel', name: 'Pixel', emoji: '👾', price: 25 },
@@ -14,6 +14,11 @@ export const UNLOCKABLE_COLORS = [
     { id: '#FF0000', name: 'Red', price: 0 },
     { id: '#00FF00', name: 'Green', price: 0 },
     { id: '#0000FF', name: 'Blue', price: 0 },
+    { id: '#FFA500', name: 'Orange', price: 0 },
+    { id: '#FFFF00', name: 'Yellow', price: 0 },
+    { id: '#800080', name: 'Purple', price: 0 },
+    { id: '#A52A2A', name: 'Brown', price: 0 },
+    { id: '#FFC0CB', name: 'Pink', price: 0 },
 
     // Unlockables
     { id: '#FFD700', name: 'Gold', locked: true, price: 25 },

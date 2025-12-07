@@ -121,32 +121,32 @@ export const ColorWheel: React.FC<ColorWheelProps> = ({
             </div>
 
             {/* Sliders */}
-            <div className="w-full max-w-xs space-y-3 p-4 bg-white/5 rounded-2xl">
+            <div className="w-full px-4 space-y-6 bg-white/5 rounded-2xl py-6">
                 {/* Saturation */}
-                <div className="flex items-center gap-3">
-                    <span className="text-xs font-bold w-4">S</span>
+                <div className="flex items-center gap-4">
+                    <span className="text-sm font-bold w-4 text-white/50">S</span>
                     <input
                         type="range"
                         min="0"
                         max="100"
                         value={hsl.s}
                         onChange={(e) => updateColor(hsl.h, parseInt(e.target.value), hsl.l)}
-                        className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                        className="flex-1 h-6 bg-gray-200 rounded-full appearance-none cursor-pointer"
                         style={{
                             background: `linear-gradient(to right, #808080, hsl(${hsl.h}, 100%, 50%))`
                         }}
                     />
                 </div>
                 {/* Lightness */}
-                <div className="flex items-center gap-3">
-                    <span className="text-xs font-bold w-4">L</span>
+                <div className="flex items-center gap-4">
+                    <span className="text-sm font-bold w-4 text-white/50">L</span>
                     <input
                         type="range"
                         min="0"
                         max="100"
                         value={hsl.l}
                         onChange={(e) => updateColor(hsl.h, hsl.s, parseInt(e.target.value))}
-                        className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                        className="flex-1 h-6 bg-gray-200 rounded-full appearance-none cursor-pointer"
                         style={{
                             background: `linear-gradient(to right, black, hsl(${hsl.h}, ${hsl.s}%, 50%), white)`
                         }}

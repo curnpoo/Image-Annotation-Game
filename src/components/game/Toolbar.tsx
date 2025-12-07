@@ -49,7 +49,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
 
     // Determine brushes (always have default if empty)
     const effectiveBrushes = availableBrushes.length > 0 ? availableBrushes : [
-        { id: 'default', name: 'Standard', emoji: '🖊️' }
+        { id: 'default', name: 'Simple', emoji: '🖊️' }
     ];
 
     return (
