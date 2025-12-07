@@ -348,10 +348,14 @@ export const FriendsPanel: React.FC<FriendsPanelProps> = ({ player: _player, ope
                                 ) : (
                                     <div className="p-2 space-y-2">
                                         {friends.map((friend) => {
-                                            const tier = XPService.getTierForLevel(friend.xp ? Math.floor(friend.xp / 100) : 0);
-                                            const activeBadge = friend.cosmetics?.activeBadge
+                                            const level = XPService.getLevelFromXP(friend.xp || 0);
+                                            const tier = XPService.getTierForLevel(level);
+
+                                            // Only show badge if level >= 5
+                                            const activeBadge = (level >= 5 && friend.cosmetics?.activeBadge)
                                                 ? BadgeService.getBadgeInfo(friend.cosmetics.activeBadge)
                                                 : null;
+
                                             const cardColor = friend.cosmetics?.activeCardColor;
 
                                             return (
@@ -393,7 +397,7 @@ export const FriendsPanel: React.FC<FriendsPanelProps> = ({ player: _player, ope
                                                                     color: tier.color
                                                                 }}
                                                             >
-                                                                {tier.icon} Lvl {friend.xp ? Math.floor(friend.xp / 100) : 0}
+                                                                {tier.icon} Lvl {level}
                                                             </span>
                                                         </div>
                                                     </div>

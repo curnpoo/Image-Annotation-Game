@@ -28,9 +28,11 @@ export const ProfileCardModal: React.FC<ProfileCardModalProps> = ({
     const currentUser = AuthService.getCurrentUser();
     const isOwnProfile = currentUser?.id === user.id;
 
-    const tier = XPService.getTierForLevel(user.xp ? Math.floor(user.xp / 100) : 0);
-    const level = user.xp ? Math.floor(user.xp / 100) : 0;
-    const activeBadgeInfo = user.cosmetics?.activeBadge
+    const level = XPService.getLevelFromXP(user.xp || 0);
+    const tier = XPService.getTierForLevel(level);
+
+    // Only show badge if level >= 5
+    const activeBadgeInfo = (level >= 5 && user.cosmetics?.activeBadge)
         ? BadgeService.getBadgeInfo(user.cosmetics.activeBadge)
         : null;
 

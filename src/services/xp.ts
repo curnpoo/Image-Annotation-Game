@@ -37,15 +37,20 @@ export const XPService = {
         return total;
     },
 
-    // Get current level based on total XP (iterative calculation)
-    getLevel(): number {
-        let remainingXP = this.getXP();
+    // Calculate level from a specific XP amount (static helper)
+    getLevelFromXP(totalXP: number): number {
+        let remainingXP = totalXP;
         let level = 0;
         while (remainingXP >= this.getXPForLevel(level)) {
             remainingXP -= this.getXPForLevel(level);
             level++;
         }
         return level;
+    },
+
+    // Get current level based on total XP (iterative calculation)
+    getLevel(): number {
+        return this.getLevelFromXP(this.getXP());
     },
 
     // Get XP progress within current level (0 to XP needed - 1)
