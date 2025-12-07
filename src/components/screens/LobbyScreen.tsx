@@ -105,16 +105,16 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                     }}>
                     <div className="flex justify-between items-stretch gap-4">
                         <div>
-                            <div className="text-xs font-bold tracking-widest opacity-60 mb-1 text-[var(--theme-text-secondary)]">ROOM CODE</div>
-                            <div className="text-6xl font-black tracking-widest rainbow-text drop-shadow-[0_0_15px_rgba(255,255,255,0.5)]">
+                            <div className="text-[10px] font-bold tracking-widest opacity-60 mb-0 leading-none text-[var(--theme-text-secondary)]">ROOM CODE</div>
+                            <div className="text-6xl font-black tracking-widest drop-shadow-[0_0_15px_rgba(255,255,255,0.3)] bg-gradient-to-r from-lime-400 via-cyan-400 to-purple-500 bg-clip-text text-transparent">
                                 {room.roomCode}
                             </div>
                         </div>
                         <ShareDropdown
                             roomCode={room.roomCode}
-                            className="flex-1 max-w-[120px]"
-                            buttonClassName="w-full h-full justify-center text-lg rounded-2xl bg-white/5 border-2"
-                            buttonStyle={{ borderColor: 'var(--theme-border)' }}
+                            className="flex-shrink-0"
+                            buttonClassName="w-16 h-12 flex items-center justify-center text-2xl rounded-xl bg-[#2A2A2A] border-2 border-yellow-200/30 hover:bg-[#333] transition-colors"
+                            buttonStyle={{ borderColor: 'rgba(253, 224, 71, 0.3)' }}
                         />
                     </div>
                 </div>
@@ -144,14 +144,14 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                     <div className="space-y-3 flex-1 overflow-y-auto max-h-[400px]">
                         {Array.isArray(room.players) && room.players.map((p) => (
                             <div key={p.id}
-                                className="flex items-center justify-between p-3 rounded-2xl"
-                                style={{ backgroundColor: 'var(--theme-bg-secondary)' }}>
+                                className="flex items-center justify-between p-3 rounded-2xl mb-2"
+                                style={{ backgroundColor: '#1A1A1A' }}>
                                 <div className="flex items-center gap-3">
                                     <div className="relative">
                                         <AvatarDisplay
                                             strokes={p.avatarStrokes}
                                             avatar={p.avatar}
-                                            frame={p.frame}
+                                            // frame={p.frame}
                                             color={p.color}
                                             size={48}
                                         />
@@ -169,7 +169,7 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                                 <div className="flex items-center gap-2">
                                     <div className={`px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest ${isIdle(p.lastSeen) ? 'opacity-50' : ''
                                         }`}
-                                        style={{ backgroundColor: '#CD853F', color: '#3E2723' }}>
+                                        style={{ backgroundColor: '#D97706', color: '#3E2723' }}>
                                         {room.playerStates && room.playerStates[p.id]?.status === 'ready'
                                             ? 'READY!'
                                             : isIdle(p.lastSeen)
@@ -194,17 +194,16 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                         ))}
                     </div>
 
-                    {/* Leave Room (Inside Players Card as per screenshot) */}
                     <button
                         onClick={onLeave}
-                        className="w-full mt-6 font-bold py-4 rounded-xl transition-all flex items-center justify-center gap-2 shadow-inner hover:scale-[1.02]"
+                        className="w-full mt-6 font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-95"
                         style={{
-                            backgroundColor: 'red',
+                            backgroundColor: '#FF0000',
                             color: 'white',
-                            border: '2px solid var(--theme-border)'
+                            boxShadow: '0 4px 0 #990000'
                         }}
                     >
-                        🚪 Leave Room
+                        <span className="text-lg">🚪</span> Leave Room
                     </button>
                 </div>
 

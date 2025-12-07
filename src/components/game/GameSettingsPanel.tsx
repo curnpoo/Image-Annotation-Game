@@ -21,7 +21,7 @@ export const GameSettingsPanel: React.FC<GameSettingsPanelProps> = ({
                 backgroundColor: 'var(--theme-card-bg)',
                 border: '2px solid var(--theme-border)'
             }}>
-            <h3 className="text-lg font-bold text-purple-400 flex items-center gap-2">
+            <h3 className="text-base font-bold text-purple-400 flex items-center gap-2 mb-2">
                 ⚙️ Game Settings
             </h3>
 
@@ -36,19 +36,16 @@ export const GameSettingsPanel: React.FC<GameSettingsPanelProps> = ({
                             key={seconds}
                             onClick={() => isHost && onSettingsChange({ timerDuration: seconds })}
                             disabled={!isHost}
-                            className={`flex-1 py-2 px-3 rounded-xl font-bold text-sm transition-all ${settings.timerDuration === seconds
+                            className={`flex-1 py-1.5 px-2 rounded-full font-bold text-sm transition-all border ${settings.timerDuration === seconds
                                 ? 'scale-105'
                                 : isHost
                                     ? 'hover:opacity-80'
                                     : 'opacity-50 cursor-not-allowed'
                                 }`}
                             style={{
-                                backgroundColor: settings.timerDuration === seconds ? 'var(--theme-button-bg)' : 'var(--theme-bg-secondary)',
-                                color: settings.timerDuration === seconds ? 'var(--theme-button-text)' : 'var(--theme-text)',
-                                boxShadow: settings.timerDuration === seconds
-                                    ? '0 3px 0 rgba(0,0,0,0.1)'
-                                    : '0 2px 0 rgba(0, 0, 0, 0.1)',
-                                border: '1px solid var(--theme-border)'
+                                backgroundColor: 'transparent',
+                                borderColor: settings.timerDuration === seconds ? '#FDE047' : '#333',
+                                color: settings.timerDuration === seconds ? '#FDE047' : '#888',
                             }}
                         >
                             {seconds}s
@@ -68,19 +65,16 @@ export const GameSettingsPanel: React.FC<GameSettingsPanelProps> = ({
                             key={rounds}
                             onClick={() => isHost && onSettingsChange({ totalRounds: rounds })}
                             disabled={!isHost}
-                            className={`flex-1 py-2 px-3 rounded-xl font-bold text-sm transition-all ${settings.totalRounds === rounds
+                            className={`flex-1 py-1.5 px-2 rounded-full font-bold text-sm transition-all border ${settings.totalRounds === rounds
                                 ? 'scale-105'
                                 : isHost
                                     ? 'hover:opacity-80'
                                     : 'opacity-50 cursor-not-allowed'
                                 }`}
                             style={{
-                                backgroundColor: settings.totalRounds === rounds ? 'var(--theme-button-bg)' : 'var(--theme-bg-secondary)',
-                                color: settings.totalRounds === rounds ? 'var(--theme-button-text)' : 'var(--theme-text)',
-                                boxShadow: settings.totalRounds === rounds
-                                    ? '0 3px 0 rgba(0,0,0,0.1)'
-                                    : '0 2px 0 rgba(0, 0, 0, 0.1)',
-                                border: '1px solid var(--theme-border)'
+                                backgroundColor: 'transparent',
+                                borderColor: settings.totalRounds === rounds ? '#FDE047' : '#333',
+                                color: settings.totalRounds === rounds ? '#FDE047' : '#888',
                             }}
                         >
                             {rounds}
