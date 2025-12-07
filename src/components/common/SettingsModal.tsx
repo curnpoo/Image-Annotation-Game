@@ -253,7 +253,15 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                             </div>
                         )}
                     </div>
-                    <button onClick={onClose} className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-xl hover:bg-gray-200 transition-colors">
+                    <button
+                        onClick={onClose}
+                        className="w-10 h-10 rounded-full flex items-center justify-center text-xl transition-colors"
+                        style={{
+                            backgroundColor: 'var(--theme-bg-secondary)',
+                            color: 'var(--theme-text)',
+                            border: '2px solid var(--theme-border)'
+                        }}
+                    >
                         ✕
                     </button>
                 </div>
