@@ -3,6 +3,7 @@ import logo from '../../assets/logo_icon.png';
 import { HowToPlayModal } from '../game/HowToPlayModal';
 import { AboutModal } from '../common/AboutModal';
 import { InstallPromptModal } from '../common/InstallPromptModal';
+import { ShareModal } from '../common/ShareModal';
 
 interface WelcomeScreenProps {
     onPlay: () => void;
@@ -29,6 +30,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onPlay }) => {
     const [mounted, setMounted] = useState(false);
     const [showHowToPlay, setShowHowToPlay] = useState(false);
     const [showAbout, setShowAbout] = useState(false);
+    const [showShare, setShowShare] = useState(false);
 
     useEffect(() => {
         setMounted(true);
@@ -83,18 +85,24 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onPlay }) => {
                     🚀 Play Now! 🚀
                 </button>
 
-                <div className="flex justify-center space-x-4 text-lg">
+                <div className="flex flex-wrap justify-center gap-3 text-lg">
                     <button
                         onClick={() => setShowHowToPlay(true)}
-                        className="hover:scale-110 transition-transform wiggle-hover bg-white/20 backdrop-blur-sm px-6 py-2 rounded-full font-bold"
+                        className="hover:scale-110 transition-transform wiggle-hover bg-white/20 backdrop-blur-sm px-5 py-2 rounded-full font-bold"
                     >
                         ❓ How to Play
                     </button>
                     <button
                         onClick={() => setShowAbout(true)}
-                        className="hover:scale-110 transition-transform wiggle-hover bg-white/20 backdrop-blur-sm px-6 py-2 rounded-full font-bold"
+                        className="hover:scale-110 transition-transform wiggle-hover bg-white/20 backdrop-blur-sm px-5 py-2 rounded-full font-bold"
                     >
                         ℹ️ About
+                    </button>
+                    <button
+                        onClick={() => setShowShare(true)}
+                        className="hover:scale-110 transition-transform wiggle-hover bg-white/20 backdrop-blur-sm px-5 py-2 rounded-full font-bold"
+                    >
+                        📤 Share
                     </button>
                 </div>
             </div>
@@ -102,6 +110,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onPlay }) => {
             {/* Modals */}
             <HowToPlayModal isOpen={showHowToPlay} onClose={() => setShowHowToPlay(false)} />
             <AboutModal isOpen={showAbout} onClose={() => setShowAbout(false)} />
+            <ShareModal isOpen={showShare} onClose={() => setShowShare(false)} />
             <InstallPromptModal />
 
             {/* Decorative Stars */}

@@ -3,6 +3,7 @@ import type { GameRoom, GameSettings } from '../../types';
 import { SettingsModal } from '../common/SettingsModal';
 import { GameSettingsPanel } from '../game/GameSettingsPanel';
 import { AvatarDisplay } from '../common/AvatarDisplay';
+import { ShareDropdown } from '../common/ShareDropdown';
 import { vibrate, HapticPatterns } from '../../utils/haptics';
 import { StorageService } from '../../services/storage';
 
@@ -117,12 +118,7 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                                 {room.roomCode}
                             </div>
                         </div>
-                        <button
-                            onClick={copyRoomCode}
-                            className="bg-white/10 hover:bg-white/20 text-[var(--theme-text)] px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 transition-all"
-                        >
-                            {copied ? '✓' : '📋'} {copied ? 'Copied' : 'Copy'}
-                        </button>
+                        <ShareDropdown roomCode={room.roomCode} />
                     </div>
                 </div>
 
