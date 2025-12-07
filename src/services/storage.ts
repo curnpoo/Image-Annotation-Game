@@ -424,6 +424,7 @@ export const StorageService = {
         }
 
         await StorageService.saveRoom(room);
+        StorageService.saveRoomCode(roomCode); // Save for persistence (Rejoin Card)
         StorageService.saveRoomToHistory(room);
         return room;
     },
