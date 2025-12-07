@@ -5,9 +5,13 @@ interface ToastProps {
     type?: 'error' | 'success' | 'info';
     onClose: () => void;
     duration?: number;
+    action?: {
+        label: string;
+        onClick: () => void;
+    };
 }
 
-export const Toast: React.FC<ToastProps> = ({ message, type = 'error', onClose, duration = 3000 }) => {
+export const Toast: React.FC<ToastProps> = ({ message, type = 'error', onClose, duration = 3000, action }) => {
     const [isLeaving, setIsLeaving] = useState(false);
 
     useEffect(() => {
@@ -63,7 +67,21 @@ export const Toast: React.FC<ToastProps> = ({ message, type = 'error', onClose, 
                 }}
             >
                 <span className="text-sm bounce-scale flex-shrink-0">{styles.emoji}</span>
-                <span className="truncate max-w-[80vw]">{message}</span>
+                <span className="truncate max-w-[70vw]">{message}</span>
+
+                {action && (
+                    <button
+                        onClick={() => {
+                            action.onClick();
+                            setIsLeaving(true);
+                            setTimeout(onClose, 300);
+                        }}
+                        className="ml-2 px-3 py-0.5 bg-white text-black text-xs font-black rounded-full hover:scale-105 active:scale-95 transition-transform shadow-sm"
+                    >
+                        {action.label}
+                    </button>
+                )}
+
                 <button
                     onClick={() => {
                         setIsLeaving(true);

@@ -42,6 +42,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [isClosing, setIsClosing] = useState(false);
 
+    // Username editing
+    const [isEditingUsername, setIsEditingUsername] = useState(false);
+    const [newUsername, setNewUsername] = useState('');
+    const [usernameError, setUsernameError] = useState('');
+    const [usernameSuccess, setUsernameSuccess] = useState(false);
+    const [isSavingUsername, setIsSavingUsername] = useState(false);
+    const currentUser = AuthService.getCurrentUser();
+
     // Animated close handler - triggers exit animation before calling onClose
     const handleAnimatedClose = useCallback(() => {
         setIsClosing(true);
@@ -64,6 +72,33 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             });
             handleAnimatedClose();
         }
+    };
+
+    const handleUsernameChange = async () => {
+        if (!newUsername.trim()) {
+            setUsernameError('Username cannot be empty');
+            return;
+        }
+
+        setIsSavingUsername(true);
+        setUsernameError('');
+        setUsernameSuccess(false);
+
+        const result = await AuthService.changeUsername(newUsername);
+
+        if (result.success) {
+            setUsernameSuccess(true);
+            setIsEditingUsername(false);
+            setNewUsername('');
+            // Force a refresh after 1 second to update UI
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        } else {
+            setUsernameError(result.error || 'Failed to change username');
+        }
+
+        setIsSavingUsername(false);
     };
 
     const handleLogout = () => {
@@ -303,7 +338,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
                     {/* Name Edit */}
                     <div className="space-y-2">
-                        <label className="text-sm font-bold uppercase tracking-wider" style={{ color: 'var(--theme-text-secondary)' }}>Your Name</label>
+                        <label className="text-sm font-bold uppercase tracking-wider" style={{ color: 'var(--theme-text-secondary)' }}>Display Name</label>
                         <input
                             type="text"
                             value={name}
@@ -315,11 +350,104 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         />
                     </div>
 
+                    {/* Username Edit */}
+                    {currentUser && (
+                        <div className="space-y-2">
+                            <label className="text-sm font-bold uppercase tracking-wider" style={{ color: 'var(--theme-text-secondary)' }}>Username</label>
+                            {!isEditingUsername ? (
+                                <div className="flex items-center gap-2">
+                                    <div
+                                        className="flex-1 px-4 py-3 rounded-xl border-2 font-bold text-lg"
+                                        style={{
+                                            backgroundColor: 'var(--theme-bg-secondary)',
+                                            color: 'var(--theme-text)',
+                                            borderColor: 'var(--theme-border)'
+                                        }}
+                                    >
+                                        @{currentUser.username}
+                                    </div>
+                                    <button
+                                        onClick={() => {
+                                            setIsEditingUsername(true);
+                                            setNewUsername(currentUser.username);
+                                        }}
+                                        className="px-4 py-3 rounded-xl font-bold transition-colors"
+                                        style={{
+                                            backgroundColor: 'var(--theme-accent, #6366f1)',
+                                            color: 'white'
+                                        }}
+                                    >
+                                        ✏️ Edit
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className="space-y-2">
+                                    <input
+                                        type="text"
+                                        value={newUsername}
+                                        onChange={(e) => {
+                                            setNewUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''));
+                                            setUsernameError('');
+                                        }}
+                                        maxLength={20}
+                                        className="w-full px-4 py-3 rounded-xl border-2 focus:border-purple-500 focus:outline-none font-bold text-lg"
+                                        style={{
+                                            backgroundColor: 'var(--theme-bg-secondary)',
+                                            color: 'var(--theme-text)',
+                                            borderColor: usernameError ? '#ef4444' : 'var(--theme-border)'
+                                        }}
+                                        placeholder="new_username"
+                                    />
+                                    <div className="text-xs font-medium" style={{ color: 'var(--theme-text-secondary)' }}>
+                                        Only lowercase letters, numbers, and underscores
+                                    </div>
+                                    {usernameError && (
+                                        <div className="text-sm font-bold text-red-500">
+                                            ❌ {usernameError}
+                                        </div>
+                                    )}
+                                    {usernameSuccess && (
+                                        <div className="text-sm font-bold text-green-500">
+                                            ✅ Username changed! Reloading...
+                                        </div>
+                                    )}
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => {
+                                                setIsEditingUsername(false);
+                                                setNewUsername('');
+                                                setUsernameError('');
+                                            }}
+                                            className="flex-1 py-2 px-4 rounded-xl font-bold transition-colors"
+                                            style={{
+                                                backgroundColor: 'var(--theme-bg-secondary)',
+                                                color: 'var(--theme-text)'
+                                            }}
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            onClick={handleUsernameChange}
+                                            disabled={isSavingUsername || !newUsername.trim()}
+                                            className="flex-1 py-2 px-4 rounded-xl font-bold transition-colors disabled:opacity-50"
+                                            style={{
+                                                backgroundColor: '#22c55e',
+                                                color: 'white'
+                                            }}
+                                        >
+                                            {isSavingUsername ? 'Saving...' : 'Save Username'}
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
                     <hr style={{ borderColor: 'var(--theme-border)' }} />
 
                     {/* Theme Toggle */}
                     <div className="space-y-2">
-                        <label className="text-sm font-bold text-gray-500 uppercase tracking-wider">App Theme</label>
+                        <label className="text-sm font-bold text-white uppercase tracking-wider">App Theme</label>
                         <div className="grid grid-cols-2 gap-3">
                             <button
                                 onClick={() => onUpdateProfile({

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ProfileStatusCard } from '../common/ProfileStatusCard';
+import { FriendsPanel } from '../common/FriendsPanel';
 import { AdminModal } from '../common/AdminModal';
 import type { Player } from '../../types';
 
@@ -116,6 +117,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         >
             {/* Header with player info - Profile Status Card */}
             <ProfileStatusCard player={player} onClick={onLevelProgress} />
+
+            {/* Friends Panel */}
+            <div className="max-w-md mx-auto w-full mb-4">
+                <FriendsPanel player={player} />
+            </div>
 
             {/* Main Navigation Cards */}
             <div className="flex-1 flex flex-col justify-center">

@@ -267,5 +267,76 @@ export const AuthService = {
         localStorage.removeItem('player_currency');
         localStorage.removeItem('player_purchased_items');
         localStorage.removeItem('aic_game_session');
+    },
+
+    // Change username with history tracking
+    async changeUsername(newUsername: string): Promise<{ success: boolean; error?: string }> {
+        const currentUser = this.getCurrentUser();
+        if (!currentUser) {
+            return { success: false, error: 'Not logged in' };
+        }
+
+        const normalizedNewUsername = newUsername.toLowerCase().trim();
+
+        // Validate new username
+        if (normalizedNewUsername.length < 2) {
+            return { success: false, error: 'Username must be at least 2 characters' };
+        }
+
+        if (normalizedNewUsername.length > 20) {
+            return { success: false, error: 'Username must be 20 characters or less' };
+        }
+
+        if (!/^[a-z0-9_]+$/.test(normalizedNewUsername)) {
+            return { success: false, error: 'Username can only contain letters, numbers, and underscores' };
+        }
+
+        // Check if same as current
+        if (normalizedNewUsername === currentUser.username.toLowerCase()) {
+            return { success: false, error: 'This is already your username' };
+        }
+
+        try {
+            // Check if username is taken by someone else
+            const usersRef = ref(database, USERS_PATH);
+            const usernameQuery = query(usersRef, orderByChild('username'), equalTo(normalizedNewUsername));
+            const snapshot = await get(usernameQuery);
+
+            if (snapshot.exists()) {
+                // Check if it's a different user
+                let isTaken = false;
+                snapshot.forEach((child) => {
+                    if (child.key !== currentUser.id) {
+                        isTaken = true;
+                    }
+                });
+                if (isTaken) {
+                    return { success: false, error: 'Username already taken' };
+                }
+            }
+
+            // Build username history (keep last 3, most recent first)
+            const oldUsername = currentUser.username;
+            let usernameHistory = currentUser.usernameHistory || [];
+
+            // Add current username to history if not already there
+            if (!usernameHistory.includes(oldUsername)) {
+                usernameHistory = [oldUsername, ...usernameHistory].slice(0, 3);
+            }
+
+            // Update in Firebase
+            const updates = {
+                username: normalizedNewUsername,
+                usernameHistory: usernameHistory,
+                lastUsernameChange: Date.now()
+            };
+
+            await this.updateUser(currentUser.id, updates);
+
+            return { success: true };
+        } catch (error: any) {
+            console.error('Error changing username:', error);
+            return { success: false, error: error.message || 'Failed to change username' };
+        }
     }
 };

@@ -26,34 +26,28 @@ export const GalleryService = {
         // Build rounds with drawings
         const rounds: GalleryRound[] = [];
 
-        for (let i = 0; i < room.roundResults.length; i++) {
+        for (let i = 0; i < (room.roundResults?.length || 0); i++) {
             const result = room.roundResults[i];
 
-            // Get drawings for this round from playerStates
-            // Note: We may need to store this differently if drawings get cleared between rounds
-            const drawings: GalleryDrawing[] = [];
-
-            for (const player of room.players) {
-                const playerState = room.playerStates[player.id];
-                if (playerState?.drawing) {
-                    const votes = result.rankings.find(r => r.playerId === player.id)?.votes || 0;
-                    drawings.push({
-                        playerId: player.id,
-                        playerName: player.name,
-                        playerColor: player.color,
-                        strokes: playerState.drawing.strokes,
-                        votes
-                    });
-                }
-            }
+            // Get drawings from the round result (captured when round ended)
+            const drawings: GalleryDrawing[] = (result.drawings || []).map(d => {
+                const votes = result.rankings.find(r => r.playerId === d.playerId)?.votes || 0;
+                return {
+                    playerId: d.playerId,
+                    playerName: d.playerName,
+                    playerColor: d.playerColor,
+                    strokes: d.strokes,
+                    votes
+                };
+            });
 
             // Find winner of this round
-            const sortedRankings = [...result.rankings].sort((a, b) => b.votes - a.votes);
+            const sortedRankings = [...(result.rankings || [])].sort((a, b) => b.votes - a.votes);
             const winner = sortedRankings[0] || { playerId: '', playerName: 'Unknown', votes: 0 };
 
             rounds.push({
                 roundNumber: result.roundNumber,
-                imageUrl: room.currentImage?.url || '',
+                imageUrl: result.imageUrl || '',
                 drawings,
                 winner: {
                     playerId: winner.playerId,
@@ -62,6 +56,7 @@ export const GalleryService = {
                 }
             });
         }
+
 
         // Find overall winner
         const sortedPlayers = [...room.players].sort(

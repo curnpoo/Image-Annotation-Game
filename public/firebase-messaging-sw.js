@@ -39,15 +39,24 @@ self.addEventListener('notificationclick', (event) => {
     // Open the app when notification is clicked
     event.waitUntil(
         clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
-            // If app is already open, focus it
+            const urlToOpen = event.notification.data?.click_action || '/';
+
+            // If a window is already open, focus it and navigate
             for (const client of clientList) {
                 if (client.url.includes(self.location.origin) && 'focus' in client) {
-                    return client.focus();
+                    client.focus();
+                    // Optional: You could postMessage to the client here to handle navigation
+                    // But usually focusing is enough if we rely on the client refreshing or checking state
+                    // If we want to force navigation to the invite URL:
+                    if (urlToOpen !== '/') {
+                        client.navigate(urlToOpen);
+                    }
+                    return;
                 }
             }
             // Otherwise open a new window
             if (clients.openWindow) {
-                return clients.openWindow('/');
+                return clients.openWindow(urlToOpen);
             }
         })
     );

@@ -9,14 +9,13 @@ import type { Player } from '../../types';
 interface LevelProgressScreenProps {
     player: Player;
     onBack: () => void;
-    onShare?: () => void;
 }
 
 export const LevelProgressScreen: React.FC<LevelProgressScreenProps> = ({
     player,
-    onBack,
-    onShare
+    onBack
 }) => {
+
     const level = XPService.getLevel();
     const tier = XPService.getTier();
     const totalXP = XPService.getXP();
@@ -42,35 +41,23 @@ export const LevelProgressScreen: React.FC<LevelProgressScreenProps> = ({
                 paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom) + 1rem)'
             }}
         >
-            {/* Header */}
-            <div className="flex items-center justify-between px-4 mb-6">
-                <button
-                    onClick={onBack}
-                    className="w-12 h-12 rounded-full flex items-center justify-center text-2xl transition-all active:scale-90"
-                    style={{
-                        backgroundColor: 'var(--theme-card-bg)',
-                        border: '2px solid var(--theme-border)'
-                    }}
-                >
-                    ←
-                </button>
-                <h1 className="text-xl font-black" style={{ color: 'var(--theme-text)' }}>
-                    Level Progress
-                </h1>
-                {onShare && (
-                    <button
-                        onClick={onShare}
-                        className="w-12 h-12 rounded-full flex items-center justify-center text-2xl transition-all active:scale-90"
-                        style={{
-                            backgroundColor: tier.color,
-                            color: tier.name === 'Gold' || tier.name === 'Bronze' ? '#000' : '#fff'
-                        }}
-                    >
-                        📤
-                    </button>
-                )}
-                {!onShare && <div className="w-12" />}
-            </div>
+            {/* Header Card Button */}
+            <button
+                onClick={onBack}
+                className="mx-4 mb-4 rounded-[2rem] p-4 border-2 flex items-center gap-4 hover:brightness-110 active:scale-95 transition-all shadow-lg"
+                style={{
+                    backgroundColor: 'var(--theme-card-bg)',
+                    borderColor: tier.color
+                }}
+            >
+                <div className="text-3xl">{tier.icon}</div>
+                <div className="flex-1 text-left">
+                    <div className="text-lg font-bold" style={{ color: 'var(--theme-text)' }}>Level Progress</div>
+                    <div className="text-sm font-medium" style={{ color: tier.color }}>{tier.name} Tier • Level {level}</div>
+                </div>
+                <div className="text-2xl" style={{ color: 'var(--theme-text-secondary)' }}>←</div>
+            </button>
+
 
             {/* Main Level Card */}
             <div className="mx-4 mb-6">

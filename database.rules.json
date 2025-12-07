@@ -31,6 +31,20 @@
             ".indexOn": [
                 "username"
             ]
+        },
+        "invites": {
+            "$invite_id": {
+                ".validate": "newData.hasChildren(['fromUserId', 'toUserId', 'roomCode', 'sentAt', 'status'])"
+            },
+            ".indexOn": [
+                "toUserId",
+                "sentAt"
+            ]
+        },
+        "pushTokens": {
+            "$user_id": {
+                ".validate": "newData.hasChild('token')"
+            }
         }
     }
 }

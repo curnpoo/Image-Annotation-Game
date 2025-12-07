@@ -134,22 +134,34 @@ export const GalleryScreen: React.FC<GalleryScreenProps> = ({ onBack, showToast 
     }
 
     return (
-        <div className="min-h-screen p-4 pb-20" style={{ background: 'var(--theme-background)' }}>
-            {/* Header */}
-            <div className="flex items-center gap-3 mb-6">
-                <button
-                    onClick={onBack}
-                    className="p-3 rounded-full bg-white/10 hover:bg-white/20 transition-all"
-                >
-                    <span className="text-2xl">←</span>
-                </button>
-                <h1 className="text-2xl font-black" style={{ color: 'var(--theme-text)' }}>
-                    📊 Match History
-                </h1>
-            </div>
+        <div
+            className="min-h-screen flex flex-col"
+            style={{
+                paddingTop: 'max(1.5rem, env(safe-area-inset-top) + 1rem)',
+                paddingBottom: 'max(1rem, env(safe-area-inset-bottom))',
+                backgroundColor: 'var(--theme-bg-primary)'
+            }}
+        >
+            {/* Header Card Button */}
+            <button
+                onClick={onBack}
+                className="mx-4 mb-4 rounded-[2rem] p-4 border-2 flex items-center gap-4 hover:brightness-110 active:scale-95 transition-all shadow-lg"
+                style={{
+                    backgroundColor: 'var(--theme-card-bg)',
+                    borderColor: 'var(--theme-border)'
+                }}
+            >
+                <div className="text-3xl">📊</div>
+                <div className="flex-1 text-left">
+                    <div className="text-lg font-bold" style={{ color: 'var(--theme-text)' }}>Match History</div>
+                    <div className="text-sm font-medium" style={{ color: 'var(--theme-text-secondary)' }}>View your completed games</div>
+                </div>
+                <div className="text-2xl" style={{ color: 'var(--theme-text-secondary)' }}>←</div>
+            </button>
+
 
             {isLoading ? (
-                <div className="flex items-center justify-center h-64">
+                <div className="flex items-center justify-center h-64 px-4">
                     <div className="text-center">
                         <div className="text-4xl animate-bounce">🎮</div>
                         <p className="mt-2 opacity-60" style={{ color: 'var(--theme-text)' }}>
@@ -158,7 +170,7 @@ export const GalleryScreen: React.FC<GalleryScreenProps> = ({ onBack, showToast 
                     </div>
                 </div>
             ) : games.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-64 text-center">
+                <div className="flex flex-col items-center justify-center h-64 text-center px-4">
                     <div className="text-6xl mb-4">📊</div>
                     <h2 className="text-xl font-bold mb-2" style={{ color: 'var(--theme-text)' }}>
                         No games yet!
@@ -168,7 +180,8 @@ export const GalleryScreen: React.FC<GalleryScreenProps> = ({ onBack, showToast 
                     </p>
                 </div>
             ) : (
-                <div className="space-y-4">
+                <div className="flex-1 overflow-y-auto px-4 pb-8 space-y-4">
+
                     {games.map((game) => {
                         // Sort players by score for display
                         const sortedPlayers = [...game.players].sort(

@@ -32,6 +32,32 @@ export interface PlayerStats {
 
 
 // User account for login system
+// Friend relationship (stored as user ID, profile fetched on demand)
+export interface Friend {
+    id: string;           // User ID
+    addedAt: number;      // Timestamp when friendship was created
+}
+
+// Game invitation
+export interface GameInvite {
+    id: string;           // Invite ID
+    fromUserId: string;   // Sender's user ID
+    fromUsername: string; // Sender's name
+    toUserId: string;     // Recipient's user ID
+    roomCode: string;     // Room to join
+    sentAt: number;       // Timestamp
+    status: 'pending' | 'accepted' | 'declined' | 'expired';
+}
+
+export interface FriendRequest {
+    id: string;
+    fromUserId: string;
+    fromUsername: string;
+    toUserId: string;
+    status: 'pending' | 'accepted' | 'declined';
+    createdAt: number;
+}
+
 export interface UserAccount {
     id: string;
     username: string;
@@ -50,6 +76,11 @@ export interface UserAccount {
     backgroundColor?: string;
     frame?: string;
     avatar?: string; // fallback emoji
+    // Friends System
+    friends?: string[];   // Array of friend user IDs
+    usernameHistory?: string[]; // Last 3 usernames (most recent first)
+    lastUsernameChange?: number; // Timestamp for rate limiting
+    lastInviteTimes?: { [userId: string]: number }; // Track invite cooldowns per user
 }
 
 
@@ -135,13 +166,21 @@ export interface Vote {
 
 export interface RoundResult {
     roundNumber: number;
+    imageUrl?: string; // Base image for this round
     rankings: {
         playerId: string;
         playerName: string;
         votes: number;
         points: number;
     }[];
+    drawings?: {
+        playerId: string;
+        playerName: string;
+        playerColor: string;
+        strokes: DrawingStroke[];
+    }[];
 }
+
 
 export type GameStatus = 'lobby' | 'uploading' | 'sabotage-selection' | 'drawing' | 'voting' | 'results' | 'final';
 
@@ -241,6 +280,10 @@ export interface RoomHistoryEntry {
 export interface ToastState {
     message: string;
     type: 'error' | 'success' | 'info';
+    action?: {
+        label: string;
+        onClick: () => void;
+    };
 }
 
 export type Screen = 'welcome' | 'login' | 'name-entry' | 'home' | 'room-selection' | 'store' | 'profile' | 'avatar-editor' | 'lobby' | 'waiting' | 'joining-game' | 'uploading' | 'sabotage-selection' | 'drawing' | 'voting' | 'results' | 'final' | 'stats' | 'level-progress' | 'gallery';

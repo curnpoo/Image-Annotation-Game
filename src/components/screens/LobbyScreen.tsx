@@ -4,6 +4,7 @@ import { SettingsModal } from '../common/SettingsModal';
 import { GameSettingsPanel } from '../game/GameSettingsPanel';
 import { AvatarDisplay } from '../common/AvatarDisplay';
 import { ShareDropdown } from '../common/ShareDropdown';
+import { InviteFriendsModal } from '../common/InviteFriendsModal';
 import { StorageService } from '../../services/storage';
 import { usePresence } from '../../hooks/usePresence';
 import { XPService } from '../../services/xp';
@@ -33,6 +34,7 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
     onLeave
 }) => {
     const [showSettings, setShowSettings] = useState(false);
+    const [showInviteModal, setShowInviteModal] = useState(false);
     const [, setTick] = useState(0); // Force update for idle timer
     const [kickTarget, setKickTarget] = useState<string | null>(null); // Player being kicked
 
@@ -131,13 +133,25 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                         <ShareDropdown
                             roomCode={room.roomCode}
                             className="flex-shrink-0"
-                            buttonClassName="w-16 h-12 flex items-center justify-center text-2xl rounded-xl border-2 transition-colors"
+                            buttonClassName="w-12 h-12 flex items-center justify-center text-2xl rounded-xl border-2 transition-colors"
                             buttonStyle={{
                                 backgroundColor: 'var(--theme-button-bg)',
                                 borderColor: 'var(--theme-border)',
                                 color: 'var(--theme-button-text)'
                             }}
                         />
+                        <button
+                            onClick={() => setShowInviteModal(true)}
+                            className="w-12 h-12 flex items-center justify-center text-2xl rounded-xl border-2 transition-all hover:scale-105 active:scale-95"
+                            style={{
+                                backgroundColor: '#6366f1',
+                                borderColor: '#4f46e5',
+                                color: 'white'
+                            }}
+                            title="Invite Friends"
+                        >
+                            📨
+                        </button>
                     </div>
                 </div>
 
@@ -349,6 +363,13 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                     onEndGame={isHost ? () => StorageService.closeRoom(room.roomCode) : undefined}
                     onKick={isHost ? (playerId: string) => StorageService.kickPlayer(room.roomCode, playerId) : undefined}
 
+                />
+            )}
+
+            {showInviteModal && (
+                <InviteFriendsModal
+                    roomCode={room.roomCode}
+                    onClose={() => setShowInviteModal(false)}
                 />
             )}
         </div>

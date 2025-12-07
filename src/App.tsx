@@ -20,7 +20,7 @@ import { Toast } from './components/common/Toast';
 import { LoadingScreen } from './components/common/LoadingScreen';
 import { NotificationPromptModal } from './components/common/NotificationPromptModal';
 import { SettingsModal } from './components/common/SettingsModal';
-import { TunnelTransition, CasinoTransition } from './components/common/ScreenTransition';
+import { TunnelTransition, CasinoTransition, GlobalBlurTransition } from './components/common/ScreenTransition';
 import {
   notifyYourTurnToUpload,
   notifyDrawingPhaseStarted,
@@ -31,7 +31,7 @@ import {
 import { simplifyStrokes } from './utils/geometry';
 import { getThemeClass, getThemeVariables } from './utils/themes';
 import { ThemeTransition } from './components/common/ThemeTransition';
-import { requestPushPermission, storePushToken, isPushSupported } from './services/pushNotifications';
+import { requestPushPermission, storePushToken, isPushSupported, onForegroundMessage } from './services/pushNotifications';
 
 import { useNotifications } from './hooks/useNotifications';
 import { usePlayerSession } from './hooks/usePlayerSession';
@@ -58,6 +58,7 @@ function App() {
   const {
     toast,
     showToast,
+    showError,
     hideToast,
     showNotificationPrompt,
     setShowNotificationPrompt
@@ -604,6 +605,8 @@ function App() {
     return () => clearInterval(interval);
   }, [roomCode, player?.id]);
 
+
+
   // --- XP & Stats Helpers ---
   const handleRoundEndRewards = async (currentRoom: GameRoom) => {
     if (!player) return;
@@ -812,7 +815,7 @@ function App() {
       showToast('Room created! Share the code! 🎉', 'success');
     } catch (err) {
       console.error('Failed to create room:', err);
-      showToast('Failed to create room 😅', 'error');
+      showError(err);
     }
     setIsLoading(false);
   };
@@ -836,7 +839,7 @@ function App() {
       }
     } catch (err) {
       console.error('Failed to join room:', err);
-      showToast('Failed to join room 😅', 'error');
+      showError(err);
     }
     setIsLoading(false);
   };
@@ -850,7 +853,7 @@ function App() {
       await StorageService.updateSettings(roomCode, settings);
     } catch (err) {
       console.error('Failed to update settings:', err);
-      showToast('Failed to update settings', 'error');
+      showError(err);
     }
   };
 
@@ -860,7 +863,7 @@ function App() {
       await StorageService.initiateRound(roomCode);
     } catch (err) {
       console.error('Failed to start game:', err);
-      showToast('Failed to start game 😅', 'error');
+      showError(err);
     }
   };
 
@@ -873,7 +876,7 @@ function App() {
       showToast('Round started! 🎨', 'success');
     } catch (err: any) {
       console.error('Failed to start round:', err);
-      showToast(err.message || 'Failed to start round 😅', 'error');
+      showError(err);
     }
     setIsLoading(false);
   };
@@ -896,7 +899,7 @@ function App() {
       }
     } catch (err) {
       console.error('Failed to mark ready:', err);
-      showToast('Failed to start drawing 😅', 'error');
+      showError(err);
       // Revert optimistic state
       setIsReadying(false);
       setIsMyTimerRunning(false);
@@ -936,7 +939,7 @@ function App() {
       showToast('Drawing submitted! ✅', 'success');
     } catch (err) {
       console.error('Failed to submit drawing:', err);
-      showToast('Failed to submit drawing 😅', 'error');
+      showError(err);
     }
   }, [roomCode, player, room, showToast]);
 
@@ -947,7 +950,7 @@ function App() {
       showToast('Vote submitted! 🗳️', 'success');
     } catch (err) {
       console.error('Failed to vote:', err);
-      showToast('Failed to vote 😅', 'error');
+      showError(err);
     }
   };
 
@@ -957,7 +960,7 @@ function App() {
       await StorageService.nextRound(roomCode);
     } catch (err) {
       console.error('Failed to start next round:', err);
-      showToast('Failed to start next round 😅', 'error');
+      showError(err);
     }
   };
 
@@ -967,7 +970,7 @@ function App() {
       await StorageService.resetGame(roomCode);
     } catch (err) {
       console.error('Failed to reset game:', err);
-      showToast('Failed to reset game 😅', 'error');
+      showError(err);
     }
   };
 
@@ -986,7 +989,7 @@ function App() {
       await StorageService.setSabotageTarget(roomCode, targetId, effect);
     } catch (err) {
       console.error('Failed to set sabotage:', err);
-      showToast('Failed to unleash chaos 😅', 'error');
+      showError(err);
     }
   };
 
@@ -1030,7 +1033,7 @@ function App() {
       else if (room.status === 'final') setCurrentScreen('final');
     } catch (err) {
       console.error(err);
-      showToast('Failed to join round', 'error');
+      showError(err);
     }
   };
 
@@ -1066,7 +1069,7 @@ function App() {
       showToast('Game ended and room closed 🛑', 'info');
     } catch (err) {
       console.error('Failed to end game:', err);
-      showToast('Failed to end game', 'error');
+      showError(err);
     }
   };
 
@@ -1078,6 +1081,26 @@ function App() {
   };
 
 
+
+  // Foreground Notification Listener
+  useEffect(() => {
+    const unsubscribe = onForegroundMessage((payload) => {
+      // Handle Game Invite
+      if (payload?.data?.type === 'game_invite') {
+        const { fromUsername, roomCode } = payload.data;
+        showToast(`Game Invite from ${fromUsername}!`, 'success', {
+          label: 'JOIN',
+          onClick: () => {
+            // Handle join
+            if (roomCode) {
+              handleJoinRoom(roomCode);
+            }
+          }
+        });
+      }
+    });
+    return () => unsubscribe();
+  }, [showToast, handleJoinRoom]);
 
   if (isLoading || isInitialLoading) {
     return <LoadingScreen onGoHome={handleSafeReset} />;
@@ -1113,7 +1136,7 @@ function App() {
       showToast('Player kicked 👢', 'info');
     } catch (err) {
       console.error(err);
-      showToast('Failed to kick player', 'error');
+      showError(err);
     }
   };
 
@@ -1124,6 +1147,7 @@ function App() {
         <Toast
           message={toast.message}
           type={toast.type}
+          action={toast.action}
           onClose={hideToast}
         />
       )}
@@ -1188,7 +1212,7 @@ function App() {
               await StorageService.kickPlayer(roomCode, playerId);
               showToast('Player kicked 🥾', 'success');
             } catch (err) {
-              showToast('Failed to kick player', 'error');
+              showError(err);
             }
           }}
         />
@@ -1274,73 +1298,75 @@ function App() {
 
 
       {/* Screen Router handles all main views */}
-      <ScreenRouter
-        currentScreen={currentScreen}
-        player={player}
-        room={room}
+      <GlobalBlurTransition screenKey={currentScreen} duration={200}>
+        <ScreenRouter
+          currentScreen={currentScreen}
+          player={player}
+          room={room}
 
-        onPlayNow={handlePlayNow}
-        onLoginComplete={handleLoginComplete}
-        onProfileComplete={handleProfileComplete}
-        onUpdateProfile={handleUpdateProfile}
+          onPlayNow={handlePlayNow}
+          onLoginComplete={handleLoginComplete}
+          onProfileComplete={handleProfileComplete}
+          onUpdateProfile={handleUpdateProfile}
 
-        onShowCasino={() => setShowCasinoTransition(true)}
-        onShowSettings={() => setShowSettings(true)}
-        onRejoin={handleRejoin}
-        onPlayWithTransition={() => setShowTunnelTransition(true)}
+          onShowCasino={() => setShowCasinoTransition(true)}
+          onShowSettings={() => setShowSettings(true)}
+          onRejoin={handleRejoin}
+          onPlayWithTransition={() => setShowTunnelTransition(true)}
 
-        onNavigate={setCurrentScreen}
-        onBackToHome={() => setCurrentScreen('home')}
-        onStoreBack={handleStoreBack}
-        onLeaveGame={() => handleLeaveGame('room-selection')}
+          onNavigate={setCurrentScreen}
+          onBackToHome={() => setCurrentScreen('home')}
+          onStoreBack={handleStoreBack}
+          onLeaveGame={() => handleLeaveGame('room-selection')}
 
-        onCreateRoom={handleCreateRoom}
-        onJoinRoom={handleJoinRoom}
+          onCreateRoom={handleCreateRoom}
+          onJoinRoom={handleJoinRoom}
 
-        onStartGame={handleStartGame}
-        onSettingsChange={handleSettingsChange}
-        onKickPlayer={handleKickPlayer}
-        onJoinCurrentRound={handleJoinCurrentRound}
-        onMinimizeGame={handleMinimizeGame}
+          onStartGame={handleStartGame}
+          onSettingsChange={handleSettingsChange}
+          onKickPlayer={handleKickPlayer}
+          onJoinCurrentRound={handleJoinCurrentRound}
+          onMinimizeGame={handleMinimizeGame}
 
-        onUploadImage={handleUploadImage}
-        onVote={handleVote}
-        onNextRound={handleNextRound}
-        onPlayAgain={handlePlayAgain}
-        onShowRewards={showGameRewards}
-        onEquipTheme={handleEquipTheme}
-        onSabotageSelect={handleSabotageSelect}
+          onUploadImage={handleUploadImage}
+          onVote={handleVote}
+          onNextRound={handleNextRound}
+          onPlayAgain={handlePlayAgain}
+          onShowRewards={showGameRewards}
+          onEquipTheme={handleEquipTheme}
+          onSabotageSelect={handleSabotageSelect}
 
-        isMyTimerRunning={isMyTimerRunning}
-        isReadying={isReadying}
-        onReady={handleReady}
-        brushColor={brushColor}
-        brushSize={brushSize}
-        brushType={brushType}
-        isEraser={isEraser}
-        isEyedropper={isEyedropper}
-        setBrushColor={setBrushColor}
-        setBrushSize={setBrushSize}
-        setBrushType={setBrushType}
-        setStrokes={setStrokes}
-        setIsEraser={setIsEraser}
-        setIsEyedropper={setIsEyedropper}
-        handleUndo={handleUndo}
-        handleClear={handleClear}
-        handleEraserToggle={handleEraserToggle}
-        handleEyedropperToggle={handleEyedropperToggle}
-        handleColorPick={handleColorPick}
-        strokes={strokes}
+          isMyTimerRunning={isMyTimerRunning}
+          isReadying={isReadying}
+          onReady={handleReady}
+          brushColor={brushColor}
+          brushSize={brushSize}
+          brushType={brushType}
+          isEraser={isEraser}
+          isEyedropper={isEyedropper}
+          setBrushColor={setBrushColor}
+          setBrushSize={setBrushSize}
+          setBrushType={setBrushType}
+          setStrokes={setStrokes}
+          setIsEraser={setIsEraser}
+          setIsEyedropper={setIsEyedropper}
+          handleUndo={handleUndo}
+          handleClear={handleClear}
+          handleEraserToggle={handleEraserToggle}
+          handleEyedropperToggle={handleEyedropperToggle}
+          handleColorPick={handleColorPick}
+          strokes={strokes}
 
-        lastGameDetails={lastGameDetails as any}
-        showToast={showToast}
+          lastGameDetails={lastGameDetails as any}
+          showToast={showToast}
 
-        hasSubmitted={hasSubmitted}
-        submittedCount={submittedCount}
-        totalPlayers={totalPlayers}
-        timerEndsAt={timerEndsAt}
-        onTimeUp={handleTimeUp}
-      />
+          hasSubmitted={hasSubmitted}
+          submittedCount={submittedCount}
+          totalPlayers={totalPlayers}
+          timerEndsAt={timerEndsAt}
+          onTimeUp={handleTimeUp}
+        />
+      </GlobalBlurTransition>
 
       <ThemeTransition isActive={isTransitionActive} onComplete={handleTransitionComplete} />
 

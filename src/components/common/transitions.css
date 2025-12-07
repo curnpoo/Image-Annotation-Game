@@ -113,8 +113,50 @@
     }
 }
 
+/* Smooth rays spin for casino */
+@keyframes casino-rays-spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Physics-based bob animation - elastic/rubber feel */
+@keyframes casino-bob {
+    0% {
+        transform: translateY(0) scale(1);
+    }
+
+    15% {
+        transform: translateY(-8px) scale(1.02);
+    }
+
+    30% {
+        transform: translateY(4px) scale(0.98);
+    }
+
+    45% {
+        transform: translateY(-3px) scale(1.01);
+    }
+
+    60% {
+        transform: translateY(2px) scale(0.99);
+    }
+
+    75% {
+        transform: translateY(-1px) scale(1);
+    }
+
+    100% {
+        transform: translateY(0) scale(1);
+    }
+}
+
 .casino-entrance {
-    animation: casino-entrance 280ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    animation: casino-bob 500ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
 .casino-exit {
@@ -123,6 +165,14 @@
 
 .rotate-dashes {
     animation: rotate-dashes 2s linear infinite;
+}
+
+.casino-rays-spin {
+    animation: casino-rays-spin 3s linear infinite;
+}
+
+.casino-bob {
+    animation: casino-bob 600ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
 /* ========================== */
@@ -157,6 +207,7 @@
     }
 }
 
+/* Old ring animation - kept for backwards compat */
 @keyframes tunnel-ring {
     0% {
         transform: scale(0.5);
@@ -169,16 +220,68 @@
     }
 }
 
+/* New 3D ring animation - slower and smoother */
+@keyframes tunnel-ring-3d {
+    0% {
+        transform: scale(0.3) translateZ(-200px);
+        opacity: 0;
+    }
+
+    15% {
+        opacity: 1;
+    }
+
+    85% {
+        opacity: 0.8;
+    }
+
+    100% {
+        transform: scale(4) translateZ(400px);
+        opacity: 0;
+    }
+}
+
+/* Center focal point animation */
+@keyframes tunnel-center {
+    0% {
+        transform: scale(0);
+        opacity: 0;
+    }
+
+    30% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    70% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    100% {
+        transform: scale(0);
+        opacity: 0;
+    }
+}
+
 .tunnel-zoom {
-    animation: tunnel-zoom-out 280ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    animation: tunnel-zoom-out 800ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
 .tunnel-text {
-    animation: tunnel-text-zoom 280ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    animation: tunnel-text-zoom 800ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
 .tunnel-ring {
-    animation: tunnel-ring 280ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    animation: tunnel-ring 800ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.tunnel-ring-3d {
+    animation: tunnel-ring-3d 800ms cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+}
+
+.tunnel-center {
+    animation: tunnel-center 800ms ease-in-out forwards;
 }
 
 /* ========================== */
@@ -286,6 +389,52 @@
 }
 
 /* ========================== */
+/* GLOBAL SCREEN BLUR         */
+/* ========================== */
+
+@keyframes global-blur-out {
+    from {
+        filter: blur(0px);
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    to {
+        filter: blur(8px);
+        opacity: 0.7;
+        transform: scale(0.99);
+    }
+}
+
+@keyframes global-blur-in {
+    from {
+        filter: blur(8px);
+        opacity: 0.7;
+        transform: scale(1.01);
+    }
+
+    to {
+        filter: blur(0px);
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.global-blur-transition {
+    width: 100%;
+    min-height: 100vh;
+    will-change: filter, opacity, transform;
+}
+
+.global-blur-blur-out {
+    animation: global-blur-out var(--blur-duration, 100ms) ease-out forwards;
+}
+
+.global-blur-blur-in {
+    animation: global-blur-in var(--blur-duration, 100ms) ease-out forwards;
+}
+
+/* ========================== */
 /* UTILITY CLASSES            */
 /* ========================== */
 
@@ -315,12 +464,16 @@
     .tunnel-zoom,
     .tunnel-text,
     .tunnel-ring,
+    .tunnel-ring-3d,
+    .tunnel-center,
     .screen-fade-in,
     .screen-fade-out,
     .screen-slide-left,
     .screen-slide-right,
     .popup-scale-in,
-    .popup-scale-out {
+    .popup-scale-out,
+    .global-blur-blur-out,
+    .global-blur-blur-in {
         animation-duration: 0.01ms !important;
     }
 }

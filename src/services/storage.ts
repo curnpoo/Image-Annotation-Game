@@ -175,9 +175,22 @@ export const StorageService = {
                     newScores[rank.playerId] = (newScores[rank.playerId] || 0) + rank.points;
                 });
 
+                // Capture drawings before they get cleared
+                const drawings = r.players.map(p => {
+                    const playerState = r.playerStates[p.id];
+                    return {
+                        playerId: p.id,
+                        playerName: p.name,
+                        playerColor: p.color,
+                        strokes: playerState?.drawing?.strokes || []
+                    };
+                }).filter(d => d.strokes.length > 0);
+
                 const roundResult: RoundResult = {
                     roundNumber: r.roundNumber,
-                    rankings
+                    imageUrl: r.currentImage?.url || '',
+                    rankings,
+                    drawings
                 };
 
                 const isFinalRound = r.roundNumber >= r.settings.totalRounds;
@@ -188,6 +201,7 @@ export const StorageService = {
                     roundResults: [...r.roundResults, roundResult],
                     status: isFinalRound ? 'final' : 'results'
                 };
+
             }
             return r;
         });
@@ -825,9 +839,22 @@ export const StorageService = {
                     newScores[rank.playerId] = (newScores[rank.playerId] || 0) + rank.points;
                 });
 
+                // Capture drawings before they get cleared
+                const drawings = r.players.map(p => {
+                    const playerState = r.playerStates[p.id];
+                    return {
+                        playerId: p.id,
+                        playerName: p.name,
+                        playerColor: p.color,
+                        strokes: playerState?.drawing?.strokes || []
+                    };
+                }).filter(d => d.strokes.length > 0);
+
                 const roundResult: RoundResult = {
                     roundNumber: r.roundNumber,
-                    rankings
+                    imageUrl: r.currentImage?.url || '',
+                    rankings,
+                    drawings
                 };
 
                 const isFinalRound = r.roundNumber >= r.settings.totalRounds;
@@ -839,6 +866,7 @@ export const StorageService = {
                     roundResults: [...r.roundResults, roundResult],
                     status: isFinalRound ? 'final' : 'results'
                 };
+
             }
 
             return {
