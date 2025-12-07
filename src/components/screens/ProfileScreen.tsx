@@ -4,6 +4,7 @@ import { AvatarDisplay } from '../common/AvatarDisplay';
 import { ColorWheel } from '../common/ColorWheel';
 import { CurrencyService, formatCurrency } from '../../services/currency';
 import { StatsService } from '../../services/stats';
+import { BadgeService } from '../../services/badgeService';
 import { XPService } from '../../services/xp';
 
 interface ProfileScreenProps {
@@ -25,15 +26,26 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
     const [activeTab, setActiveTab] = useState<Tab>('edit');
     const [name, setName] = useState(player.name);
     const [backgroundColor, setBackgroundColor] = useState(player.backgroundColor || '#ffffff');
+    const [cardColor, setCardColor] = useState(player.cosmetics?.activeCardColor || '#ffffff');
+    const [activeBadge, setActiveBadge] = useState(player.cosmetics?.activeBadge || '');
+
     const balance = CurrencyService.getCurrency();
     const stats = StatsService.getStats();
     const level = XPService.getLevel();
+
+    const unlockedBadges = BadgeService.getUnlockedBadges();
+
 
     const handleSave = () => {
         if (name.trim()) {
             onUpdateProfile({
                 name: name.trim(),
-                backgroundColor: backgroundColor
+                backgroundColor: backgroundColor,
+                cosmetics: {
+                    ...player.cosmetics || { brushesUnlocked: [], colorsUnlocked: [], badges: [] },
+                    activeCardColor: cardColor,
+                    activeBadge: activeBadge
+                }
             });
             onBack();
         }
@@ -170,8 +182,6 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                             </button>
                         </div>
 
-
-
                         {/* Background Color Picker */}
                         <div className="rounded-[2rem] p-4 shadow-lg flex flex-col items-center"
                             style={{
@@ -191,6 +201,76 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                             <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 border border-white/20">
                                 <div className="w-6 h-6 rounded-full border border-gray-200" style={{ backgroundColor }} />
                                 <span className="font-mono text-xs uppercase opacity-70" style={{ color: 'var(--theme-text)' }}>{backgroundColor}</span>
+                            </div>
+                        </div>
+
+                        {/* Card Styling Section */}
+                        <div className="rounded-[2rem] p-4 shadow-lg space-y-6"
+                            style={{
+                                backgroundColor: 'var(--theme-card-bg)',
+                                border: '2px solid var(--theme-border)'
+                            }}>
+                            <h3 className="text-lg font-bold text-center" style={{ color: 'var(--theme-text)' }}>💳 CARD STYLING</h3>
+
+                            {/* Card Color */}
+                            <div className="flex flex-col items-center">
+                                <label className="block text-sm font-bold mb-4" style={{ color: 'var(--theme-text-secondary)' }}>CARD COLOR</label>
+                                <ColorWheel
+                                    color={cardColor}
+                                    onChange={setCardColor}
+                                    size={150}
+                                    className="mb-4"
+                                />
+                                <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 border border-white/20">
+                                    <div className="w-6 h-6 rounded-full border border-gray-200" style={{ backgroundColor: cardColor }} />
+                                    <span className="font-mono text-xs uppercase opacity-70" style={{ color: 'var(--theme-text)' }}>{cardColor}</span>
+                                </div>
+                            </div>
+
+                            {/* Badge Selection */}
+                            <div className="flex flex-col items-center">
+                                <label className="block text-sm font-bold mb-4" style={{ color: 'var(--theme-text-secondary)' }}>SHOWOFF BADGE</label>
+                                {unlockedBadges.length > 0 ? (
+                                    <div className="grid grid-cols-4 gap-2 w-full">
+                                        {unlockedBadges.map(badgeId => {
+                                            const info = BadgeService.getBadgeInfo(badgeId);
+                                            if (!info) return null;
+                                            const isSelected = activeBadge === badgeId;
+                                            return (
+                                                <button
+                                                    key={badgeId}
+                                                    onClick={() => setActiveBadge(badgeId)}
+                                                    className={`aspect-square rounded-xl flex items-center justify-center text-2xl transition-all border-2 ${isSelected ? 'scale-110 shadow-lg' : 'opacity-60 hover:opacity-100'
+                                                        }`}
+                                                    style={{
+                                                        backgroundColor: isSelected ? 'var(--theme-accent)' : 'var(--theme-bg-secondary)',
+                                                        borderColor: isSelected ? 'var(--theme-text)' : 'transparent'
+                                                    }}
+                                                    title={info.name}
+                                                >
+                                                    {info.emoji}
+                                                </button>
+                                            );
+                                        })}
+                                        {/* Option to unequip */}
+                                        <button
+                                            onClick={() => setActiveBadge('')}
+                                            className={`aspect-square rounded-xl flex items-center justify-center text-sm font-bold transition-all border-2 ${activeBadge === '' ? 'scale-110 shadow-lg' : 'opacity-60 hover:opacity-100'
+                                                }`}
+                                            style={{
+                                                backgroundColor: 'var(--theme-bg-secondary)',
+                                                borderColor: activeBadge === '' ? 'var(--theme-text)' : 'transparent',
+                                                color: 'var(--theme-text)'
+                                            }}
+                                        >
+                                            NONE
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className="text-center p-4 opacity-60 text-sm">
+                                        Playing games to unlock badges!
+                                    </div>
+                                )}
                             </div>
                         </div>
 

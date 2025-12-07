@@ -58,6 +58,8 @@ export interface PlayerCosmetics {
     activeBrush?: string;
     activeColor?: string;
     activeBackgroundColor?: string;
+    activeCardColor?: string; // Color for player card in lobby
+    activeBadge?: string; // Currently displayed badge
     activeTheme?: string; // light/dark mode preference
     activeFont?: string;  // purchased font
     purchasedItems?: string[]; // Items bought with currency

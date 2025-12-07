@@ -6,6 +6,8 @@ import { AvatarDisplay } from '../common/AvatarDisplay';
 import { ShareDropdown } from '../common/ShareDropdown';
 import { StorageService } from '../../services/storage';
 import { usePresence } from '../../hooks/usePresence';
+import { XPService } from '../../services/xp';
+import { BadgeService } from '../../services/badgeService';
 
 interface LobbyScreenProps {
     room: GameRoom;
@@ -151,56 +153,83 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                     </div>
 
                     <div className="space-y-3 flex-1 overflow-y-auto max-h-[400px]">
-                        {Array.isArray(room.players) && room.players.map((p) => (
-                            <div key={p.id}
-                                className="flex items-center justify-between p-3 rounded-2xl mb-2"
-                                style={{ backgroundColor: 'var(--theme-highlight)' }}>
-                                <div className="flex items-center gap-3">
-                                    <div className="relative">
-                                        <AvatarDisplay
-                                            strokes={p.avatarStrokes}
-                                            avatar={p.avatar}
-                                            // frame={p.frame}
-                                            color={p.color}
-                                            size={48}
-                                        />
-                                        {p.id === room.hostId && (
-                                            <span className="absolute -top-1 -right-1 text-lg">👑</span>
-                                        )}
+                        {Array.isArray(room.players) && room.players.map((p) => {
+                            const tier = XPService.getTierForLevel(p.level || 0);
+                            const activeBadgeInfo = p.cosmetics?.activeBadge ? BadgeService.getBadgeInfo(p.cosmetics.activeBadge) : null;
+                            const cardColor = p.cosmetics?.activeCardColor;
+
+                            return (
+                                <div key={p.id}
+                                    className="flex items-center justify-between p-3 rounded-2xl mb-2 relative overflow-hidden transition-all"
+                                    style={{
+                                        backgroundColor: 'var(--theme-highlight)',
+                                        borderLeft: cardColor ? `6px solid ${cardColor}` : 'none',
+                                        background: cardColor ? `linear-gradient(90deg, ${cardColor}22, var(--theme-highlight) 30%)` : 'var(--theme-highlight)'
+                                    }}>
+                                    <div className="flex items-center gap-3 relative z-10">
+                                        <div className="relative">
+                                            <AvatarDisplay
+                                                strokes={p.avatarStrokes}
+                                                avatar={p.avatar}
+                                                // frame={p.frame}
+                                                color={p.color}
+                                                size={48}
+                                            />
+                                            {p.id === room.hostId && (
+                                                <span className="absolute -top-1 -right-1 text-lg">👑</span>
+                                            )}
+                                        </div>
+                                        <div>
+                                            <div className="flex items-center gap-1.5">
+                                                <div className="font-bold text-[var(--theme-text)] leading-tight">{p.name}</div>
+                                                {/* Badge */}
+                                                {activeBadgeInfo && (
+                                                    <span title={activeBadgeInfo.name} className="text-lg drop-shadow-md cursor-help">
+                                                        {activeBadgeInfo.emoji}
+                                                    </span>
+                                                )}
+                                            </div>
+
+                                            <div className="flex items-center gap-2 mt-0.5">
+                                                {/* Level & Rank */}
+                                                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-black/5 dark:bg-white/10" title={tier.name}>
+                                                    <span className="text-xs">{tier.icon}</span>
+                                                    <span className="text-[10px] font-black opacity-70 uppercase">Lvl {p.level || 0}</span>
+                                                </div>
+
+                                                {p.id === currentPlayerId && (
+                                                    <div className="text-[10px] font-bold tracking-wider opacity-60 text-[var(--theme-text)]">YOU</div>
+                                                )}
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <div className="font-bold text-[var(--theme-text)] leading-tight">{p.name}</div>
-                                        {p.id === currentPlayerId && (
-                                            <div className="text-[10px] font-bold tracking-wider opacity-60 text-[var(--theme-text)]">YOU</div>
+                                    <div className="flex items-center gap-2 relative z-10">
+                                        <div className={`px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest ${isIdle(p.id) ? 'opacity-50' : ''
+                                            }`}
+                                            style={{ backgroundColor: '#D97706', color: '#3E2723' }}>
+                                            {room.playerStates && room.playerStates[p.id]?.status === 'ready'
+                                                ? 'READY!'
+                                                : isIdle(p.id)
+                                                    ? 'AWAY...'
+                                                    : 'WAITING...'}
+                                        </div>
+                                        {isHost && p.id !== currentPlayerId && (
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    if (window.confirm(`Kick ${p.name}?`)) {
+                                                        onKick(p.id);
+                                                    }
+                                                }}
+                                                className="bg-red-100 text-red-500 w-7 h-7 rounded-full hover:bg-red-500 hover:text-white transition-colors flex items-center justify-center text-sm"
+                                            >
+                                                ✕
+                                            </button>
                                         )}
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <div className={`px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest ${isIdle(p.id) ? 'opacity-50' : ''
-                                        }`}
-                                        style={{ backgroundColor: '#D97706', color: '#3E2723' }}>
-                                        {room.playerStates && room.playerStates[p.id]?.status === 'ready'
-                                            ? 'READY!'
-                                            : isIdle(p.id)
-                                                ? 'AWAY...'
-                                                : 'WAITING...'}
-                                    </div>
-                                    {isHost && p.id !== currentPlayerId && (
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                if (window.confirm(`Kick ${p.name}?`)) {
-                                                    onKick(p.id);
-                                                }
-                                            }}
-                                            className="bg-red-100 text-red-500 w-7 h-7 rounded-full hover:bg-red-500 hover:text-white transition-colors flex items-center justify-center text-sm"
-                                        >
-                                            ✕
-                                        </button>
-                                    )}
-                                </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
 
                     <button

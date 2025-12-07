@@ -58,8 +58,7 @@ export const AvatarDisplay: React.FC<AvatarDisplayProps> = ({
                 className="w-full h-full"
                 style={{ color: color }}
             >
-                {/* Persistent White Background */}
-                <rect x="0" y="0" width="100" height="100" fill="white" />
+
 
                 {strokes.map((stroke, i) => {
                     if (!stroke || !stroke.points || stroke.points.length === 0) return null;

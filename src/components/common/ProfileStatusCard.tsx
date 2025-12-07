@@ -46,6 +46,7 @@ export const ProfileStatusCard: React.FC<ProfileStatusCardProps> = ({ player, on
                         avatar={player.avatar}
                         frame={player.frame}
                         color={player.color}
+                        backgroundColor={player.backgroundColor}
                         size={120}
                     />
                 </div>

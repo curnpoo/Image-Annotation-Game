@@ -93,6 +93,7 @@ export const SabotageSelectionScreen: React.FC<SabotageSelectionScreenProps> = (
                                     strokes={p.avatarStrokes}
                                     avatar={p.avatar}
                                     color={p.color}
+                                    backgroundColor={p.backgroundColor}
                                     size={48}
                                 />
                                 <span className="font-bold text-sm text-white truncate w-full text-center">

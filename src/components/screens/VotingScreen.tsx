@@ -158,6 +158,7 @@ export const VotingScreen: React.FC<VotingScreenProps> = ({
                         avatar={currentDrawing.player.avatar}
                         frame={currentDrawing.player.frame}
                         color={currentDrawing.player.color}
+                        backgroundColor={currentDrawing.player.backgroundColor}
                         size={40}
                     />
                     <span className="text-xl font-bold" style={{ color: currentDrawing.player.color }}>

@@ -98,6 +98,7 @@ export const LevelProgressScreen: React.FC<LevelProgressScreenProps> = ({
                                 avatar={player.avatar}
                                 frame={player.frame}
                                 color={player.color}
+                                backgroundColor={player.backgroundColor}
                                 size={140}
                             />
                         </div>

@@ -91,7 +91,10 @@ export const AvatarEditorScreen: React.FC<AvatarEditorScreenProps> = ({
 
             {/* Canvas Area */}
             <div className="flex-1 relative bg-gray-800 flex items-center justify-center p-4">
-                <div className="relative aspect-square w-full max-w-sm rounded-[2rem] overflow-hidden bg-white shadow-2xl">
+                <div
+                    className="relative aspect-square w-full max-w-sm rounded-[2rem] overflow-hidden shadow-2xl"
+                    style={{ backgroundColor: player.backgroundColor || '#ffffff' }}
+                >
                     <div className={`absolute inset-0 pointer-events-none z-10 rounded-[2rem] ${FRAMES.find(f => f.id === selectedFrame)?.class}`} style={{ color: brushColor }}></div>
                     <GameCanvas
                         imageUrl=""

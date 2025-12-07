@@ -73,6 +73,7 @@ export const UploadScreen: React.FC<UploadScreenProps> = ({
                                     avatar={uploader?.avatar}
                                     frame={uploader?.frame}
                                     color={uploader?.color}
+                                    backgroundColor={uploader?.backgroundColor}
                                     size={120}
                                     className="animate-bounce"
                                 />

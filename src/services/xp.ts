@@ -72,7 +72,11 @@ export const XPService = {
 
     // Get current tier based on level
     getTier(): LevelTier {
-        const level = this.getLevel();
+        return this.getTierForLevel(this.getLevel());
+    },
+
+    // Get tier for a specific level (static helper)
+    getTierForLevel(level: number): LevelTier {
         // Find the highest tier the player qualifies for
         for (let i = LEVEL_TIERS.length - 1; i >= 0; i--) {
             if (level >= LEVEL_TIERS[i].minLevel) {

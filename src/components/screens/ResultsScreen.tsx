@@ -212,6 +212,7 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
                                     avatar={p?.avatar}
                                     frame={p?.frame}
                                     color={p?.color}
+                                    backgroundColor={p?.backgroundColor}
                                     size={80}
                                     className="shadow-md"
                                 />
@@ -239,6 +240,7 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
                                     avatar={p?.avatar}
                                     frame={p?.frame}
                                     color={p?.color}
+                                    backgroundColor={p?.backgroundColor}
                                     size={96}
                                     className="shadow-lg border-4 border-yellow-400"
                                 />
@@ -266,6 +268,7 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
                                     avatar={p?.avatar}
                                     frame={p?.frame}
                                     color={p?.color}
+                                    backgroundColor={p?.backgroundColor}
                                     size={64}
                                     className="shadow-md"
                                 />
@@ -304,6 +307,7 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
                                         avatar={player.avatar}
                                         frame={player.frame}
                                         color={player.color}
+                                        backgroundColor={player.backgroundColor}
                                         size={32}
                                     />
                                     <span className="font-bold" style={{ color: 'var(--theme-text)' }}>{player.name}</span>

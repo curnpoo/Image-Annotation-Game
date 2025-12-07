@@ -46,6 +46,7 @@ export const WaitingRoomScreen: React.FC<WaitingRoomScreenProps> = ({
                         avatar={me?.avatar}
                         frame={me?.frame}
                         color={me?.color}
+                        backgroundColor={me?.backgroundColor}
                         size={80}
                         className="shadow-lg"
                     />
