@@ -113,8 +113,12 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                         <ShareDropdown
                             roomCode={room.roomCode}
                             className="flex-shrink-0"
-                            buttonClassName="w-16 h-12 flex items-center justify-center text-2xl rounded-xl bg-[#2A2A2A] border-2 border-yellow-200/30 hover:bg-[#333] transition-colors"
-                            buttonStyle={{ borderColor: 'rgba(253, 224, 71, 0.3)' }}
+                            buttonClassName="w-16 h-12 flex items-center justify-center text-2xl rounded-xl border-2 transition-colors"
+                            buttonStyle={{
+                                backgroundColor: 'var(--theme-button-bg)',
+                                borderColor: 'var(--theme-border)',
+                                color: 'var(--theme-button-text)'
+                            }}
                         />
                     </div>
                 </div>
@@ -145,7 +149,7 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                         {Array.isArray(room.players) && room.players.map((p) => (
                             <div key={p.id}
                                 className="flex items-center justify-between p-3 rounded-2xl mb-2"
-                                style={{ backgroundColor: '#1A1A1A' }}>
+                                style={{ backgroundColor: 'var(--theme-highlight)' }}>
                                 <div className="flex items-center gap-3">
                                     <div className="relative">
                                         <AvatarDisplay

@@ -70,10 +70,10 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onPlay }) => {
                         }}>
                         <span className="rainbow-text">Ano</span>
                         <br />
-                        <span className="text-white">Draw</span>
+                        <span style={{ color: 'var(--theme-text)' }}>Draw</span>
                     </h1>
 
-                    <p className="text-xl text-yellow-200 font-bold bubble-float" style={{ animationDelay: '0.5s' }}>
+                    <p className="text-xl font-bold bubble-float" style={{ animationDelay: '0.5s', color: 'var(--theme-text-secondary)' }}>
                         ✨ The party drawing game! ✨
                     </p>
                 </div>

@@ -16,7 +16,9 @@ import { VotingScreen } from '../screens/VotingScreen';
 import { ResultsScreen } from '../screens/ResultsScreen';
 import { FinalResultsScreen } from '../screens/FinalResultsScreen';
 import { StatsScreen } from '../screens/StatsScreen';
+import { SabotageSelectionScreen } from '../screens/SabotageSelectionScreen';
 import { Timer } from '../game/Timer';
+import type { SabotageEffect } from '../../types';
 
 interface ScreenRouterProps {
     currentScreen: Screen;
@@ -59,6 +61,9 @@ interface ScreenRouterProps {
 
     // Store
     onEquipTheme: (themeId?: string) => void;
+
+    // Sabotage
+    onSabotageSelect: (targetId: string, effect: SabotageEffect) => void;
 
     // Drawing Specifics
     isMyTimerRunning: boolean;
@@ -121,6 +126,7 @@ export const ScreenRouter: React.FC<ScreenRouterProps> = ({
     onNextRound,
     onPlayAgain,
     onEquipTheme,
+    onSabotageSelect,
     isMyTimerRunning,
     isReadying,
     onReady,
@@ -380,6 +386,15 @@ export const ScreenRouter: React.FC<ScreenRouterProps> = ({
                 onPlayAgain={onPlayAgain}
                 onGoHome={onLeaveGame}
                 showToast={showToast}
+            />;
+
+        case 'sabotage-selection':
+            if (!room || !player) return null;
+            return <SabotageSelectionScreen
+                players={room.players}
+                saboteurId={room.saboteurId || ''}
+                currentPlayerId={player.id}
+                onSelect={onSabotageSelect}
             />;
 
         case 'stats':

@@ -589,10 +589,11 @@ export const StorageService = {
     },
 
     // Saboteur sets their target
-    setSabotageTarget: async (roomCode: string, targetId: string): Promise<GameRoom | null> => {
+    setSabotageTarget: async (roomCode: string, targetId: string, effect: any): Promise<GameRoom | null> => {
         return StorageService.updateRoom(roomCode, (r) => ({
             ...r,
-            sabotageTargetId: targetId
+            sabotageTargetId: targetId,
+            sabotageEffect: effect
         }));
     },
 

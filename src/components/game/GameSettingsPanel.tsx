@@ -43,9 +43,8 @@ export const GameSettingsPanel: React.FC<GameSettingsPanelProps> = ({
                                     : 'opacity-50 cursor-not-allowed'
                                 }`}
                             style={{
-                                backgroundColor: 'transparent',
-                                borderColor: settings.timerDuration === seconds ? '#FDE047' : '#333',
-                                color: settings.timerDuration === seconds ? '#FDE047' : '#888',
+                                borderColor: settings.timerDuration === seconds ? 'var(--theme-accent)' : 'var(--theme-border)',
+                                color: settings.timerDuration === seconds ? 'var(--theme-button-text)' : 'var(--theme-text-secondary)',
                             }}
                         >
                             {seconds}s
@@ -73,8 +72,8 @@ export const GameSettingsPanel: React.FC<GameSettingsPanelProps> = ({
                                 }`}
                             style={{
                                 backgroundColor: 'transparent',
-                                borderColor: settings.totalRounds === rounds ? '#FDE047' : '#333',
-                                color: settings.totalRounds === rounds ? '#FDE047' : '#888',
+                                borderColor: settings.totalRounds === rounds ? 'var(--theme-accent)' : 'var(--theme-border)',
+                                color: settings.totalRounds === rounds ? 'var(--theme-button-text)' : 'var(--theme-text-secondary)',
                             }}
                         >
                             {rounds}
@@ -83,11 +82,32 @@ export const GameSettingsPanel: React.FC<GameSettingsPanelProps> = ({
                 </div>
             </div>
 
-            {!isHost && (
-                <p className="text-xs text-center italic" style={{ color: 'var(--theme-text-secondary)' }}>
-                    Only the host can change settings
-                </p>
-            )}
-        </div>
+
+            {/* Sabotage Toggle */}
+            <div className="flex items-center justify-between">
+                <label className="text-sm font-medium flex items-center gap-2" style={{ color: 'var(--theme-text-secondary)' }}>
+                    😈 Enable Sabotage
+                </label>
+                <button
+                    onClick={() => isHost && onSettingsChange({ enableSabotage: !settings.enableSabotage })}
+                    disabled={!isHost}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${settings.enableSabotage ? 'bg-purple-500' : 'bg-gray-700'
+                        } ${!isHost ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                >
+                    <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${settings.enableSabotage ? 'translate-x-6' : 'translate-x-1'
+                            }`}
+                    />
+                </button>
+            </div>
+
+            {
+                !isHost && (
+                    <p className="text-xs text-center italic" style={{ color: 'var(--theme-text-secondary)' }}>
+                        Only the host can change settings
+                    </p>
+                )
+            }
+        </div >
     );
 };

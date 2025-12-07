@@ -2,9 +2,6 @@ import React, { useMemo } from 'react';
 import type { GameRoom, Player } from '../../types';
 import { GameCanvas } from '../game/GameCanvas';
 import { Toolbar } from '../game/Toolbar';
-import { SaboteurPanel } from '../game/SaboteurPanel';
-import { SabotageOverlay } from '../game/SabotageOverlay';
-import { StorageService } from '../../services/storage';
 
 import { CosmeticsService } from '../../services/cosmetics';
 import type { DrawingStroke } from '../../types';
@@ -65,10 +62,6 @@ export const DrawingScreen: React.FC<DrawingScreenProps> = ({
 
     // Get unlockables
     const availableBrushes = CosmeticsService.getAvailableBrushes();
-    const availableColors = CosmeticsService.getAvailableColors();
-
-
-
 
     const unfinishedPlayers = useMemo(() => {
         return room.players.filter(p =>
@@ -76,12 +69,30 @@ export const DrawingScreen: React.FC<DrawingScreenProps> = ({
         );
     }, [room.players, room.playerStates]);
 
-    const handleSabotageTargetSelect = async (targetId: string) => {
-        await StorageService.setSabotageTarget(room.roomCode, targetId);
-    };
+
+    const isSabotaged = room.sabotageTargetId === player.id && room.sabotageTriggered;
+    const sabotageEffect = room.sabotageEffect;
+
+    // Effect: Reduce Colors
+    const effectiveAvailableColors = useMemo(() => {
+        if (isSabotaged && sabotageEffect?.type === 'reduce_colors') {
+            return [
+                { id: '#000000', name: 'Black', price: 0 },
+                { id: '#FFFFFF', name: 'White', price: 0 },
+                { id: '#FF0000', name: 'Red', price: 0 },
+                { id: '#555555', name: 'Gray', price: 0 }
+            ];
+        }
+        return CosmeticsService.getAvailableColors();
+    }, [isSabotaged, sabotageEffect]);
+
+    // Effect: Visual Distortion
+    const containerClass = (isSabotaged && sabotageEffect?.type === 'visual_distortion')
+        ? "absolute inset-0 flex flex-col pt-20 pb-4 px-4 overflow-hidden pointer-events-none animate-shake-hard filter blur-[1px]"
+        : "absolute inset-0 flex flex-col pt-20 pb-4 px-4 overflow-hidden pointer-events-none";
 
     return (
-        <div className="absolute inset-0 flex flex-col pt-20 pb-4 px-4 overflow-hidden pointer-events-none">
+        <div className={containerClass}>
             {/* Canvas Container */}
             <div className="flex-1 relative w-full h-full max-w-lg mx-auto pointer-events-auto">
 
@@ -135,11 +146,6 @@ export const DrawingScreen: React.FC<DrawingScreenProps> = ({
                         onStrokesChange={setStrokes}
                         isEyedropper={isEyedropper} // Prop name is isEyedropper
                         onColorPick={handleColorPick}
-                    // content... wait, GameCanvas has explicit props.
-                    // GameCanvas definition:
-                    // strokes: DrawingStroke[]
-                    // onStrokesChange
-                    // isDrawingEnabled (mapped from isDrawing)
                     />
 
                     {/* Show "waiting" overlay if not ready */}
@@ -222,31 +228,11 @@ export const DrawingScreen: React.FC<DrawingScreenProps> = ({
                         onClear={handleClear}
                         isEyedropper={isEyedropper}
                         onEyedropperToggle={handleEyedropperToggle}
-                        availableColors={availableColors}
+                        availableColors={effectiveAvailableColors}
                         availableBrushes={availableBrushes}
                     />
                 </div>
             )}
-
-            {/* Saboteur Panel */}
-            {room.saboteurId === player.id && !room.sabotageTargetId && (
-                <SaboteurPanel
-                    players={room.players}
-                    currentPlayerId={player.id}
-                    uploaderId={room.currentUploaderId || room.hostId}
-                    onSelectTarget={handleSabotageTargetSelect}
-                    selectedTargetId={room.sabotageTargetId || undefined}
-                />
-            )}
-
-            {/* Sabotage Overlay */}
-            <SabotageOverlay
-                isActive={
-                    Boolean(room.sabotageTargetId === player.id &&
-                        room.sabotageTriggered === true &&
-                        isMyTimerRunning)
-                }
-            />
         </div>
     );
 };

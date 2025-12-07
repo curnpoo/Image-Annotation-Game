@@ -22,5 +22,15 @@ export const CosmeticsService = {
     isUnlocked(itemId: string, price: number) {
         if (price === 0) return true;
         return CurrencyService.isItemPurchased(itemId);
+    },
+
+    // Get ALL brushes (for Avatar Editor, etc)
+    getAllBrushes() {
+        return UNLOCKABLE_BRUSHES;
+    },
+
+    // Get ALL colors (for Avatar Editor, etc)
+    getAllColors() {
+        return UNLOCKABLE_COLORS;
     }
 };

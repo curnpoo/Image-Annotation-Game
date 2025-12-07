@@ -139,6 +139,7 @@ function App() {
     if (room?.status) {
       if (room.status === 'lobby') setCurrentScreen('lobby');
       else if (room.status === 'uploading') setCurrentScreen('uploading');
+      else if (room.status === 'sabotage-selection') setCurrentScreen('sabotage-selection');
       else if (room.status === 'drawing') setCurrentScreen('drawing');
       else if (room.status === 'voting') setCurrentScreen('voting');
       else if (room.status === 'results') setCurrentScreen('results');
@@ -237,11 +238,17 @@ function App() {
   const stats = useMemo(() => {
     const myState = room?.playerStates?.[player?.id || ''];
     const submitted = myState?.status === 'submitted';
+    const totalDuration = room?.settings?.timerDuration || 15;
     // Add +5 seconds if player has time bonus
     const hasTimeBonus = room?.timeBonusPlayerId === player?.id;
-    const bonusTime = hasTimeBonus ? 5 : 0;
+    const isTimeSabotaged = room?.sabotageTargetId === player?.id && room?.sabotageEffect?.type === 'subtract_time';
+
+    // Calculate penalty (20% of total time, rounded up)
+    const penalty = Math.ceil(totalDuration * 0.20);
+    const bonusTime = (hasTimeBonus ? 5 : 0) - (isTimeSabotaged ? penalty : 0);
+
     const endsAt = myState?.timerStartedAt
-      ? myState.timerStartedAt + ((room?.settings?.timerDuration || 15) + bonusTime) * 1000
+      ? myState.timerStartedAt + (totalDuration + bonusTime) * 1000
       : null;
 
     // Safety check for room existence
@@ -287,6 +294,7 @@ function App() {
         if (waitingChanged) {
           if (status === 'lobby') setCurrentScreen('lobby');
           else if (status === 'uploading') setCurrentScreen(shouldShowWaitingRoom ? 'waiting' : 'uploading');
+          else if (status === 'sabotage-selection') setCurrentScreen('sabotage-selection');
           else if (status === 'drawing') {
             if (shouldShowWaitingRoom) {
               setCurrentScreen('waiting');
@@ -305,6 +313,7 @@ function App() {
         if (currentScreen === 'room-selection' || currentScreen === 'welcome' || currentScreen === 'name-entry') {
           if (status === 'lobby') setCurrentScreen('lobby');
           else if (status === 'uploading') setCurrentScreen(shouldShowWaitingRoom ? 'waiting' : 'uploading');
+          else if (status === 'sabotage-selection') setCurrentScreen('sabotage-selection');
           else if (status === 'drawing') setCurrentScreen(shouldShowWaitingRoom ? 'waiting' : 'drawing');
           else if (status === 'voting') setCurrentScreen(shouldShowWaitingRoom ? 'waiting' : 'voting');
           else if (status === 'results') setCurrentScreen('results');
@@ -351,6 +360,7 @@ function App() {
         // Routing Logic
         if (status === 'lobby') setCurrentScreen('lobby');
         else if (status === 'uploading') setCurrentScreen(shouldShowWaitingRoom ? 'waiting' : 'uploading');
+        else if (status === 'sabotage-selection') setCurrentScreen('sabotage-selection');
         else if (status === 'drawing') {
           if (shouldShowWaitingRoom) {
             setCurrentScreen('waiting');
@@ -634,7 +644,14 @@ function App() {
         id: crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(),
         ...profileData,
         joinedAt: Date.now(),
-        lastSeen: Date.now()
+        lastSeen: Date.now(),
+        cosmetics: {
+          activeTheme: 'premium-light',
+          brushesUnlocked: [],
+          colorsUnlocked: [],
+          badges: [],
+          purchasedItems: []
+        }
       };
       StorageService.saveSession(newPlayer);
       setPlayer(newPlayer);
@@ -793,8 +810,23 @@ function App() {
 
 
 
+  const handleSabotageSelect = async (targetId: string, effect: any) => {
+    if (!roomCode) return;
+    try {
+      await StorageService.setSabotageTarget(roomCode, targetId, effect);
+    } catch (err) {
+      console.error('Failed to set sabotage:', err);
+      showToast('Failed to unleash chaos 😅', 'error');
+    }
+  };
+
   const handleLeaveGame = async (targetScreen: Screen = 'room-selection') => {
-    // Always do local cleanup first
+    // 1. Capture state needed for cleanup
+    const roomCodeToLeave = roomCode;
+    const playerToLeave = player;
+
+    // 2. IMMEDIATE UI Updates (Priority)
+    // Clear local session first to prevent auto-rejoin
     StorageService.leaveRoom();
     setRoomCode(null);
     setCurrentScreen(targetScreen);
@@ -802,13 +834,15 @@ function App() {
     setIsLoadingTransition(false);
     showToast('Left game 👋', 'info');
 
-    // Then try to remove from server if we have the info
-    if (roomCode && player) {
-      try {
-        await StorageService.removePlayerFromRoom(roomCode, player.id);
-      } catch (err) {
-        console.error('Failed to leave game:', err);
-      }
+    // 3. Deferred Server Cleanup (Don't block UI)
+    if (roomCodeToLeave && playerToLeave) {
+      setTimeout(async () => {
+        try {
+          await StorageService.removePlayerFromRoom(roomCodeToLeave, playerToLeave.id);
+        } catch (err) {
+          console.error('Failed to leave game:', err);
+        }
+      }, 10);
     }
   };
 
@@ -1062,6 +1096,7 @@ function App() {
         onPlayAgain={handlePlayAgain}
 
         onEquipTheme={handleEquipTheme}
+        onSabotageSelect={handleSabotageSelect}
 
         isMyTimerRunning={isMyTimerRunning}
         isReadying={isReadying}

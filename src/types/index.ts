@@ -96,6 +96,7 @@ export interface PlayerDrawing {
 export interface GameSettings {
     timerDuration: number; // seconds (10, 15, 20, 30)
     totalRounds: number; // (3, 5, 7, 10)
+    enableSabotage?: boolean;
 }
 
 export interface BlockInfo {
@@ -130,7 +131,7 @@ export interface RoundResult {
     }[];
 }
 
-export type GameStatus = 'lobby' | 'uploading' | 'drawing' | 'voting' | 'results' | 'final';
+export type GameStatus = 'lobby' | 'uploading' | 'sabotage-selection' | 'drawing' | 'voting' | 'results' | 'final';
 
 export interface GameRoom {
     roomCode: string;
@@ -171,6 +172,7 @@ export interface GameRoom {
     sabotageRound?: number; // Which round has sabotage (1-indexed)
     saboteurId?: string | null; // Player doing the sabotaging
     sabotageTargetId?: string | null; // Player being sabotaged
+    sabotageEffect?: SabotageEffect;
     sabotageTriggered?: boolean; // Has the effect started?
 
     // Double Points (random chance per round)
@@ -180,6 +182,13 @@ export interface GameRoom {
     timeBonusPlayerId?: string | null; // Player with extra time this round
 
     createdAt: number;
+}
+
+export type SabotageType = 'subtract_time' | 'reduce_colors' | 'visual_distortion';
+
+export interface SabotageEffect {
+    type: SabotageType;
+    intensity: number; // 1-10 scale maybe? or just generic
 }
 
 export interface ChatMessage {
@@ -222,7 +231,7 @@ export interface ToastState {
     type: 'error' | 'success' | 'info';
 }
 
-export type Screen = 'welcome' | 'login' | 'name-entry' | 'home' | 'room-selection' | 'store' | 'profile' | 'avatar-editor' | 'lobby' | 'waiting' | 'uploading' | 'drawing' | 'voting' | 'results' | 'final' | 'stats';
+export type Screen = 'welcome' | 'login' | 'name-entry' | 'home' | 'room-selection' | 'store' | 'profile' | 'avatar-editor' | 'lobby' | 'waiting' | 'uploading' | 'sabotage-selection' | 'drawing' | 'voting' | 'results' | 'final' | 'stats';
 
 // Stats history for graphs over time
 export interface StatsHistoryEntry {

@@ -35,8 +35,8 @@ export const AvatarEditorScreen: React.FC<AvatarEditorScreenProps> = ({
     const [history, setHistory] = useState<DrawingStroke[][]>([player.avatarStrokes || []]);
 
     // Data from Cosmetics
-    const availableBrushes = CosmeticsService.getAvailableBrushes();
-    const availableColors = CosmeticsService.getAvailableColors();
+    const availableBrushes = CosmeticsService.getAllBrushes();
+    const availableColors = CosmeticsService.getAllColors();
 
     const handleStrokesChange = (newStrokes: DrawingStroke[]) => {
         setStrokes(newStrokes);
