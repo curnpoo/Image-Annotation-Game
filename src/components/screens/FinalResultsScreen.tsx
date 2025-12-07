@@ -80,7 +80,47 @@ export const FinalResultsScreen: React.FC<FinalResultsScreenProps> = ({
         };
 
         processFinalStats();
-    }, [room.roomCode, currentPlayerId, room.players, room.scores, showToast]); // Changed player.id to currentPlayerId
+    }, [room.roomCode, currentPlayerId, room.players, room.scores, showToast]);
+
+    // Stats Logic
+    const [showStatsModal, setShowStatsModal] = useState(false);
+    const [pendingAction, setPendingAction] = useState<'home' | 'replay' | null>(null);
+    const [earnedStats, setEarnedStats] = useState<{ xp: number; coins: number; isWinner: boolean; newLevel?: number } | null>(null);
+
+    // Capture calculated stats (using a separate effect or ref logic would be cleaner, but we can hook into the existing one if we move logic out,
+    // OR we can just re-calculate/access them since they are deterministic based on room state).
+    // Let's re-calculate cleanly here for display purposes.
+    useEffect(() => {
+        if (!earnedStats && mounted) {
+            const sortedPlayers = [...room.players].sort((a, b) => (room.scores[b.id] || 0) - (room.scores[a.id] || 0));
+            const isWinner = sortedPlayers[0]?.id === currentPlayerId;
+            const currencyEarned = 50 + (isWinner ? 100 : 0);
+            // We can't easily know "newLevel" here without duplicating the XP service call which acts as a transaction.
+            // For now, let's just show "+100 XP".
+            setEarnedStats({
+                xp: 100,
+                coins: currencyEarned,
+                isWinner
+            });
+        }
+    }, [room, currentPlayerId, mounted]);
+
+
+    const handleGoHome = () => {
+        setPendingAction('home');
+        setShowStatsModal(true);
+    };
+
+    const handlePlayAgain = () => {
+        setPendingAction('replay');
+        setShowStatsModal(true);
+    };
+
+    const handleContinue = () => {
+        if (pendingAction === 'home') onGoHome();
+        if (pendingAction === 'replay') onPlayAgain();
+    };
+
 
     const isHost = room.hostId === currentPlayerId;
 
@@ -101,7 +141,7 @@ export const FinalResultsScreen: React.FC<FinalResultsScreenProps> = ({
 
             {/* Home Button Card */}
             <button
-                onClick={onGoHome}
+                onClick={handleGoHome}
                 className="w-full max-w-md mb-4 bg-white/10 backdrop-blur-sm rounded-2xl p-4 border-2 border-white/20 flex items-center gap-4 hover:bg-white/20 active:scale-95 transition-all z-10"
             >
                 <div className="text-3xl">🏠</div>
@@ -213,7 +253,7 @@ export const FinalResultsScreen: React.FC<FinalResultsScreenProps> = ({
                                 >
                                     {player.name.charAt(0).toUpperCase()}
                                 </div>
-                                <span className="font-medium">{player.name}</span>
+                                <span className="font-medium text-gray-800">{player.name}</span>
                                 {player.id === currentPlayerId && (
                                     <span className="text-xs text-gray-400">(You)</span>
                                 )}
@@ -227,7 +267,7 @@ export const FinalResultsScreen: React.FC<FinalResultsScreenProps> = ({
             {/* Play Again Button */}
             {isHost ? (
                 <button
-                    onClick={onPlayAgain}
+                    onClick={handlePlayAgain}
                     className="btn-90s bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-500 text-white px-10 py-5 rounded-2xl font-bold text-2xl jelly-hover z-10"
                 >
                     🎮 Play Again!
@@ -236,6 +276,47 @@ export const FinalResultsScreen: React.FC<FinalResultsScreenProps> = ({
                 <p className="text-white/80 font-medium animate-pulse z-10">
                     Waiting for host to start new game...
                 </p>
+            )}
+
+            {/* Rewards Modal */}
+            {showStatsModal && earnedStats && (
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 pop-in">
+                    <div className="bg-white rounded-3xl p-8 w-full max-w-sm mx-4 text-center border-4 border-yellow-400 shadow-2xl relative overflow-hidden">
+                        {/* Shine effect */}
+                        <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/20 to-transparent pointer-events-none" />
+
+                        <div className="text-6xl mb-4 animate-bounce">🎁</div>
+                        <h2 className="text-3xl font-black text-gray-800 mb-2">Round Rewards</h2>
+                        <p className="text-gray-500 mb-6">Great game! Here's what you earned:</p>
+
+                        <div className="space-y-4 mb-8">
+                            {/* Coins */}
+                            <div className="bg-green-50 rounded-xl p-4 border-2 border-green-100 flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <span className="text-3xl">🪙</span>
+                                    <span className="font-bold text-green-700">Coins</span>
+                                </div>
+                                <div className="text-2xl font-black text-green-600">+{earnedStats.coins}</div>
+                            </div>
+
+                            {/* XP */}
+                            <div className="bg-purple-50 rounded-xl p-4 border-2 border-purple-100 flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <span className="text-3xl">✨</span>
+                                    <span className="font-bold text-purple-700">XP</span>
+                                </div>
+                                <div className="text-2xl font-black text-purple-600">+{earnedStats.xp}</div>
+                            </div>
+                        </div>
+
+                        <button
+                            onClick={handleContinue}
+                            className="w-full bg-black text-white py-4 rounded-xl font-bold text-lg hover:scale-105 active:scale-95 transition-all shadow-xl"
+                        >
+                            Continue
+                        </button>
+                    </div>
+                </div>
             )}
         </div>
     );
