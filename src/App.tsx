@@ -37,6 +37,7 @@ import { ThemeTransition } from './components/common/ThemeTransition';
 import { requestPushPermission, onForegroundMessage } from './services/pushNotifications';
 import { useNotifications } from './hooks/useNotifications';
 import { usePlayerSession } from './hooks/usePlayerSession';
+import { useLoadingProgress } from './hooks/useLoadingProgress';
 import type { Player, GameSettings, PlayerDrawing, GameRoom, Screen } from './types';
 
 
@@ -130,50 +131,33 @@ const App = () => {
   const [lastGameDetails, setLastGameDetails] = useState<RoomHistoryEntry | null>(null);
 
   // --- Smart Loading System ---
-  type LoadingScenario = 'initial' | 'join' | 'start' | 'upload' | 'results';
-  const [loadingScenario, setLoadingScenario] = useState<LoadingScenario | null>('initial');
-  const [loadingStages, setLoadingStages] = useState<LoadingStage[]>([]);
+  const {
+    stages: loadingStages,
+    isOnline,
+    isSlow,
+    updateStage: updateLoadingStage,
+    clearStages: clearLoadingStages,
+    startScenario: startLoadingScenario,
+  } = useLoadingProgress();
   const loadingStartTimeRef = useRef<number>(0);
 
-  // Initialize checklist based on scenario
-  const startLoading = useCallback((scenario: LoadingScenario) => {
-    setLoadingScenario(scenario);
+  // Wrapper to start loading with scenario
+  const startLoading = useCallback((scenario: 'initial' | 'join' | 'start' | 'upload' | 'create') => {
     setIsLoading(true);
     loadingStartTimeRef.current = Date.now();
+    startLoadingScenario(scenario);
+  }, [startLoadingScenario]);
 
-    let stages: LoadingStage[] = [];
-    if (scenario === 'initial') {
-      stages = [
-        { id: 'auth', label: 'Connecting to account...', status: 'pending' },
-        { id: 'profile', label: 'Loading profile...', status: 'pending' },
-        { id: 'room', label: 'Rejoining room...', status: 'pending' }
-      ];
-    } else if (scenario === 'join') {
-      stages = [
-        { id: 'connect', label: 'Connecting to server...', status: 'loading' },
-        { id: 'sync', label: 'Syncing room data...', status: 'pending' },
-        { id: 'verify', label: 'Verifying entry...', status: 'pending' }
-      ];
-    } else if (scenario === 'start') {
-      stages = [
-        { id: 'init', label: 'Initializing round...', status: 'loading' },
-        { id: 'assign', label: 'Assigning roles...', status: 'pending' },
-        { id: 'sync', label: 'Syncing players...', status: 'pending' }
-      ];
-    } else if (scenario === 'upload') {
-      stages = [
-        { id: 'process', label: 'Processing image...', status: 'loading' },
-        { id: 'upload', label: 'Uploading to cloud...', status: 'pending' },
-        { id: 'verify', label: 'Verifying upload...', status: 'pending' }
-      ];
+
+  const stopLoadingWithDelay = useCallback(() => {
+    const elapsed = Date.now() - loadingStartTimeRef.current;
+    const minDelay = 300;
+    const remaining = Math.max(0, minDelay - elapsed);
+    if (remaining > 0) {
+      setTimeout(() => setIsLoading(false), remaining);
+    } else {
+      setIsLoading(false);
     }
-    setLoadingStages(stages);
-  }, []);
-
-  const updateLoadingStage = useCallback((id: string, status: 'loading' | 'completed' | 'error') => {
-    setLoadingStages(prev => prev.map(stage =>
-      stage.id === id ? { ...stage, status } : stage
-    ));
   }, []);
 
   const {
@@ -184,27 +168,12 @@ const App = () => {
   } = usePlayerSession({
     setCurrentScreen,
     onProgress: (id, status) => {
-      // Only update if we are in 'initial' scenario to avoid conflicts
-      if (loadingScenario === 'initial') {
-        updateLoadingStage(id, status);
-      }
+      updateLoadingStage(id, status);
     },
     onComplete: () => {
       stopLoadingWithDelay();
     }
   });
-
-  const stopLoadingWithDelay = useCallback(() => {
-    const elapsed = Date.now() - loadingStartTimeRef.current;
-    const minDelay = 300; // Minimum 300ms loading time per user request
-    const remaining = Math.max(0, minDelay - elapsed);
-
-    if (remaining > 0) {
-      setTimeout(() => setIsLoading(false), remaining);
-    } else {
-      setIsLoading(false);
-    }
-  }, []);
 
   // Initialize default loading stages on mount (for initial load)
   useEffect(() => {
@@ -1407,17 +1376,17 @@ const App = () => {
   }, [showToast, handleJoinRoom]);
 
   if (isLoading || isInitialLoading) {
-    return <LoadingScreen onGoHome={handleSafeReset} />;
+    return <LoadingScreen onGoHome={handleSafeReset} stages={loadingStages} isOnline={isOnline} isSlow={isSlow} />;
   }
 
   if (isLoadingTransition) {
-    return <LoadingScreen onGoHome={handleSafeReset} />;
+    return <LoadingScreen onGoHome={handleSafeReset} stages={loadingStages} isOnline={isOnline} isSlow={isSlow} />;
   }
 
   // Prevent white screen if in game but room/player missing
   const isGameScreen = ['lobby', 'waiting', 'uploading', 'drawing', 'voting', 'results', 'final'].includes(currentScreen);
   if (isGameScreen && (!room || !player)) {
-    return <LoadingScreen onGoHome={handleSafeReset} />;
+    return <LoadingScreen onGoHome={handleSafeReset} stages={loadingStages} isOnline={isOnline} isSlow={isSlow} />;
   }
 
 

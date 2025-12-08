@@ -3,210 +3,194 @@ import type { LoadingStage } from '../../types';
 
 const TIPS = [
     "💡 Tip: Vote for the funniest answer, not just the best drawing!",
-    "💡 Tip: The government is watching you draw that.",
-    "💡 Tip: Birds aren't real. Wake up.",
-    "💡 Tip: If you don't win, the election was stolen. Stop the count!",
-    "💡 Tip: Your FBI agent is judging your art style right now.",
-    "💡 Tip: I am living in your walls.",
-    "💡 Tip: Your drawing is so bad, it's good. No, wait, it's just bad.",
-    "💡 Tip: Remember to hydrate, drawing is hard work!",
-    "💡 Tip: This game is not responsible for any existential crises caused by your art.",
-    "💡 Tip: Don't let your dreams be memes.",
-    "💡 Tip: Why did the scarecrow win an award? Because he was outstanding in his field!",
-    "💡 Tip: My computer just beat me at chess. I guess it was no match for its motherboard.",
-    "💡 Tip: What do you call a fake noodle? An impasta.",
-    "💡 Tip: I told my wife she was drawing her eyebrows too high. She looked surprised.",
-    "💡 Tip: Did you hear about the restaurant on the moon? Great food, no atmosphere.",
-    "💡 Tip: I'm reading a book about anti-gravity. It's impossible to put down!",
-    "💡 Tip: What's orange and sounds like a parrot? A carrot.",
-    "💡 Tip: I used to be a baker, but I couldn't make enough dough.",
-    "💡 Tip: Why don't scientists trust atoms? Because they make up everything!",
-    "💡 Tip: What do you call a sad strawberry? A blueberry.",
-    "💡 Tip: Jet fuel can't melt steel beams, but your drawing might melt my eyes.",
-    "💡 Tip: Taxation is theft, but tracing is worse.",
-    "💡 Tip: The earth is flat, just like your drawing skills.",
-    "💡 Tip: Aliens built the pyramids, and you can't even draw a circle.",
-    "💡 Tip: Don't look behind you.",
-    "💡 Tip: Simulation theory is real. None of this matters.",
-    "💡 Tip: I know what you did last summer.",
-    "💡 Tip: Vote for Giant Meteor 2026. Just end it.",
-    "💡 Tip: Drawing hands is impossible. Just hide them in pockets.",
-    "💡 Tip: If you draw a stick figure, I will uninstall myself.",
-    "💡 Tip: Your internet is slow. Have you tried yelling at the router?",
-    "💡 Tip: Drink water. Or don't. I'm a line of code, I don't care.",
-    "💡 Tip: You can change your brush size, but you can't change your past.",
     "💡 Tip: Creative answers usually get more votes. Bribes work too.",
-    "💡 Tip: You can rejoin a game if you accidentally close the tab. You clumsy oaf.",
-    "💡 Tip: You can't win at this game.",
-    "💡 Tip: I don't care what you draw.",
     "💡 Tip: The eyedropper tool can be used to copy colors from the image.",
-    "💡 Tip: Unlock stuff by winning games!",
-    "💡 Tip: The cake is a lie. Just like your drawing skills.",
-    "💡 Tip: Have you tried turning it off and on again?",
-    "💡 Tip: Don't trust anyone, not even yourself. Especially not your drawing hand.",
-    "💡 Tip: The early bird gets the worm, but the second mouse gets the cheese.",
-    "💡 Tip: If at first you don't succeed, redefine success.",
-    "💡 Tip: Life is like a box of chocolates. You never know what you're gonna draw.",
-    "💡 Tip: I'm not saying I'm Batman, I'm just saying no one has ever seen me and Batman in the same room.",
-    "💡 Tip: The best way to predict the future is to create it. Or just draw it badly.",
-    "💡 Tip: My therapist told me to embrace my flaws. I'm still working on my drawing of a perfect circle.",
-    "💡 Tip: If you think nobody cares if you're alive, try missing a couple of payments.",
-    "💡 Tip: I've been trying to come up with a pun about drawing, but I'm just sketching for ideas.",
-    "💡 Tip: Don't worry, be happy. And draw something funny."
+    "💡 Tip: You can rejoin a game if you accidentally close the tab.",
+    "💡 Tip: Drawing hands is impossible. Just hide them in pockets.",
+    "💡 Tip: Your FBI agent is judging your art style right now.",
 ];
 
 interface LoadingScreenProps {
     onGoHome?: () => void;
     stages?: LoadingStage[];
+    isOnline?: boolean;
+    isSlow?: boolean;
 }
 
-export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onGoHome, stages }) => {
+export const LoadingScreen: React.FC<LoadingScreenProps> = ({
+    onGoHome,
+    stages = [],
+    isOnline = true,
+    isSlow = false
+}) => {
     const [tip, setTip] = useState('');
     const [showStuckButton, setShowStuckButton] = useState(false);
-    const [isReallySlow, setIsReallySlow] = useState(false);
 
     useEffect(() => {
         setTip(TIPS[Math.floor(Math.random() * TIPS.length)]);
-
-        // 1. Show stuck button after 8 seconds
-        const timer = setTimeout(() => {
-            setShowStuckButton(true);
-        }, 8000);
-
-        // 2. Slow network warning after 5 seconds
-        const slowTimer = setTimeout(() => {
-            if (stages && stages.some(s => s.status === 'loading')) {
-                setIsReallySlow(true);
-            }
-        }, 5000);
-
-        return () => {
-            clearTimeout(timer);
-            clearTimeout(slowTimer);
-        };
+        const timer = setTimeout(() => setShowStuckButton(true), 10000);
+        return () => clearTimeout(timer);
     }, []);
 
-    // Render Checklist with polished visuals
-    const renderChecklist = () => {
-        if (!stages || stages.length === 0) return null;
+    // Render individual stage item with spinning → checkmark animation
+    const renderStageItem = (stage: LoadingStage, index: number) => {
+        let icon: React.ReactNode;
+        let textClass = 'text-white/40';
+        let containerClass = 'transition-all duration-300';
+
+        switch (stage.status) {
+            case 'completed':
+                icon = (
+                    <div className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center">
+                        <svg className="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                        </svg>
+                    </div>
+                );
+                textClass = 'text-green-400/80 line-through';
+                break;
+            case 'loading':
+                icon = (
+                    <div className="w-6 h-6 rounded-full border-2 border-t-transparent border-[var(--theme-accent,#9B59B6)] animate-spin" />
+                );
+                textClass = 'text-white font-medium';
+                containerClass += ' scale-[1.02]';
+                break;
+            case 'error':
+                icon = (
+                    <div className="w-6 h-6 rounded-full bg-red-500/20 flex items-center justify-center">
+                        <svg className="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </div>
+                );
+                textClass = 'text-red-400 font-medium';
+                break;
+            default: // pending
+                icon = (
+                    <div className="w-6 h-6 rounded-full border-2 border-white/20" />
+                );
+        }
 
         return (
-            <div className="mt-8 w-full space-y-4 animate-fade-in">
-                {stages.map((stage) => {
-                    let icon = (
-                        <div className="w-6 h-6 rounded-full border-2 border-zinc-700 transition-colors" />
-                    );
-                    let color = 'text-zinc-500';
-                    let animate = '';
-                    let textClass = 'font-normal opacity-60';
-
-                    if (stage.status === 'completed') {
-                        icon = <span className="text-xl">✅</span>;
-                        color = 'text-green-400';
-                        textClass = 'font-medium text-green-400 opacity-90 line-through decoration-green-400/30';
-                    } else if (stage.status === 'loading') {
-                        icon = (
-                            <div className="w-6 h-6 border-2 border-t-transparent border-[var(--theme-accent)] rounded-full animate-spin" />
-                        );
-                        color = 'text-[var(--theme-accent)]';
-                        animate = 'scale-105';
-                        textClass = 'font-bold text-white';
-                    } else if (stage.status === 'error') {
-                        icon = <span className="text-xl">❌</span>;
-                        color = 'text-red-500';
-                        textClass = 'font-bold text-red-500';
-                    }
-
-                    return (
-                        <div key={stage.id} className={`flex items-center gap-4 transition-all duration-300 ${color} ${animate}`}>
-                            <div className="flex-shrink-0 w-8 flex justify-center">{icon}</div>
-                            <span className={`text-lg transition-all ${textClass}`}>
-                                {stage.label}
-                            </span>
-                        </div>
-                    );
-                })}
+            <div
+                key={stage.id}
+                className={`flex items-center gap-4 py-2 ${containerClass}`}
+                style={{ animationDelay: `${index * 100}ms` }}
+            >
+                <div className="flex-shrink-0 w-8 flex justify-center">
+                    {icon}
+                </div>
+                <div className="flex-1 min-w-0">
+                    <span className={`text-sm transition-all ${textClass}`}>
+                        {stage.label}
+                    </span>
+                    {stage.error && (
+                        <p className="text-xs text-red-400/70 mt-0.5">{stage.error}</p>
+                    )}
+                </div>
             </div>
         );
     };
 
+    const hasStages = stages.length > 0;
+    const visibleStages = stages.slice(0, 5);
+    const hasMoreStages = stages.length > 5;
+
     return (
-        <div className="fixed inset-0 flex flex-col items-center justify-center z-[2000] overflow-hidden bg-black text-white font-sans"
-            style={{ backgroundColor: '#000000', color: '#fff' }}>
-
-            {/* Dark Grid Background Pattern */}
-            <div className="absolute inset-0 opacity-[0.1] pointer-events-none"
-                style={{
-                    backgroundImage: 'linear-gradient(#333 1px, transparent 1px), linear-gradient(90deg, #333 1px, transparent 1px)',
-                    backgroundSize: '40px 40px'
-                }}
-            />
-
-            {/* Animated Floating Tools (Subtle & Dark) */}
-            <style>{`
-                @keyframes float-slow {
-                    0%, 100% { transform: translateY(0px) rotate(0deg); }
-                    50% { transform: translateY(-20px) rotate(5deg); }
-                }
-                .bg-icon { animation: float-slow 8s ease-in-out infinite; opacity: 0.15; filter: grayscale(100%); }
-            `}</style>
-
-            <div className="absolute inset-0 pointer-events-none overflow-hidden select-none">
-                <div className="absolute bg-icon text-9xl top-10 -left-10" style={{ animationDelay: '0s' }}>🎨</div>
-                <div className="absolute bg-icon text-8xl bottom-20 -right-10" style={{ animationDelay: '2s' }}>✏️</div>
-                <div className="absolute bg-icon text-6xl top-1/4 right-20" style={{ animationDelay: '4s' }}>🖍️</div>
+        <div
+            className="fixed inset-0 flex flex-col items-center justify-center z-[2000] overflow-hidden"
+            style={{
+                backgroundColor: 'var(--theme-bg, #000000)',
+                color: 'var(--theme-text, #ffffff)'
+            }}
+        >
+            {/* Animated Background - Gradient Circles (matching HomeScreen) */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+                <div className="absolute top-[-15%] right-[-15%] w-[60%] h-[60%] bg-purple-500/20 rounded-full blur-[120px] animate-[pulse_8s_ease-in-out_infinite]" />
+                <div className="absolute bottom-[-15%] left-[-15%] w-[70%] h-[70%] bg-blue-500/20 rounded-full blur-[120px] animate-[pulse_12s_ease-in-out_infinite_2s]" />
+                {/* Floating particles */}
+                <div className="absolute top-1/4 left-1/4 w-3 h-3 rounded-full bg-white/10 animate-[float_8s_ease-in-out_infinite]" />
+                <div className="absolute top-3/4 right-1/4 w-4 h-4 rounded-full bg-white/10 animate-[float_12s_ease-in-out_infinite_1s]" />
+                <div className="absolute top-1/2 left-1/2 w-2 h-2 rounded-full bg-white/10 animate-[float_10s_ease-in-out_infinite_3s]" />
             </div>
 
-            {/* Main Content Area */}
-            <div className="relative z-10 flex flex-col items-center max-w-md w-full px-6">
+            {/* Main Content */}
+            <div className="relative z-10 flex flex-col items-center max-w-sm w-full px-6">
 
-                {/* 1. Main Spinner */}
-                <div className="mb-8 relative transition-all duration-500 scale-90">
-                    {/* Outer ring */}
-                    <div className="w-20 h-20 rounded-full border-8 border-zinc-800"></div>
-                    {/* Spinner */}
-                    <div className="absolute top-0 left-0 w-20 h-20 rounded-full border-8 border-t-[var(--theme-accent,orange)] border-r-transparent border-b-transparent border-l-transparent animate-spin"></div>
+                {/* Spinner with glow effect */}
+                <div className={`mb-8 relative ${hasStages ? 'scale-75' : 'scale-100'} transition-transform duration-500`}>
+                    {/* Glow behind spinner */}
+                    <div className="absolute inset-0 bg-[var(--theme-accent,#9B59B6)] rounded-full blur-xl opacity-30 animate-pulse" />
+                    {/* Spinner track */}
+                    <div className="relative w-16 h-16 rounded-full border-4 border-white/10" />
+                    {/* Spinner indicator */}
+                    <div className="absolute top-0 left-0 w-16 h-16 rounded-full border-4 border-t-[var(--theme-accent,#9B59B6)] border-r-transparent border-b-transparent border-l-transparent animate-spin" />
                 </div>
 
-                {/* 2. Headline */}
-                <h2 className="text-2xl font-black mb-2 tracking-wide text-center uppercase text-white animate-pulse">
-                    {stages ? 'Connecting...' : 'Loading...'}
+                {/* Headline */}
+                <h2 className="text-xl font-bold mb-6 tracking-wide text-center" style={{ color: 'var(--theme-text)' }}>
+                    {!isOnline ? 'Reconnecting...' : (hasStages ? 'Loading...' : 'Please wait...')}
                 </h2>
 
-                {/* 3. Smart Content (Checklist + Tips) - Always Visible now */}
-                <div className="w-full flex flex-col items-center animate-slide-up-fade">
-
-                    {/* Checklist */}
-                    {renderChecklist()}
-
-                    {/* Tip Box */}
-                    <div className="mt-12 w-full p-6 bg-zinc-900/50 rounded-xl border border-zinc-800 shadow-sm text-center backdrop-blur-sm">
-                        <p className="text-zinc-400 font-medium italic text-lg leading-relaxed">
-                            {tip}
-                        </p>
-                    </div>
-                </div>
-
-                {/* 4. Slow Network & Stuck Actions */}
-                {isReallySlow && stages && (
-                    <div className="mt-6 animate-fade-in bg-yellow-900/20 text-yellow-500 px-4 py-3 rounded-xl text-sm font-bold border border-yellow-700/30 flex items-center gap-2 shadow-sm">
-                        <span className="text-2xl">🐢</span>
+                {/* Network Status Warnings */}
+                {!isOnline && (
+                    <div className="w-full mb-6 glass-panel p-4 rounded-2xl flex items-center gap-3 animate-pulse border-red-500/30" style={{ backgroundColor: 'rgba(220, 38, 38, 0.15)' }}>
+                        <span className="text-2xl">📡</span>
                         <div>
-                            Slow connection detected...
-                            <div className="font-normal text-xs opacity-80">Hang tight!</div>
+                            <p className="font-bold text-red-400">Lost connection to server!</p>
+                            <p className="text-sm text-red-300/60">Check your network connection</p>
                         </div>
                     </div>
                 )}
 
+                {isOnline && isSlow && (
+                    <div className="w-full mb-6 glass-panel p-4 rounded-2xl flex items-center gap-3 border-yellow-500/30" style={{ backgroundColor: 'rgba(234, 179, 8, 0.1)' }}>
+                        <span className="text-2xl">🐢</span>
+                        <div>
+                            <p className="font-bold text-yellow-400">Slow connection detected</p>
+                            <p className="text-sm text-yellow-300/60">Be patient, this may take a moment</p>
+                        </div>
+                    </div>
+                )}
+
+                {/* Stages List - Glass Panel Style */}
+                {hasStages && (
+                    <div
+                        className="w-full backdrop-blur-xl rounded-2xl border border-white/10 p-4 mb-6 max-h-52 overflow-y-auto"
+                        style={{ backgroundColor: 'rgba(255, 255, 255, 0.03)' }}
+                    >
+                        <div className="space-y-1">
+                            {visibleStages.map((stage, i) => renderStageItem(stage, i))}
+                        </div>
+                        {hasMoreStages && (
+                            <p className="text-xs text-white/30 text-center mt-3">
+                                +{stages.length - 5} more tasks...
+                            </p>
+                        )}
+                    </div>
+                )}
+
+                {/* Tip - Glass Card */}
+                <div
+                    className="w-full p-4 backdrop-blur-md rounded-xl border border-white/5 text-center"
+                    style={{ backgroundColor: 'rgba(255, 255, 255, 0.02)' }}
+                >
+                    <p className="text-white/40 text-sm italic leading-relaxed">
+                        {tip}
+                    </p>
+                </div>
+
+                {/* Stuck Button */}
                 {showStuckButton && onGoHome && (
                     <button
                         onClick={onGoHome}
-                        className="mt-8 py-2 px-6 rounded-full bg-zinc-800 hover:bg-red-900/30 text-zinc-500 hover:text-red-400 text-xs font-bold uppercase tracking-wider transition-colors animate-fade-in"
+                        className="mt-6 py-2 px-6 rounded-full backdrop-blur-md border border-white/10 text-white/40 hover:text-red-400 hover:border-red-500/30 text-xs font-bold uppercase tracking-wider transition-all active:scale-95"
+                        style={{ backgroundColor: 'rgba(255, 255, 255, 0.03)' }}
                     >
-                        Stuck? Reload App 🔄
+                        Stuck? Reload App
                     </button>
                 )}
-
             </div>
         </div>
     );
