@@ -166,7 +166,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 </div>
 
                 {/* Bottom Bar: Match History & Footer */}
-                <div className="shrink-0 pt-2 flex flex-col items-center gap-4">
+                <div className="shrink-0 pt-6 flex flex-col items-center gap-4">
                     {/* Match History Button */}
                     <button
                         onClick={onGallery}
