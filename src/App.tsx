@@ -132,11 +132,13 @@ const App = () => {
   type LoadingScenario = 'initial' | 'join' | 'start' | 'upload' | 'results';
   const [loadingScenario, setLoadingScenario] = useState<LoadingScenario | null>('initial');
   const [loadingStages, setLoadingStages] = useState<LoadingStage[]>([]);
+  const loadingStartTimeRef = useRef<number>(0);
 
   // Initialize checklist based on scenario
   const startLoading = useCallback((scenario: LoadingScenario) => {
     setLoadingScenario(scenario);
     setIsLoading(true);
+    loadingStartTimeRef.current = Date.now();
 
     let stages: LoadingStage[] = [];
     if (scenario === 'initial') {
@@ -187,9 +189,21 @@ const App = () => {
       }
     },
     onComplete: () => {
-      setIsLoading(false);
+      stopLoadingWithDelay();
     }
   });
+
+  const stopLoadingWithDelay = useCallback(() => {
+    const elapsed = Date.now() - loadingStartTimeRef.current;
+    const minDelay = 300; // Minimum 300ms loading time per user request
+    const remaining = Math.max(0, minDelay - elapsed);
+
+    if (remaining > 0) {
+      setTimeout(() => setIsLoading(false), remaining);
+    } else {
+      setIsLoading(false);
+    }
+  }, []);
 
   // Initialize default loading stages on mount (for initial load)
   useEffect(() => {
@@ -993,11 +1007,9 @@ const App = () => {
         // setRoom(newRoom); // Optimistic set to avoid flicker - useRoom hook handles this
 
         // Wait a tick for verify
-        setTimeout(() => {
-          updateLoadingStage('verify', 'completed');
-          // Transition Logic is handled by useRoom effect
-          setIsLoading(false);
-        }, 500);
+        updateLoadingStage('verify', 'completed');
+        // Transition Logic is handled by useRoom effect
+        stopLoadingWithDelay();
 
       } else {
         showError('Room not found or full');
@@ -1037,7 +1049,7 @@ const App = () => {
 
       // Let the natural room updates clear the loading screen
       // But ensure we clear it if update comes fast
-      setTimeout(() => setIsLoading(false), 800);
+      setTimeout(() => stopLoadingWithDelay(), 800);
 
     } catch (err) {
       console.error('Failed to start game:', err);
@@ -1069,7 +1081,7 @@ const App = () => {
 
       // Clear loading state immediately - don't wait for room status update
       // This prevents stuck loading screen for host
-      setIsLoading(false);
+      stopLoadingWithDelay();
 
     } catch (err: any) {
       console.error('Upload failed:', err);
