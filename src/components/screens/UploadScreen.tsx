@@ -86,7 +86,7 @@ export const UploadScreen: React.FC<UploadScreenProps> = ({
                         <div className="space-y-6">
                             <div className="flex justify-center">
                                 <AvatarDisplay
-                                    strokes={uploader?.avatarStrokes}
+                                    strokes={uploader?.avatarStrokes || []}
                                     avatar={uploader?.avatar}
                                     frame={uploader?.frame}
                                     color={uploader?.color}
@@ -96,8 +96,8 @@ export const UploadScreen: React.FC<UploadScreenProps> = ({
                                 />
                             </div>
 
-                            <div className="text-xl font-bold" style={{ color: 'var(--theme-text)' }}>
-                                Waiting for <span style={{ color: isDarkMode ? 'var(--theme-text)' : uploader?.color }}>{uploaderName}</span>...
+                            <div className="text-xl font-bold" style={{ color: 'var(--theme-text-secondary)' }}>
+                                Waiting for <span style={{ color: uploader?.color, fontWeight: 'bold' }}>{uploaderName}</span>...
                             </div>
 
                             <div className="font-bold animate-pulse" style={{ color: 'var(--theme-text-secondary)' }}>
@@ -110,3 +110,4 @@ export const UploadScreen: React.FC<UploadScreenProps> = ({
         </div>
     );
 };
+```
