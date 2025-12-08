@@ -29,45 +29,52 @@
     }
 }
 
-/* Backdrop Blur Animation */
+/* Backdrop Blur Animation - Optimized for smooth performance */
+/* Only animate opacity, apply blur instantly (blur animation causes lag) */
 @keyframes backdrop-blur-in {
     from {
-        backdrop-filter: blur(0px);
-        background-color: transparent;
+        opacity: 0;
     }
 
     to {
-        backdrop-filter: blur(12px);
-        background-color: rgba(0, 0, 0, 0.5);
+        opacity: 1;
     }
 }
 
 @keyframes backdrop-blur-out {
     from {
-        backdrop-filter: blur(12px);
-        background-color: rgba(0, 0, 0, 0.5);
+        opacity: 1;
     }
 
     to {
-        backdrop-filter: blur(0px);
-        background-color: transparent;
+        opacity: 0;
     }
 }
 
 .modal-slide-up {
     animation: modal-slide-up 250ms cubic-bezier(0.32, 0.72, 0, 1) forwards;
+    will-change: transform, opacity;
 }
 
 .modal-slide-down {
     animation: modal-slide-down 200ms cubic-bezier(0.32, 0.72, 0, 1) forwards;
+    will-change: transform, opacity;
 }
 
 .backdrop-blur-in {
-    animation: backdrop-blur-in 250ms ease-out forwards;
+    /* Apply blur instantly, only animate opacity for smooth performance */
+    backdrop-filter: blur(12px);
+    background-color: rgba(0, 0, 0, 0.5);
+    animation: backdrop-blur-in 200ms ease-out forwards;
+    will-change: opacity;
 }
 
 .backdrop-blur-out {
-    animation: backdrop-blur-out 200ms ease-in forwards;
+    /* Keep blur during exit, only animate opacity */
+    backdrop-filter: blur(12px);
+    background-color: rgba(0, 0, 0, 0.5);
+    animation: backdrop-blur-out 150ms ease-in forwards;
+    will-change: opacity;
 }
 
 /* ========================== */
@@ -338,18 +345,22 @@
 
 .screen-fade-in {
     animation: screen-fade-in 200ms ease-out forwards;
+    will-change: opacity, transform;
 }
 
 .screen-fade-out {
     animation: screen-fade-out 150ms ease-in forwards;
+    will-change: opacity, transform;
 }
 
 .screen-slide-left {
     animation: screen-slide-left 200ms cubic-bezier(0.32, 0.72, 0, 1) forwards;
+    will-change: transform, opacity;
 }
 
 .screen-slide-right {
     animation: screen-slide-right 200ms cubic-bezier(0.32, 0.72, 0, 1) forwards;
+    will-change: transform, opacity;
 }
 
 /* ========================== */
@@ -382,25 +393,26 @@
 
 .popup-scale-in {
     animation: popup-scale-in 200ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    will-change: transform, opacity;
 }
 
 .popup-scale-out {
     animation: popup-scale-out 150ms ease-in forwards;
+    will-change: transform, opacity;
 }
 
 /* ========================== */
 /* GLOBAL SCREEN BLUR         */
 /* ========================== */
 
+/* Optimized: Only animate opacity and transform, apply filter instantly */
 @keyframes global-blur-out {
     from {
-        filter: blur(0px);
         opacity: 1;
         transform: scale(1);
     }
 
     to {
-        filter: blur(8px);
         opacity: 0.7;
         transform: scale(0.99);
     }
@@ -408,13 +420,11 @@
 
 @keyframes global-blur-in {
     from {
-        filter: blur(8px);
         opacity: 0.7;
         transform: scale(1.01);
     }
 
     to {
-        filter: blur(0px);
         opacity: 1;
         transform: scale(1);
     }
@@ -423,14 +433,18 @@
 .global-blur-transition {
     width: 100%;
     min-height: 100vh;
-    will-change: filter, opacity, transform;
+    will-change: opacity, transform;
 }
 
 .global-blur-blur-out {
+    /* Apply filter instantly, only animate opacity and transform */
+    filter: blur(8px);
     animation: global-blur-out var(--blur-duration, 100ms) ease-out forwards;
 }
 
 .global-blur-blur-in {
+    /* Remove filter instantly when animation starts */
+    filter: blur(0px);
     animation: global-blur-in var(--blur-duration, 100ms) ease-out forwards;
 }
 

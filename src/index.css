@@ -90,10 +90,14 @@ body.light-mode {
 }
 
 .glass-button {
-  @apply backdrop-blur-sm border transition-all active:scale-95;
+  @apply backdrop-blur-sm border active:scale-95;
   background-color: var(--glass-bg);
   border-color: var(--glass-border);
   color: var(--glass-text);
+  transition: background-color 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+  will-change: transform;
 }
 
 .glass-button:hover {
@@ -418,12 +422,14 @@ input,
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  transition: all 0.2s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  transition: transform 0.2s cubic-bezier(0.68, -0.55, 0.265, 1.55),
+    box-shadow 0.2s cubic-bezier(0.68, -0.55, 0.265, 1.55);
   box-shadow:
     0 4px 0 rgba(0, 0, 0, 0.2),
     0 8px 20px rgba(0, 0, 0, 0.15),
     inset 0 2px 0 rgba(255, 255, 255, 0.3);
   transform: translateY(0);
+  will-change: transform;
 }
 
 .btn-90s:hover {
@@ -534,10 +540,13 @@ input,
   padding: 1rem 1.5rem;
   font-size: 1.25rem;
   font-weight: 600;
-  transition: all 0.3s ease;
+  transition: border-color 0.3s ease,
+    box-shadow 0.3s ease,
+    transform 0.3s ease;
   box-shadow:
     0 4px 0 rgba(155, 89, 182, 0.3),
     inset 0 2px 4px rgba(0, 0, 0, 0.1);
+  will-change: transform;
 }
 
 .input-90s:focus {
