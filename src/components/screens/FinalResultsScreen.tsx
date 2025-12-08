@@ -141,7 +141,7 @@ export const FinalResultsScreen: React.FC<FinalResultsScreenProps> = ({
 
     return (
         <div
-            className={`min-h-[100dvh] w-full flex flex-col items-center p-4 relative overflow-x-hidden ${mounted ? 'pop-in' : 'opacity-0'}`}
+            className={`min-h-[100dvh] h-[100dvh] w-full flex flex-col items-center p-4 relative overflow-x-hidden overflow-y-auto ${mounted ? 'pop-in' : 'opacity-0'}`}
             style={{
                 paddingTop: 'max(1.5rem, env(safe-area-inset-top) + 1rem)',
                 paddingBottom: 'max(2rem, env(safe-area-inset-bottom) + 1rem)',
