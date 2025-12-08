@@ -550,6 +550,14 @@ const App = () => {
         if (status === 'uploading') setCurrentScreen(shouldShowWaitingRoom ? 'waiting' : 'uploading');
         else if (status === 'sabotage-selection') setCurrentScreen('sabotage-selection');
         else if (status === 'drawing') {
+          // Safeguard: Only transition to drawing if playerStates are properly initialized
+          // This prevents race conditions where status changes before playerStates are set
+          const hasPlayerState = room.playerStates && player?.id && room.playerStates[player.id];
+          if (!hasPlayerState) {
+            console.warn('Drawing status changed but playerState not yet initialized, deferring screen sync');
+            return; // Skip this sync cycle, will catch it on next update
+          }
+
           setCurrentScreen(shouldShowWaitingRoom ? 'waiting' : 'drawing');
           if (!shouldShowWaitingRoom) {
             setStrokes([]);
@@ -1047,7 +1055,10 @@ const App = () => {
       await StorageService.startRound(roomCode, imageUrl, player.id);
 
       updateLoadingStage('verify', 'completed');
-      // Loading cleared by room status update
+
+      // Clear loading state immediately - don't wait for room status update
+      // This prevents stuck loading screen for host
+      setIsLoading(false);
 
     } catch (err: any) {
       console.error('Upload failed:', err);
@@ -1287,6 +1298,18 @@ const App = () => {
           }
         });
       }
+      // Handle Friend Request
+      else if (payload?.data?.type === 'friend_request') {
+        const { fromUsername } = payload.data;
+        showToast(`Friend Request from ${fromUsername}! 👋`, 'info', {
+          label: 'VIEW',
+          onClick: () => {
+            // Open friends panel to requests tab
+            // The FriendsPanel will automatically show the new request via real-time subscription
+            vibrate();
+          }
+        });
+      }
     });
     return () => unsubscribe();
   }, [showToast, handleJoinRoom]);
@@ -1334,7 +1357,7 @@ const App = () => {
 
       {/* Global Background - Applied to all screens */}
       {/* Note: User requested safe storage of this background with subtle settings for screens */}
-      <MonogramBackground speed="slow" blur="sm" opacity={0.15} />
+      <MonogramBackground speed="slow" blur="none" opacity={0.15} />
 
       {/* Main Router with Transitions */}
       <GlobalBlurTransition screenKey={currentScreen}>

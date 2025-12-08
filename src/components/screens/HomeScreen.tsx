@@ -52,13 +52,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 paddingBottom: 'max(1rem, env(safe-area-inset-bottom))'
             }}
         >
-            {/* Animated Background Elements */}
+            {/* Animated Background Elements - Gradient Circles HEAVILY BLURRED */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none z-0 fixed">
-                <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-purple-500/10 rounded-full blur-[100px] animate-[pulse_10s_ease-in-out_infinite]" />
-                <div className="absolute bottom-[-10%] left-[-10%] w-[60%] h-[60%] bg-blue-500/10 rounded-full blur-[100px] animate-[pulse_15s_ease-in-out_infinite_2s]" />
+                <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-purple-500/20 rounded-full blur-[120px] animate-[pulse_10s_ease-in-out_infinite]" />
+                <div className="absolute bottom-[-10%] left-[-10%] w-[60%] h-[60%] bg-blue-500/20 rounded-full blur-[120px] animate-[pulse_15s_ease-in-out_infinite_2s]" />
                 {/* Floating particles */}
-                <div className="absolute top-1/4 left-1/4 w-4 h-4 rounded-full bg-white/5 animate-[float_8s_ease-in-out_infinite]" />
-                <div className="absolute top-3/4 right-1/4 w-6 h-6 rounded-full bg-white/5 animate-[float_12s_ease-in-out_infinite_1s]" />
+                <div className="absolute top-1/4 left-1/4 w-4 h-4 rounded-full bg-white/10 animate-[float_8s_ease-in-out_infinite]" />
+                <div className="absolute top-3/4 right-1/4 w-6 h-6 rounded-full bg-white/10 animate-[float_12s_ease-in-out_infinite_1s]" />
             </div>
 
             {/* Content Container - Flex Column with careful spacing */}
@@ -81,7 +81,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                             <FriendsPanel
                                 player={player}
                                 onJoinRoom={onRejoin}
-                                className="w-full h-full !rounded-[2.5rem] !bg-black/40 border-2 !border-green-500/20 hover:!border-green-500/40 cursor-pointer active:scale-95"
+                                className="w-full h-full !rounded-[2.5rem] !bg-black/30 border-2 !border-green-500/20 hover:!border-green-500/40 cursor-pointer active:scale-95 !backdrop-blur-3xl"
                                 style={{
                                     boxShadow: '0 0 20px rgba(34, 197, 94, 0.05)'
                                 }}
@@ -91,9 +91,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                         {/* Play Button - Right Side (Special & Glowing) */}
                         <button
                             onClick={onPlay}
-                            className="relative group overflow-hidden rounded-[2.5rem] shadow-2xl border-4 transform transition-all duration-300 hover:scale-[1.02] active:scale-95 flex flex-col items-center justify-center p-4"
+                            className="relative group overflow-hidden rounded-[2.5rem] shadow-2xl border-4 transform transition-all duration-300 hover:scale-[1.02] active:scale-95 flex flex-col items-center justify-center p-4 backdrop-blur-xl"
                             style={{
-                                backgroundColor: 'var(--theme-card-bg)',
+                                backgroundColor: 'rgba(0, 0, 0, 0.3)',
                                 borderColor: 'var(--theme-accent)',
                                 boxShadow: '0 0 50px -10px var(--theme-accent-glow), 0 20px 40px -10px rgba(0,0,0,0.6)'
                             }}
@@ -115,7 +115,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                     {lastGameDetails && onRejoin && (
                         <button
                             onClick={() => onRejoin(lastGameDetails.roomCode)}
-                            className="w-full bg-orange-500/10 rounded-2xl p-3 border-2 border-orange-500/30 flex items-center justify-between group active:scale-95 transition-all shrink-0"
+                            className="w-full bg-orange-500/10 backdrop-blur-xl rounded-2xl p-3 border-2 border-orange-500/30 flex items-center justify-between group active:scale-95 transition-all shrink-0"
                         >
                             <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center text-xl group-hover:rotate-12 transition-transform shadow-lg">
@@ -142,7 +142,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                                 key={card.id}
                                 onClick={card.onClick}
                                 className={`
-                                    bg-white/5 backdrop-blur-md rounded-3xl p-4 shadow-lg border border-white/10
+                                    bg-white/[0.02] backdrop-blur-md rounded-3xl p-4 shadow-lg border border-white/10
                                     transform transition-all duration-200 hover:scale-[1.02] active:scale-95
                                     flex flex-col items-center justify-center gap-3 group relative
                                 `}
@@ -170,7 +170,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                     {/* Match History Button */}
                     <button
                         onClick={onGallery}
-                        className="w-full bg-white/5 hover:bg-white/10 rounded-2xl p-3 border border-white/10 flex items-center justify-between group active:scale-95 transition-all backdrop-blur-sm"
+                        className="w-full bg-white/5 hover:bg-white/10 rounded-2xl p-3 border border-white/10 flex items-center justify-between group active:scale-95 transition-all backdrop-blur-xl"
                     >
                         <div className="flex items-center gap-3">
                             <div className="w-8 h-8 bg-pink-500/20 rounded-lg flex items-center justify-center text-sm group-hover:scale-110 transition-transform">

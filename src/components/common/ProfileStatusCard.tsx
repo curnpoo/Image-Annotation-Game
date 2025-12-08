@@ -21,7 +21,7 @@ export const ProfileStatusCard: React.FC<ProfileStatusCardProps> = ({ player, on
     return (
         <div
             onClick={onClick}
-            className="rounded-[2rem] p-3 shadow-xl relative overflow-hidden transition-all hover:scale-[1.01] cursor-pointer bg-white/5 backdrop-blur-sm border border-white/10 group"
+            className="rounded-[2rem] p-3 shadow-xl relative overflow-hidden transition-all hover:scale-[1.01] cursor-pointer bg-black/30 backdrop-blur-3xl border border-white/10 group"
             style={{
                 boxShadow: `0 4px 20px -5px ${tier.color}40`,
                 borderColor: `${tier.color}40`

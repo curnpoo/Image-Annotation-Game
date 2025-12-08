@@ -740,11 +740,17 @@ export const StorageService = {
         const block = StorageService.generateBlock();
 
         return StorageService.updateRoom(roomCode, (r) => {
-            // Reset player states for new round
+            // Reset player states for new round - ensure ALL players get an entry
             const playerStates: { [id: string]: PlayerState } = {};
             r.players.forEach(p => {
                 playerStates[p.id] = { status: 'waiting' };
             });
+
+            // Validation: Ensure no players are missing from playerStates
+            const missingPlayers = r.players.filter(p => !playerStates[p.id]);
+            if (missingPlayers.length > 0) {
+                console.warn('startRound: Some players missing from playerStates:', missingPlayers.map(p => p.id));
+            }
 
             // 20% chance for double points round
             const isDoublePoints = Math.random() < 0.2;

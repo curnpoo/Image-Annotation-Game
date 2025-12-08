@@ -67,30 +67,30 @@ body {
   transition: background 0.5s ease, color 0.5s ease;
 
   /* Default Glass Variables (Dark Mode Default) */
-  --glass-bg: rgba(0, 0, 0, 0.4);
-  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-bg: rgba(0, 0, 0, 0.65);
+  --glass-border: rgba(255, 255, 255, 0.15);
   --glass-text: #ffffff;
-  --glass-text-secondary: rgba(255, 255, 255, 0.6);
+  --glass-text-secondary: rgba(255, 255, 255, 0.7);
 }
 
 /* Light Mode Override (if body has .light-mode class) */
 body.light-mode {
-  --glass-bg: rgba(255, 255, 255, 0.2);
-  --glass-border: rgba(255, 255, 255, 0.3);
+  --glass-bg: rgba(255, 255, 255, 0.45);
+  --glass-border: rgba(255, 255, 255, 0.4);
   --glass-text: #1a1a1a;
-  --glass-text-secondary: rgba(0, 0, 0, 0.6);
+  --glass-text-secondary: rgba(0, 0, 0, 0.7);
 }
 
 /* Semantic Glass Utilities */
 .glass-panel {
-  @apply backdrop-blur-md shadow-xl border;
+  @apply backdrop-blur-2xl shadow-xl border;
   background-color: var(--glass-bg);
   border-color: var(--glass-border);
   color: var(--glass-text);
 }
 
 .glass-button {
-  @apply backdrop-blur-sm border active:scale-95;
+  @apply backdrop-blur-lg border active:scale-95;
   background-color: var(--glass-bg);
   border-color: var(--glass-border);
   color: var(--glass-text);

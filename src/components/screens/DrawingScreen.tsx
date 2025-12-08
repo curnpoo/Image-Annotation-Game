@@ -66,8 +66,10 @@ export const DrawingScreen: React.FC<DrawingScreenProps> = ({
     handleColorPick,
     strokes
 }) => {
-    const playerState = room.playerStates[player.id];
-    const hasSubmitted = playerState?.status === 'submitted';
+    const playerState = room.playerStates?.[player.id];
+    // Defensive check: only show submitted state if playerState exists AND status is explicitly 'submitted'
+    // This prevents race conditions during upload→drawing transitions
+    const hasSubmitted = playerState?.status === 'submitted' || false;
 
     // Effect: Lock scrolling and gestures
     useEffect(() => {
