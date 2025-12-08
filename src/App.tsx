@@ -553,15 +553,15 @@ const App = () => {
           // Safeguard: Only transition to drawing if playerStates are properly initialized
           // This prevents race conditions where status changes before playerStates are set
           const hasPlayerState = room.playerStates && player?.id && room.playerStates[player.id];
-          if (!hasPlayerState) {
+          if (hasPlayerState) {
+            setCurrentScreen(shouldShowWaitingRoom ? 'waiting' : 'drawing');
+            if (!shouldShowWaitingRoom) {
+              setStrokes([]);
+              setIsMyTimerRunning(false);
+            }
+          } else {
             console.warn('Drawing status changed but playerState not yet initialized, deferring screen sync');
-            return; // Skip this sync cycle, will catch it on next update
-          }
-
-          setCurrentScreen(shouldShowWaitingRoom ? 'waiting' : 'drawing');
-          if (!shouldShowWaitingRoom) {
-            setStrokes([]);
-            setIsMyTimerRunning(false);
+            // Don't return - let the effect continue to update refs and handle notifications
           }
         }
         else if (status === 'voting') setCurrentScreen(shouldShowWaitingRoom ? 'waiting' : 'voting');

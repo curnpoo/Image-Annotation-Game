@@ -1,0 +1,18 @@
+{
+    "platform": "react",
+    "code": {
+        "lang": "ts",
+        "scheme": "blackbox",
+        "reactRuntime": "classic"
+    },
+    "style": {
+        "scheme": "css"
+    },
+    "images": {
+        "scheme": "public-files",
+        "publicDir": "../public",
+        "publicUrlPrefix": "/"
+    },
+    "srcDir": "src/components/plasmic",
+    "defaultPlasmicDir": "./src/components/plasmic"
+}

@@ -12,6 +12,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@plasmicapp/host": "^1.0.229",
+    "@plasmicapp/loader-react": "^1.0.404",
     "firebase": "^12.6.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",

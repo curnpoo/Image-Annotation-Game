@@ -182,7 +182,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                     </button>
 
                     <div className="text-[var(--theme-text-secondary)] text-[10px] font-bold tracking-[0.2em] opacity-30">
-                        ANTIGRAVITY GAMES
+                        BORED AT WORK GAMES
                     </div>
                 </div>
             </div>
