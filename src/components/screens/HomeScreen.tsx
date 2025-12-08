@@ -45,16 +45,15 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
     return (
         <div
-            className={`fixed inset-0 overflow-hidden flex flex-col items-center select-none ${mounted ? 'pop-in' : 'opacity-0'}`}
+            className={`fixed inset-0 overflow-y-auto overflow-x-hidden flex flex-col items-center select-none ${mounted ? 'pop-in' : 'opacity-0'}`}
             style={{
                 backgroundColor: 'var(--theme-bg-primary)',
-                height: '100dvh',
                 paddingTop: 'max(1rem, env(safe-area-inset-top))',
                 paddingBottom: 'max(1rem, env(safe-area-inset-bottom))'
             }}
         >
             {/* Animated Background Elements */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+            <div className="absolute inset-0 overflow-hidden pointer-events-none z-0 fixed">
                 <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-purple-500/10 rounded-full blur-[100px] animate-[pulse_10s_ease-in-out_infinite]" />
                 <div className="absolute bottom-[-10%] left-[-10%] w-[60%] h-[60%] bg-blue-500/10 rounded-full blur-[100px] animate-[pulse_15s_ease-in-out_infinite_2s]" />
                 {/* Floating particles */}
@@ -63,7 +62,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             </div>
 
             {/* Content Container - Flex Column with careful spacing */}
-            <div className="flex-1 w-full max-w-md flex flex-col z-10 p-5 gap-4 h-full relative">
+            <div className="flex-1 w-full max-w-md flex flex-col z-10 p-5 gap-4 min-h-full relative justify-center">
 
                 {/* Top Section: Profile Only */}
                 <div className="flex flex-col gap-3 shrink-0">

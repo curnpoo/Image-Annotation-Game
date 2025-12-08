@@ -101,7 +101,7 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
     };
 
     return (
-        <div className="min-h-screen flex flex-col pb-safe overflow-y-auto px-4"
+        <div className="min-h-[100dvh] flex flex-col pb-safe overflow-y-auto px-4"
             style={{ paddingTop: 'max(1rem, env(safe-area-inset-top) + 0.5rem)' }}>
 
             <div className="w-full max-w-md mx-auto space-y-4 pb-8">
@@ -141,17 +141,23 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                         </div>
                         <ShareDropdown
                             roomCode={room.roomCode}
-                            className="flex-shrink-0"
-                            buttonClassName="w-12 h-12 flex items-center justify-center text-2xl rounded-xl border-2 transition-colors active:scale-95"
+                            className="flex-shrink-0 flex-1"
+                            buttonClassName="w-full h-full min-h-[60px] flex flex-col items-center justify-center p-2 rounded-xl border-2 transition-colors active:scale-95 gap-1"
                             buttonStyle={{
                                 backgroundColor: 'var(--theme-button-bg)',
                                 borderColor: 'var(--theme-border)',
                                 color: 'var(--theme-button-text)'
                             }}
+                            label={
+                                <div className="flex flex-col items-center leading-none">
+                                    <span className="text-xl mb-0.5">📤</span>
+                                    <span className="text-[10px] font-bold uppercase tracking-wider">Share</span>
+                                </div>
+                            }
                         />
                         <button
                             onClick={() => setShowInviteModal(true)}
-                            className="w-12 h-12 flex items-center justify-center text-2xl rounded-xl border-2 transition-all hover:scale-105 active:scale-95"
+                            className="flex-1 w-full h-full min-h-[60px] flex flex-col items-center justify-center p-2 rounded-xl border-2 transition-all hover:scale-105 active:scale-95 gap-1"
                             style={{
                                 backgroundColor: '#6366f1',
                                 borderColor: '#4f46e5',
@@ -159,7 +165,8 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                             }}
                             title="Invite Friends"
                         >
-                            📨
+                            <span className="text-xl leading-none mb-0.5">📨</span>
+                            <span className="text-[10px] font-bold uppercase tracking-wider leading-none">Invite</span>
                         </button>
                     </div>
                 </div>
@@ -174,7 +181,7 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                 )}
 
                 {/* Players Card */}
-                <div className="p-6 rounded-[2rem] shadow-xl min-h-[300px] flex flex-col"
+                <div className="p-6 rounded-[2rem] shadow-xl min-h-[200px] flex flex-col"
                     style={{
                         backgroundColor: 'var(--theme-card-bg)',
                         border: '2px solid var(--theme-border)'
@@ -313,7 +320,7 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                     onLeaveGame={onLeave}
                     onEndGame={isHost ? () => StorageService.closeRoom(room.roomCode) : undefined}
                     onKick={isHost ? (playerId: string) => StorageService.kickPlayer(room.roomCode, playerId) : undefined}
-
+                    onGoHome={onBack}
                 />
             )}
 

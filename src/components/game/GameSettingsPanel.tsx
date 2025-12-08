@@ -1,4 +1,5 @@
 import React from 'react';
+import { HorizontalPicker } from '../common/HorizontalPicker';
 import type { GameSettings } from '../../types';
 
 interface GameSettingsPanelProps {
@@ -7,7 +8,7 @@ interface GameSettingsPanelProps {
     isHost: boolean;
 }
 
-const TIMER_OPTIONS = [10, 20, 30, 60];
+const TIMER_OPTIONS = [10, 20, 30, 40, 50, 60];
 const ROUND_OPTIONS = [1, 3, 5, 7];
 
 export const GameSettingsPanel: React.FC<GameSettingsPanelProps> = ({
@@ -30,29 +31,16 @@ export const GameSettingsPanel: React.FC<GameSettingsPanelProps> = ({
                 <label className="text-sm font-medium" style={{ color: 'var(--theme-text-secondary)' }}>
                     ⏱️ Drawing Time
                 </label>
-                <div className="flex gap-2">
-                    {TIMER_OPTIONS.map((seconds) => (
-                        <button
-                            key={seconds}
-                            onClick={() => isHost && onSettingsChange({ timerDuration: seconds })}
-                            disabled={!isHost}
-                            className={`flex-1 py-1.5 px-2 rounded-full font-bold text-sm transition-all border ${settings.timerDuration === seconds
-                                ? 'scale-105'
-                                : isHost
-                                    ? 'hover:opacity-80'
-                                    : 'opacity-50 cursor-not-allowed'
-                                }`}
-                            style={{
-                                backgroundColor: settings.timerDuration === seconds ? '#F3E5AB' : 'transparent',
-                                borderColor: settings.timerDuration === seconds ? '#D4C596' : 'var(--theme-border)',
-                                color: settings.timerDuration === seconds ? '#4A3B2A' : 'var(--theme-text-secondary)',
-                                boxShadow: settings.timerDuration === seconds ? '0 3px 0 #D4C596' : 'none',
-                                transform: settings.timerDuration === seconds ? 'translateY(-2px)' : 'none'
-                            }}
-                        >
-                            {seconds}s
-                        </button>
-                    ))}
+                <div className="py-2">
+                    <HorizontalPicker
+                        min={10}
+                        max={60}
+                        value={settings.timerDuration}
+                        onChange={(val) => isHost && onSettingsChange({ timerDuration: val })}
+                        disabled={!isHost}
+                        options={TIMER_OPTIONS}
+                        suffix="s"
+                    />
                 </div>
             </div>
 
@@ -61,32 +49,17 @@ export const GameSettingsPanel: React.FC<GameSettingsPanelProps> = ({
                 <label className="text-sm font-medium" style={{ color: 'var(--theme-text-secondary)' }}>
                     🔄 Number of Rounds
                 </label>
-                <div className="flex gap-2">
-                    {ROUND_OPTIONS.map((rounds) => (
-                        <button
-                            key={rounds}
-                            onClick={() => isHost && onSettingsChange({ totalRounds: rounds })}
-                            disabled={!isHost}
-                            className={`flex-1 py-1.5 px-2 rounded-full font-bold text-sm transition-all border ${settings.totalRounds === rounds
-                                ? 'scale-105'
-                                : isHost
-                                    ? 'hover:opacity-80'
-                                    : 'opacity-50 cursor-not-allowed'
-                                }`}
-                            style={{
-                                backgroundColor: settings.totalRounds === rounds ? '#F3E5AB' : 'transparent',
-                                borderColor: settings.totalRounds === rounds ? '#D4C596' : 'var(--theme-border)',
-                                color: settings.totalRounds === rounds ? '#4A3B2A' : 'var(--theme-text-secondary)',
-                                boxShadow: settings.totalRounds === rounds ? '0 3px 0 #D4C596' : 'none',
-                                transform: settings.totalRounds === rounds ? 'translateY(-2px)' : 'none'
-                            }}
-                        >
-                            {rounds}
-                        </button>
-                    ))}
+                <div className="py-2">
+                    <HorizontalPicker
+                        min={1}
+                        max={7}
+                        value={settings.totalRounds}
+                        onChange={(val) => isHost && onSettingsChange({ totalRounds: val })}
+                        disabled={!isHost}
+                        options={ROUND_OPTIONS}
+                    />
                 </div>
             </div>
-
 
             {/* Sabotage Toggle */}
             <div className="flex items-center justify-between">
@@ -112,13 +85,11 @@ export const GameSettingsPanel: React.FC<GameSettingsPanelProps> = ({
                 </button>
             </div>
 
-            {
-                !isHost && (
-                    <p className="text-xs text-center italic" style={{ color: 'var(--theme-text-secondary)' }}>
-                        Only the host can change settings
-                    </p>
-                )
-            }
+            {!isHost && (
+                <p className="text-xs text-center italic" style={{ color: 'var(--theme-text-secondary)' }}>
+                    Only the host can change settings
+                </p>
+            )}
         </div >
     );
 };

@@ -39,7 +39,7 @@ body {
 
 /* Semantic Theme Variables */
 :root {
-  --bg-primary: var(--theme-bg, #0f766e);
+  --bg-primary: var(--theme-bg, #000000);
   --bg-secondary: var(--theme-bg-secondary, #f3f4f6);
   --text-primary: var(--theme-text, #ffffff);
   --text-secondary: var(--theme-text-secondary, #6b7280);
@@ -753,4 +753,8 @@ input,
 
 .animate-breathe {
   animation: breathe 4s ease-in-out infinite;
+}
+
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
 }

@@ -9,6 +9,7 @@ interface ShareDropdownProps {
     className?: string;
     buttonClassName?: string;
     buttonStyle?: React.CSSProperties;
+    label?: React.ReactNode;
 }
 
 export const ShareDropdown: React.FC<ShareDropdownProps> = ({
@@ -16,7 +17,8 @@ export const ShareDropdown: React.FC<ShareDropdownProps> = ({
     url,
     className = '',
     buttonClassName = '',
-    buttonStyle
+    buttonStyle,
+    label
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [showQR, setShowQR] = useState(false);
@@ -97,8 +99,14 @@ export const ShareDropdown: React.FC<ShareDropdownProps> = ({
                 className={`bg-white/10 hover:bg-white/20 text-[var(--theme-text)] px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 transition-all ${buttonClassName}`}
                 style={buttonStyle}
             >
-                <span className="text-lg">📤</span>
-                <span className="hidden sm:inline">Share</span>
+                {label ? (
+                    label
+                ) : (
+                    <>
+                        <span className="text-lg">📤</span>
+                        <span className="hidden sm:inline">Share</span>
+                    </>
+                )}
             </button>
 
             {/* Dropdown Menu */}

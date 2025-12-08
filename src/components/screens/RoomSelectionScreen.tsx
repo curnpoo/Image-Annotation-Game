@@ -86,7 +86,7 @@ export const RoomSelectionScreen: React.FC<RoomSelectionScreenProps> = ({
 
     return (
         <div
-            className="min-h-screen flex flex-col items-center justify-start p-4 relative overflow-y-auto overflow-x-hidden"
+            className="h-[100dvh] w-full flex flex-col items-center justify-start p-4 pb-safe relative overflow-y-auto overflow-x-hidden"
             style={{
                 paddingTop: 'max(2rem, env(safe-area-inset-top) + 1rem)',
                 backgroundColor: 'var(--theme-bg-primary)'

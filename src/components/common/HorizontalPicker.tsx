@@ -10,6 +10,7 @@ interface HorizontalPickerProps {
     prefix?: string;
     suffix?: string;
     disabled?: boolean;
+    options?: number[]; // Custom values to pick from
     maxAllowed?: number; // Max value user can select (e.g., based on balance)
 }
 
@@ -22,6 +23,7 @@ export const HorizontalPicker: React.FC<HorizontalPickerProps> = ({
     prefix = '',
     suffix = '',
     disabled = false,
+    options,
     maxAllowed
 }) => {
     const scrollRef = useRef<HTMLDivElement>(null);
@@ -29,9 +31,11 @@ export const HorizontalPicker: React.FC<HorizontalPickerProps> = ({
     const lastValueRef = useRef(value);
 
     // Generate values array
-    const values: number[] = [];
-    for (let i = min; i <= max; i += step) {
-        values.push(i);
+    const values: number[] = options || [];
+    if (!options) {
+        for (let i = min; i <= max; i += step) {
+            values.push(i);
+        }
     }
 
     // Find index of current value

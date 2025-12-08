@@ -851,6 +851,7 @@ const App = () => {
   async function handleJoinRoom(code: string) {
     if (!player) return;
 
+    setIsBrowsing(false);
     startLoading('join'); // Smart Loading Checklist
 
     // Explicitly update checklist for 'connect'
@@ -1355,7 +1356,10 @@ const App = () => {
 
       <NotificationPromptModal
         isOpen={showNotificationPrompt}
-        onEnable={requestPushPermission}
+        onEnable={() => {
+          setShowNotificationPrompt(false);
+          requestPushPermission();
+        }}
         onLater={() => setShowNotificationPrompt(false)}
       />
 
