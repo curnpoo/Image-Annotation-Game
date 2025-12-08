@@ -382,6 +382,7 @@ export const ScreenRouter: React.FC<ScreenRouterProps> = ({
                 currentPlayerId={player.id}
                 onVote={onVote}
                 showToast={showToast}
+                onShowSettings={onShowSettings}
             />;
 
         case 'results':

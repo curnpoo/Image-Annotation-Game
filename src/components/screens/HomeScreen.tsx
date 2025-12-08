@@ -65,37 +65,52 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             {/* Content Container - Flex Column with careful spacing */}
             <div className="flex-1 w-full max-w-md flex flex-col z-10 p-5 gap-4 h-full relative">
 
-                {/* Top Section: Profile & Friends */}
+                {/* Top Section: Profile Only */}
                 <div className="flex flex-col gap-3 shrink-0">
                     <div className="animate-in slide-in-from-top-4 fade-in duration-500 delay-100">
                         <ProfileStatusCard player={player} onClick={onLevelProgress} />
                     </div>
-
-                    <div className="animate-in slide-in-from-top-4 fade-in duration-500 delay-200">
-                        <FriendsPanel player={player} onJoinRoom={onRejoin} />
-                    </div>
                 </div>
 
                 {/* Main Action Grid - Expands to fill available space */}
-                <div className="flex-1 min-h-0 flex flex-col justify-center gap-4">
+                <div className="flex-1 min-h-0 flex flex-col justify-center gap-3">
 
-                    {/* Primary Action: PLAY - Takes up significant space */}
-                    <button
-                        onClick={onPlay}
-                        className="w-full relative group overflow-hidden rounded-[2rem] shadow-2xl border-4 transform transition-all duration-300 hover:scale-[1.02] active:scale-95 flex-1 min-h-[160px] max-h-[220px]"
-                        style={{
-                            backgroundColor: 'var(--theme-card-bg)', // Keep card bg
-                            borderColor: 'var(--theme-accent)',
-                            boxShadow: '0 20px 40px -10px rgba(0,0,0,0.5)'
-                        }}
-                    >
-                        <div className="absolute inset-0 bg-gradient-to-br from-[var(--theme-accent)]/10 to-transparent opacity-50 group-hover:opacity-100 transition-opacity" />
-                        <div className="absolute inset-0 flex flex-col items-center justify-center p-6 bg-white/5 backdrop-blur-[1px]">
-                            <div className="text-7xl mb-2 group-hover:rotate-12 group-hover:scale-110 transition-transform duration-300 drop-shadow-lg animate-[pulse_3s_infinite]">🎮</div>
-                            <div className="text-5xl font-black text-[var(--theme-text)] drop-shadow-md tracking-tight">PLAY</div>
-                            <div className="text-[var(--theme-text-secondary)] font-bold text-sm tracking-widest uppercase mt-2 opacity-80 group-hover:opacity-100">Start a new game</div>
+                    {/* Split Action Card: FRIENDS (Left) + PLAY (Right) */}
+                    <div className="grid grid-cols-2 gap-3 h-[210px] shrink-0">
+                        {/* Friends Panel - Left Side */}
+                        <div className="min-w-0 transition-all duration-300">
+                            <FriendsPanel
+                                player={player}
+                                onJoinRoom={onRejoin}
+                                className="h-full !rounded-[2.5rem] !bg-black/40 border-2 !border-green-500/20 hover:!border-green-500/40"
+                                style={{
+                                    boxShadow: '0 0 20px rgba(34, 197, 94, 0.05)'
+                                }}
+                            />
                         </div>
-                    </button>
+
+                        {/* Play Button - Right Side (Special & Glowing) */}
+                        <button
+                            onClick={onPlay}
+                            className="relative group overflow-hidden rounded-[2.5rem] shadow-2xl border-4 transform transition-all duration-300 hover:scale-[1.02] active:scale-95 flex flex-col items-center justify-center p-4"
+                            style={{
+                                backgroundColor: 'var(--theme-card-bg)',
+                                borderColor: 'var(--theme-accent)',
+                                boxShadow: '0 0 50px -10px var(--theme-accent-glow), 0 20px 40px -10px rgba(0,0,0,0.6)'
+                            }}
+                        >
+                            <div className="absolute inset-0 bg-gradient-to-br from-[var(--theme-accent)]/20 via-transparent to-transparent opacity-60 group-hover:opacity-100 transition-opacity" />
+                            <div className="absolute inset-0 bg-[var(--theme-accent)]/5 animate-pulse" />
+
+                            <div className="relative z-10 flex flex-col items-center justify-center gap-1">
+                                <div className="text-5xl mb-1 group-hover:rotate-12 group-hover:scale-110 transition-transform duration-300 drop-shadow-[0_4px_8px_rgba(0,0,0,0.5)]">🎮</div>
+                                <div className="text-3xl font-black text-[var(--theme-text)] drop-shadow-md tracking-tight">PLAY</div>
+                                <div className="text-[var(--theme-text-secondary)] font-bold text-[9px] tracking-[0.2em] uppercase opacity-80 group-hover:opacity-100 bg-black/20 px-2 py-1 rounded-full border border-white/5">
+                                    Start
+                                </div>
+                            </div>
+                        </button>
+                    </div>
 
                     {/* Rejoin Card (Conditional) */}
                     {lastGameDetails && onRejoin && (
@@ -116,8 +131,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                         </button>
                     )}
 
-                    {/* Secondary Actions Grid - Bento Style */}
-                    <div className="grid grid-cols-2 gap-3 shrink-0 h-[35%] max-h-[250px]">
+                    {/* Secondary Actions Grid - Bento Style (Adjusted for Pro/Max Sizing) */}
+                    <div className="grid grid-cols-2 gap-3 flex-1 min-h-[200px]">
                         {[
                             { id: 'casino', label: 'CASINO', emoji: '🎰', onClick: onCasino, delay: '100ms', color: 'text-yellow-400' },
                             { id: 'store', label: 'STORE', emoji: '🛒', onClick: onStore, delay: '200ms', color: 'text-purple-400' },
@@ -128,18 +143,18 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                                 key={card.id}
                                 onClick={card.onClick}
                                 className={`
-                                    bg-white/5 backdrop-blur-md rounded-2xl p-3 shadow-lg border border-white/10
-                                    transform transition-all duration-200 hover:scale-[1.03] active:scale-95 
-                                    flex flex-col items-center justify-center gap-2 group animate-in zoom-in fade-in fill-mode-backwards relative overflow-hidden
+                                    bg-white/5 backdrop-blur-md rounded-3xl p-4 shadow-lg border border-white/10
+                                    transform transition-all duration-200 hover:scale-[1.02] active:scale-95
+                                    flex flex-col items-center justify-center gap-3 group animate-in zoom-in fade-in fill-mode-backwards relative overflow-hidden
                                 `}
                                 style={{
                                     backgroundColor: 'var(--theme-card-bg)',
                                     animationDelay: card.delay
                                 }}
                             >
-                                <div className={`text-4xl group-hover:-translate-y-1 transition-transform duration-300 drop-shadow-md ${['settings', 'profile'].includes(card.id) ? '' : 'animate-[bounce_3s_infinite]'}`} style={{ animationDelay: `${i * 0.5}s` }}>{card.emoji}</div>
-                                <div className="text-xs font-bold font-black tracking-wider uppercase opacity-80 group-hover:opacity-100 transition-opacity" style={{ color: 'var(--theme-text)' }}>{card.label}</div>
-                                <div className={`absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl`}></div>
+                                <div className={`text-5xl group-hover:-translate-y-1 transition-transform duration-300 drop-shadow-md ${['settings', 'profile'].includes(card.id) ? '' : 'animate-[bounce_3s_infinite]'}`} style={{ animationDelay: `${i * 0.5}s` }}>{card.emoji}</div>
+                                <div className="text-sm font-black tracking-widest uppercase opacity-80 group-hover:opacity-100 transition-opacity" style={{ color: 'var(--theme-text)' }}>{card.label}</div>
+                                <div className={`absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-3xl`}></div>
                             </button>
                         ))}
                     </div>

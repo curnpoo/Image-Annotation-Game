@@ -724,9 +724,8 @@ const App = () => {
   };
 
   function handlePlayNow() {
-    // If we have a session, go to home (should cover edge cases)
     if (player) {
-      setCurrentScreen('home');
+      setCurrentScreen('room-selection');
     } else {
       // Go to Login Screen instead of name-entry
       setCurrentScreen('login');

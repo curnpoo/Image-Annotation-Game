@@ -13,13 +13,15 @@ interface VotingScreenProps {
     currentPlayerId: string;
     onVote: (votedForId: string) => void;
     showToast: (message: string, type: 'success' | 'error' | 'info') => void;
+    onShowSettings?: () => void;
 }
 
 export const VotingScreen: React.FC<VotingScreenProps> = ({
     room,
     currentPlayerId,
     onVote,
-    showToast
+    showToast,
+    onShowSettings
 }) => {
     const [selectedIndex, setSelectedIndex] = useState(0);
     const [hasVoted, setHasVoted] = useState(false);
@@ -109,6 +111,11 @@ export const VotingScreen: React.FC<VotingScreenProps> = ({
         );
     }
 
+    // Safe area style for top
+    const safeAreaTopStyle = {
+        paddingTop: 'max(1rem, env(safe-area-inset-top) + 0.5rem)'
+    };
+
     return (
         <div className="fixed inset-0 w-full h-[100dvh] overflow-hidden flex flex-col items-center bg-black/5 safe-area-padding">
 
@@ -119,10 +126,24 @@ export const VotingScreen: React.FC<VotingScreenProps> = ({
             </div>
 
             {/* Header Area */}
-            <div className="w-full pt-4 pb-2 px-4 z-10 flex flex-col items-center safe-area-top-padding">
-                <h1 className="text-4xl font-black mb-2 rainbow-text drop-shadow-lg text-center animate-slide-down">
-                    Vote Time!
-                </h1>
+            <div
+                className="w-full pb-2 px-4 z-10 flex flex-col items-center"
+                style={safeAreaTopStyle}
+            >
+                {/* Header Row with Settings */}
+                <div className="w-full relative flex items-center justify-center mb-2">
+                    {/* Settings Button - Top Left */}
+                    <button
+                        onClick={onShowSettings}
+                        className="absolute left-0 top-1/2 -translate-y-1/2 bg-white/10 backdrop-blur-md p-2 rounded-xl text-white hover:bg-white/20 transition-all active:scale-95 border border-white/10"
+                    >
+                        ⚙️
+                    </button>
+
+                    <h1 className="text-4xl font-black rainbow-text drop-shadow-lg text-center animate-slide-down">
+                        Vote Time!
+                    </h1>
+                </div>
 
                 {/* Stats Bar */}
                 <div className="glass-panel px-4 py-2 rounded-full flex items-center gap-4 text-sm font-bold text-white/90 shadow-lg mb-2 backdrop-blur-md">

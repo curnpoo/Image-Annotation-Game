@@ -4,6 +4,8 @@ import React, { useState } from 'react';
 import { InstallPromptModal } from '../common/InstallPromptModal';
 import { ShareModal } from '../common/ShareModal';
 
+import { MonogramBackground } from '../common/MonogramBackground';
+
 interface WelcomeScreenProps {
     onPlay: () => void;
     onJoin: (code: string) => void;
@@ -26,40 +28,26 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
     return (
         <div className="relative w-full h-[100dvh] overflow-hidden flex flex-col items-center justify-between safe-area-padding">
 
-            {/* Background Bubbles Container - Fixed to viewport */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
-                <div className="bubble bg-white w-32 h-32 left-[10%] animation-delay-0 blur-sm"></div>
-                <div className="bubble bg-white w-24 h-24 left-[30%] animation-delay-2000 blur-sm"></div>
-                <div className="bubble bg-white w-40 h-40 left-[60%] animation-delay-4000 blur-md"></div>
-                <div className="bubble bg-white w-16 h-16 left-[80%] animation-delay-1000"></div>
-                <div className="bubble bg-white w-20 h-20 left-[50%] animation-delay-3000 blur-sm"></div>
-            </div>
+            <MonogramBackground />
 
             {/* Top Bar: About & Share */}
             <div className="w-full flex justify-between items-center p-4 z-20">
                 <button
                     onClick={() => setShowAboutModal(true)}
-                    className="w-12 h-12 rounded-full glass-button flex items-center justify-center text-xl hover:scale-110 shadow-lg"
+                    className="h-10 px-4 rounded-full glass-button flex items-center justify-center gap-2 hover:scale-105 shadow-lg active:scale-95 transition-all text-white"
                     aria-label="About"
                 >
-                    ℹ️
+                    <span className="text-lg">ℹ️</span>
+                    <span className="font-bold text-xs tracking-wider opacity-90">INFO</span>
                 </button>
-                <div className="flex gap-2">
-                    <button
-                        onClick={() => setShowShareModal(true)}
-                        className="w-12 h-12 rounded-full glass-button flex items-center justify-center text-xl hover:scale-110 shadow-lg"
-                        aria-label="Share"
-                    >
-                        📤
-                    </button>
-                    <button
-                        onClick={() => setShowInstallModal(true)}
-                        className="w-12 h-12 rounded-full glass-button flex items-center justify-center text-xl hover:scale-110 shadow-lg"
-                        aria-label="Install App"
-                    >
-                        📱
-                    </button>
-                </div>
+                <button
+                    onClick={() => setShowShareModal(true)}
+                    className="h-10 px-4 rounded-full glass-button flex items-center justify-center gap-2 hover:scale-105 shadow-lg active:scale-95 transition-all text-white"
+                    aria-label="Share"
+                >
+                    <span className="text-lg">📤</span>
+                    <span className="font-bold text-xs tracking-wider opacity-90">SHARE</span>
+                </button>
             </div>
 
             {/* Main Content: Logo & Play */}
@@ -90,26 +78,55 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                             </button>
                         </div>
                     ) : (
-                        <button
-                            onClick={onPlay}
-                            className="w-full group relative overflow-hidden rounded-3xl p-1 transition-all duration-300 hover:scale-[1.02] active:scale-95 shadow-2xl"
-                        >
-                            <div className="absolute inset-0 bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 animate-gradient-flow"></div>
-                            <div className="relative bg-black/20 backdrop-blur-sm rounded-[1.3rem] py-6 px-8 flex items-center justify-center gap-4 border border-white/20 group-hover:bg-transparent transition-colors">
-                                <span className="text-4xl filter drop-shadow-lg group-hover:animate-bounce">🎨</span>
-                                <div className="text-left">
-                                    <div className="text-2xl font-black text-white uppercase tracking-wide drop-shadow-md">Play Now</div>
-                                    <div className="text-xs text-white/80 font-medium tracking-wider uppercase">Create or Join Game</div>
+                        <div className="relative w-full">
+                            {/* Radial Glow - behind text/screen */}
+                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[200%] h-[400%] bg-gradient-to-r from-purple-600/40 to-pink-600/40 blur-[90px] animate-pulse -z-10 pointer-events-none mix-blend-screen"></div>
+
+                            <button
+                                onClick={onPlay}
+                                className="w-full group relative overflow-hidden rounded-3xl p-1 transition-all duration-300 hover:scale-[1.02] active:scale-95 shadow-2xl z-10"
+                            >
+                                <div className="absolute inset-0 bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 animate-gradient-flow"></div>
+                                <div className="relative bg-black/20 backdrop-blur-sm rounded-[1.3rem] py-8 px-8 flex items-center justify-center gap-6 border border-white/20 group-hover:bg-transparent transition-colors">
+                                    <span className="text-5xl filter drop-shadow-lg group-hover:animate-bounce">🎨</span>
+                                    <div className="text-3xl font-black text-white uppercase tracking-wide drop-shadow-md">Play Now</div>
                                 </div>
-                            </div>
-                        </button>
+                            </button>
+                        </div>
                     )}
                 </div>
+
+                {/* Install App Card */}
+                {!joiningRoomCode && (
+                    <button
+                        onClick={() => setShowInstallModal(true)}
+                        className="w-full glass-panel p-4 rounded-2xl flex items-center justify-between group hover:bg-white/40 transition-all cursor-pointer active:scale-95 shadow-sm mt-auto md:mt-0"
+                    >
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl flex items-center justify-center text-white shadow-md text-xl">
+                                📱
+                            </div>
+                            <div className="text-left">
+                                <div className="font-bold text-white leading-tight">Install App</div>
+                                <div className="text-xs text-white/70 font-medium">Add to Home Screen</div>
+                            </div>
+                        </div>
+                        <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center group-hover:bg-white/40 transition-colors text-white">
+                            ⬇️
+                        </div>
+                    </button>
+                )}
             </div>
 
             {/* Footer / Copyright */}
-            <div className="p-6 text-center z-10 opacity-60 text-xs font-medium tracking-widest uppercase mb-safe">
-                Antigravity Games © {new Date().getFullYear()}
+            <div className="p-6 text-center z-10 space-y-1 mb-safe">
+                <div className="text-sm font-bold text-white/90 shadow-black/20 drop-shadow-sm">Bored at Work games</div>
+                <div className="text-xs text-white/70 font-medium">
+                    made with love by curren ❤️
+                </div>
+                <div className="text-[10px] text-white/50 font-mono tracking-widest uppercase">
+                    v0.7 Alpha
+                </div>
             </div>
 
             {/* Modals */}
@@ -117,44 +134,46 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
             {showShareModal && <ShareModal onClose={() => setShowShareModal(false)} isOpen={showShareModal} />}
 
             {/* About Modal - Inline for simplicity */}
-            {showAboutModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
-                    <div className="bg-white/90 backdrop-blur-md rounded-3xl p-6 max-w-sm w-full mx-auto relative shadow-2xl border-4 border-yellow-400">
-                        <button
-                            onClick={() => setShowAboutModal(false)}
-                            className="absolute top-4 right-4 text-gray-500 hover:text-black w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/50 transition-colors"
-                        >
-                            ✕
-                        </button>
+            {
+                showAboutModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
+                        <div className="bg-white/90 backdrop-blur-md rounded-3xl p-6 max-w-sm w-full mx-auto relative shadow-2xl border-4 border-yellow-400">
+                            <button
+                                onClick={() => setShowAboutModal(false)}
+                                className="absolute top-4 right-4 text-gray-500 hover:text-black w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/50 transition-colors"
+                            >
+                                ✕
+                            </button>
 
-                        <div className="text-center mb-6">
-                            <span className="text-5xl mb-2 block animate-bounce-gentle">✨</span>
-                            <h2 className="text-2xl font-black bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent">
-                                About Ano Draw
-                            </h2>
-                        </div>
-
-                        <div className="space-y-4 text-center text-gray-800 mb-6 font-medium">
-                            <p>
-                                The ultimate party drawing game for friends! Draw vague prompts, guess the results, and laugh at the chaos. 🎨
-                            </p>
-                            <div className="bg-yellow-50/80 p-4 rounded-xl border-2 border-yellow-100 text-sm">
-                                <p className="font-bold text-yellow-700 mb-1">Version 1.0.0 Alpha</p>
-                                <p>Created with 💜 by Antigravity</p>
+                            <div className="text-center mb-6">
+                                <span className="text-5xl mb-2 block animate-bounce-gentle">✨</span>
+                                <h2 className="text-2xl font-black bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent">
+                                    About Ano Draw
+                                </h2>
                             </div>
+
+                            <div className="space-y-4 text-center text-gray-800 mb-6 font-medium">
+                                <p>
+                                    The ultimate party drawing game for friends! Draw vague prompts, guess the results, and laugh at the chaos. 🎨
+                                </p>
+                                <div className="bg-yellow-50/80 p-4 rounded-xl border-2 border-yellow-100 text-sm">
+                                    <p className="font-bold text-yellow-700 mb-1">Version 0.7 Alpha</p>
+                                    <p>made with love by curren ❤️</p>
+                                </div>
+                            </div>
+
+                            <button
+                                onClick={() => setShowAboutModal(false)}
+                                className="w-full btn-90s bg-yellow-400 text-black py-3 font-bold text-lg hover:bg-yellow-500 transition-colors"
+                            >
+                                Awesome! 🌟
+                            </button>
                         </div>
-
-                        <button
-                            onClick={() => setShowAboutModal(false)}
-                            className="w-full btn-90s bg-yellow-400 text-black py-3 font-bold text-lg hover:bg-yellow-500 transition-colors"
-                        >
-                            Awesome! 🌟
-                        </button>
                     </div>
-                </div>
-            )}
+                )
+            }
 
-        </div>
+        </div >
     );
 };
 

@@ -11,6 +11,8 @@ interface FriendsPanelProps {
     player: Player;
     openRequestsTrigger?: number;
     onJoinRoom?: (code: string) => void;
+    className?: string;
+    style?: React.CSSProperties;
 }
 
 export const FriendsPanel: React.FC<FriendsPanelProps> = ({ player: _player, onJoinRoom }) => {
@@ -143,9 +145,10 @@ export const FriendsPanel: React.FC<FriendsPanelProps> = ({ player: _player, onJ
         <>
             {/* Friends Button / Panel */}
             <div
-                className="rounded-3xl shadow-2xl overflow-hidden transition-all duration-300 backdrop-blur-xl bg-black/60 border border-white/10"
+                className={`flex flex-col rounded-3xl shadow-2xl overflow-hidden transition-all duration-300 backdrop-blur-xl bg-black/60 border border-white/10 ${className || ''}`}
                 style={{
-                    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)'
+                    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
+                    ...style
                 }}
             >
                 {/* Header Button */}
@@ -154,14 +157,14 @@ export const FriendsPanel: React.FC<FriendsPanelProps> = ({ player: _player, onJ
                         vibrate();
                         setIsExpanded(!isExpanded);
                     }}
-                    className="w-full p-4 flex items-center justify-between hover:bg-white/5 transition-colors group"
+                    className={`w-full p-4 flex items-center justify-between hover:bg-white/5 transition-colors group ${isExpanded ? '' : 'flex-1'}`}
                 >
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full flex items-center justify-center text-xl shadow-inner group-hover:scale-110 transition-transform bg-green-500/20 border border-green-500/30 text-green-400">
                             👥
                         </div>
                         <div className="text-left">
-                            <div className="font-bold text-white">Friends</div>
+                            <div className="font-bold text-white text-lg">Friends</div>
                             <div className="text-xs text-white/50 font-medium">
                                 {friends.length} friend{friends.length !== 1 ? 's' : ''}
                             </div>
@@ -182,7 +185,7 @@ export const FriendsPanel: React.FC<FriendsPanelProps> = ({ player: _player, onJ
 
                 {/* Expanded Panel */}
                 {isExpanded && (
-                    <div className="border-t border-white/10 animate-in slide-in-from-top-2 duration-200">
+                    <div className="flex-1 min-h-0 overflow-hidden flex flex-col border-t border-white/10 animate-in slide-in-from-top-2 duration-200">
                         {/* Segment Controller Tabs */}
                         <div className="p-3">
                             <div className="flex p-1 bg-black/40 rounded-xl border border-white/10">
@@ -282,7 +285,7 @@ export const FriendsPanel: React.FC<FriendsPanelProps> = ({ player: _player, onJ
                         )}
 
                         {/* Lists */}
-                        <div className="max-h-[300px] overflow-y-auto custom-scrollbar bg-black/20">
+                        <div className="flex-1 overflow-y-auto custom-scrollbar bg-black/20 min-h-0">
                             {isLoading && !friends.length ? (
                                 <div className="p-6 text-center">
                                     <div className="text-2xl animate-pulse mb-2">⏳</div>

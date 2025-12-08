@@ -180,22 +180,22 @@ export const CasinoScreen: React.FC<CasinoScreenProps> = ({ onClose }) => {
                     </div>
 
                     {/* Slot Machine Frame */}
-                    <div className="w-full relative p-4 rounded-3xl border-4 border-yellow-600/50 bg-gradient-to-b from-gray-900 to-black shadow-[0_0_50px_rgba(255,165,0,0.2)]">
+                    <div className="w-full relative p-3 rounded-3xl border-4 border-yellow-600/50 bg-gradient-to-b from-gray-900 to-black shadow-[0_0_50px_rgba(255,165,0,0.2)]">
                         {/* Lights Top */}
-                        <div className="absolute top-2 left-4 right-4 flex justify-between px-2">
+                        <div className="absolute top-1 left-4 right-4 flex justify-between px-2">
                             {[...Array(6)].map((_, i) => (
-                                <div key={i} className={`w-3 h-3 rounded-full ${spinning ? 'animate-pulse bg-red-500 shadow-[0_0_10px_red]' : 'bg-red-900'}`} style={{ animationDelay: `${i * 100}ms` }} />
+                                <div key={i} className={`w-2 h-2 rounded-full ${spinning ? 'animate-pulse bg-red-500 shadow-[0_0_10px_red]' : 'bg-red-900'}`} style={{ animationDelay: `${i * 100}ms` }} />
                             ))}
                         </div>
 
                         {/* Reels Window */}
-                        <div className="mt-6 mb-4 bg-white rounded-lg p-1 shadow-inner border-y-4 border-gray-800 relative overflow-hidden">
+                        <div className="mt-4 mb-2 bg-white rounded-lg p-1 shadow-inner border-y-4 border-gray-800 relative overflow-hidden">
                             <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/40 pointer-events-none z-10" />
                             <div className="flex bg-gray-100">
                                 {reels.map((symbol, i) => (
                                     <div
                                         key={i}
-                                        className={`flex-1 h-32 flex items-center justify-center text-6xl border-r last:border-r-0 border-gray-300
+                                        className={`flex-1 h-24 flex items-center justify-center text-5xl border-r last:border-r-0 border-gray-300
                                         ${spinningReels[i] ? 'animate-slot-spin blur-sm' : 'animate-bounce-short'}`}
                                     >
                                         {spinningReels[i] ? '🎰' : symbol}
@@ -208,21 +208,21 @@ export const CasinoScreen: React.FC<CasinoScreenProps> = ({ onClose }) => {
                         </div>
 
                         {/* Result Display */}
-                        <div className="h-10 text-center flex items-center justify-center">
+                        <div className="h-8 text-center flex items-center justify-center">
                             {result ? (
-                                <div className={`font-black text-xl animate-pop-in ${result.win > 0 ? 'text-green-400 drop-shadow-[0_0_5px_lime]' : 'text-red-400'}`}>
+                                <div className={`font-black text-lg animate-pop-in ${result.win > 0 ? 'text-green-400 drop-shadow-[0_0_5px_lime]' : 'text-red-400'}`}>
                                     {result.message}
-                                    {result.win > 0 && <span className="block text-2xl text-yellow-400">+{formatCurrency(result.win)}</span>}
+                                    {result.win > 0 && <span className="block text-xl text-yellow-400">+{formatCurrency(result.win)}</span>}
                                 </div>
                             ) : (
-                                <div className="text-gray-500 font-bold tracking-widest text-xs uppercase opacity-50">Good Luck!</div>
+                                <div className="text-gray-500 font-bold tracking-widest text-[10px] uppercase opacity-50">Good Luck!</div>
                             )}
                         </div>
                     </div>
 
                     {/* Controls */}
-                    <div className="w-full mt-8 space-y-4">
-                        <div className="bg-white/5 rounded-2xl p-2 border border-white/10 backdrop-blur-md">
+                    <div className="w-full mt-4 space-y-3">
+                        <div className="bg-white/5 rounded-xl p-1.5 border border-white/10 backdrop-blur-md">
                             <HorizontalPicker
                                 min={1}
                                 max={500}
@@ -238,7 +238,7 @@ export const CasinoScreen: React.FC<CasinoScreenProps> = ({ onClose }) => {
                         <button
                             onClick={spin}
                             disabled={spinning || balance < bet}
-                            className={`w-full py-5 rounded-2xl font-black text-2xl tracking-widest uppercase transition-all
+                            className={`w-full py-4 rounded-xl font-black text-xl tracking-widest uppercase transition-all
                                 ${spinning
                                     ? 'bg-gray-800 text-gray-500 cursor-not-allowed scale-95'
                                     : balance < bet
@@ -255,7 +255,7 @@ export const CasinoScreen: React.FC<CasinoScreenProps> = ({ onClose }) => {
                 {/* Footer Stats Trigger */}
                 <button
                     onClick={() => setShowStats(true)}
-                    className="mx-auto mt-4 text-xs font-bold text-white/30 uppercase tracking-[0.2em] hover:text-white/80 transition-colors"
+                    className="mx-auto mt-4 py-3 px-10 rounded-2xl bg-white/10 border border-white/10 text-sm font-bold text-white/80 uppercase tracking-widest hover:bg-white/20 hover:text-white transition-all active:scale-95 shadow-lg backdrop-blur-sm"
                 >
                     View Stats
                 </button>

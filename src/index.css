@@ -168,6 +168,60 @@ input,
   }
 }
 
+@keyframes pastel-cycle {
+  0% {
+    color: #FFB3BA;
+    fill: #FFB3BA;
+  }
+
+  20% {
+    color: #FFDFBA;
+    fill: #FFDFBA;
+  }
+
+  40% {
+    color: #FFFFBA;
+    fill: #FFFFBA;
+  }
+
+  60% {
+    color: #BAFFC9;
+    fill: #BAFFC9;
+  }
+
+  80% {
+    color: #BAE1FF;
+    fill: #BAE1FF;
+  }
+
+  100% {
+    color: #FFB3BA;
+    fill: #FFB3BA;
+  }
+}
+
+@keyframes background-pan {
+  from {
+    background-position: 0px 0px;
+  }
+
+  to {
+    background-position: var(--pan-x) var(--pan-y);
+  }
+}
+
+@keyframes mask-pan {
+  from {
+    mask-position: 0px 0px;
+    -webkit-mask-position: 0px 0px;
+  }
+
+  to {
+    mask-position: var(--pan-x) var(--pan-y);
+    -webkit-mask-position: var(--pan-x) var(--pan-y);
+  }
+}
+
 /* Bubble Float Animation */
 @keyframes bubble-float {
 
@@ -671,5 +725,13 @@ input,
 
 /* Safe Area Utility */
 .safe-area-padding {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.safe-area-top-padding {
+  padding-top: env(safe-area-inset-top);
+}
+
+.safe-area-bottom-padding {
   padding-bottom: env(safe-area-inset-bottom);
 }
