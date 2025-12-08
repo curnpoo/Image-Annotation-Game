@@ -347,11 +347,18 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
                     const x = (point.x / 100) * imgCanvas.width;
                     const y = (point.y / 100) * imgCanvas.height;
                     const p = ctx.getImageData(x, y, 1, 1).data;
-                    const hex = "#" + [p[0], p[1], p[2]].map(x => x.toString(16).padStart(2, '0')).join('');
-                    onColorPick(hex);
-                    return;
+                    /* Check for alpha in image too, though usually opaque */
+                    if (p[3] > 0) {
+                        const hex = "#" + [p[0], p[1], p[2]].map(x => x.toString(16).padStart(2, '0')).join('');
+                        onColorPick(hex);
+                        return;
+                    }
                 }
             }
+
+            // 3. Fallback to White (Background)
+            // If we hit nothing (transparent), we assume we hit the paper which is white.
+            onColorPick('#FFFFFF');
             return;
         }
 
