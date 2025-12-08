@@ -201,15 +201,17 @@ export const FriendsPanel: React.FC<FriendsPanelProps> = ({ player: _player, onJ
                     </div>
                 </div>
 
-                {/* Subtitle / Status indicators */}
-                {(requests.length > 0 || sentRequests.length > 0) && (
-                    <div className="absolute top-3 right-3 flex gap-1">
-                        {requests.length > 0 && (
-                            <div className="w-3 h-3 rounded-full bg-red-500 animate-pulse shadow-[0_0_10px_rgba(239,68,68,0.5)]" />
-                        )}
-                        {isRefreshing && (
-                            <div className="w-3 h-3 rounded-full border-2 border-green-500 border-t-transparent animate-spin" />
-                        )}
+                {/* Notification Badge for Pending Requests */}
+                {requests.length > 0 && (
+                    <div className="absolute -top-1 -right-1 min-w-6 h-6 rounded-full bg-red-500 flex items-center justify-center text-white text-xs font-black shadow-lg shadow-red-500/50 animate-pulse border-2 border-black/50">
+                        {requests.length}
+                    </div>
+                )}
+
+                {/* Refreshing indicator */}
+                {isRefreshing && (
+                    <div className="absolute top-3 right-3">
+                        <div className="w-3 h-3 rounded-full border-2 border-green-500 border-t-transparent animate-spin" />
                     </div>
                 )}
             </button>

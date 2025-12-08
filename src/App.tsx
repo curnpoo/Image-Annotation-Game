@@ -476,13 +476,28 @@ const App = () => {
         else if (status === 'results') setCurrentScreen('results');
         else if (status === 'final') setCurrentScreen('final');
       }
-      // 2. Room Status Change (Navigation) - only if we are on a "joining" screen
-      else if (['room-selection', 'welcome', 'name-entry', 'joining-game'].includes(currentScreen)) {
+      // 2. Room Status Change (Navigation) - if we are on a "joining" screen OR the lobby
+      else if (['room-selection', 'welcome', 'name-entry', 'joining-game', 'lobby'].includes(currentScreen)) {
         if (status === 'lobby') setCurrentScreen('lobby');
         // Check other statuses just in case we rejoin mid-game
         else if (status === 'uploading') setCurrentScreen(shouldShowWaitingRoom ? 'waiting' : 'uploading');
         else if (status === 'sabotage-selection') setCurrentScreen('sabotage-selection');
         else if (status === 'drawing') setCurrentScreen(shouldShowWaitingRoom ? 'waiting' : 'drawing');
+        else if (status === 'voting') setCurrentScreen(shouldShowWaitingRoom ? 'waiting' : 'voting');
+        else if (status === 'results') setCurrentScreen('results');
+        else if (status === 'final') setCurrentScreen('final');
+      }
+      // 3. In-game status changes (for players already in the game on other screens)
+      else if (statusChanged) {
+        if (status === 'uploading') setCurrentScreen(shouldShowWaitingRoom ? 'waiting' : 'uploading');
+        else if (status === 'sabotage-selection') setCurrentScreen('sabotage-selection');
+        else if (status === 'drawing') {
+          setCurrentScreen(shouldShowWaitingRoom ? 'waiting' : 'drawing');
+          if (!shouldShowWaitingRoom) {
+            setStrokes([]);
+            setIsMyTimerRunning(false);
+          }
+        }
         else if (status === 'voting') setCurrentScreen(shouldShowWaitingRoom ? 'waiting' : 'voting');
         else if (status === 'results') setCurrentScreen('results');
         else if (status === 'final') setCurrentScreen('final');
@@ -508,6 +523,11 @@ const App = () => {
       if (pendingRoomCode === roomCode) {
         setPendingRoomCode(null);
       }
+
+      // Update refs to track what we've processed
+      lastStatusRef.current = status;
+      lastRoundRef.current = round;
+      lastWaitingRef.current = amWaiting;
     }
   }, [room?.status, room?.roundNumber, isLoading, currentScreen, isBrowsing, amWaiting, shouldShowWaitingRoom, roomCode, pendingRoomCode]);
 
