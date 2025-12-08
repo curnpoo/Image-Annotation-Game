@@ -211,7 +211,7 @@ export const FriendsService = {
         }
     },
 
-    // Remove a friend
+    // Remove a friend (bidirectional - removes from both users' lists)
     async removeFriend(userId: string): Promise<{ success: boolean; error?: string }> {
         const currentUser = AuthService.getCurrentUser();
         if (!currentUser) {
@@ -223,8 +223,25 @@ export const FriendsService = {
         }
 
         try {
+            // Remove from current user's friends list
             const updatedFriends = currentUser.friends.filter(id => id !== userId);
             await AuthService.updateUser(currentUser.id, { friends: updatedFriends });
+
+            // Also remove current user from the other user's friends list
+            try {
+                const otherUserRef = ref(database, `${USERS_PATH}/${userId}`);
+                const otherUserSnapshot = await get(otherUserRef);
+                if (otherUserSnapshot.exists()) {
+                    const otherUser = otherUserSnapshot.val() as UserAccount;
+                    if (otherUser.friends?.includes(currentUser.id)) {
+                        const otherUpdatedFriends = otherUser.friends.filter(id => id !== currentUser.id);
+                        await update(otherUserRef, { friends: otherUpdatedFriends });
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to remove from other user\'s friends list:', err);
+                // Continue anyway - at least the current user's list is updated
+            }
 
             return { success: true };
         } catch (error) {
