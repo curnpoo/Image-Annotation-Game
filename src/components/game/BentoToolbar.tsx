@@ -144,6 +144,25 @@ export const BentoToolbar: React.FC<BentoToolbarProps> = ({
                             </button>
                         ))}
                     </div>
+
+                    {/* Brush Type Selector (if available) */}
+                    {availableBrushes.length > 1 && onTypeChange && (
+                        <div className="flex-1 bg-black/20 rounded-xl p-1 flex gap-1 overflow-x-auto no-scrollbar">
+                            {availableBrushes.map((b) => (
+                                <button
+                                    key={b.id}
+                                    onClick={() => {
+                                        vibrate();
+                                        onTypeChange(b.id);
+                                    }}
+                                    className={`h-full flex-1 min-w-[30px] rounded-lg flex items-center justify-center transition-all ${brushType === b.id && !isEraser ? 'bg-white text-black shadow-sm' : 'text-white/40 hover:text-white'}`}
+                                    title={b.name}
+                                >
+                                    <span className="text-sm">{b.emoji}</span>
+                                </button>
+                            ))}
+                        </div>
+                    )}
                 </div>
             </div>
 
