@@ -31,7 +31,10 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
             <MonogramBackground />
 
             {/* Top Bar: About & Share */}
-            <div className="w-full flex justify-between items-center p-4 z-20">
+            <div
+                className="w-full flex justify-between items-center px-4 pb-4 z-20"
+                style={{ paddingTop: 'max(1.5rem, calc(env(safe-area-inset-top) + 0.75rem))' }}
+            >
                 <button
                     onClick={() => setShowAboutModal(true)}
                     className="h-10 px-4 rounded-full glass-button flex items-center justify-center gap-2 hover:scale-105 shadow-lg active:scale-95 transition-all text-white"
