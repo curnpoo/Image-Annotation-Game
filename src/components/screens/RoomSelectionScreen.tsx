@@ -4,6 +4,7 @@ import type { RoomHistoryEntry } from '../../types';
 
 interface RoomSelectionScreenProps {
     playerName: string;
+    currentRoomCode?: string | null; // The room the user is currently in
     onCreateRoom: () => void;
     onJoinRoom: (roomCode: string) => void;
     onBack: () => void;
@@ -11,6 +12,7 @@ interface RoomSelectionScreenProps {
 
 export const RoomSelectionScreen: React.FC<RoomSelectionScreenProps> = ({
     playerName,
+    currentRoomCode,
     onCreateRoom,
     onJoinRoom,
     onBack,
@@ -76,12 +78,26 @@ export const RoomSelectionScreen: React.FC<RoomSelectionScreenProps> = ({
         }
     };
 
-    const getInactiveStatusText = (room: RoomHistoryEntry) => {
-        if (room.endReason === 'cancelled') return 'Cancelled 🚫';
-        if (room.endReason === 'early') return 'Ended Early 🛑';
-        if (room.endReason === 'left') return 'Left Game 🏃‍♂️';
-        if (room.winnerName) return 'Ended 🏁';
-        return 'Ended 🏁';
+    const getStatusBadge = (game: RoomHistoryEntry & { isActive: boolean }) => {
+        // Check if user is currently in this game
+        if (currentRoomCode && game.roomCode === currentRoomCode && game.isActive) {
+            return { text: 'In Game ✅', color: 'bg-blue-500', textColor: 'text-white' };
+        }
+
+        if (game.isActive) {
+            // Check if room has no players (orphaned)
+            if (game.playerCount === 0) {
+                return { text: 'Empty 👻', color: 'bg-gray-500', textColor: 'text-white' };
+            }
+            return { text: 'Active', color: 'bg-green-500', textColor: 'text-white' };
+        }
+
+        // Inactive games
+        if (game.endReason === 'left') return { text: 'You Left 🏃', color: 'bg-orange-500', textColor: 'text-white' };
+        if (game.endReason === 'cancelled') return { text: 'Cancelled 🚫', color: 'bg-gray-500', textColor: 'text-white' };
+        if (game.endReason === 'early') return { text: 'Ended Early 🛑', color: 'bg-red-500', textColor: 'text-white' };
+        if (game.winnerName) return { text: 'Finished 🏁', color: 'bg-purple-500', textColor: 'text-white' };
+        return { text: 'Ended 🏁', color: 'bg-gray-500', textColor: 'text-white' };
     };
 
     return (
@@ -211,15 +227,14 @@ export const RoomSelectionScreen: React.FC<RoomSelectionScreenProps> = ({
                                             <div>
                                                 <div className="flex items-center gap-2">
                                                     <span className="text-2xl font-black" style={{ color: 'var(--theme-text)' }}>{game.roomCode}</span>
-                                                    {game.isActive ? (
-                                                        <span className="bg-green-500 text-white text-xs px-2 py-1 rounded-full font-bold">
-                                                            Active
-                                                        </span>
-                                                    ) : (
-                                                        <span className="bg-gray-500 text-white text-xs px-2 py-1 rounded-full font-bold">
-                                                            {getInactiveStatusText(game)}
-                                                        </span>
-                                                    )}
+                                                    {(() => {
+                                                        const badge = getStatusBadge(game);
+                                                        return (
+                                                            <span className={`${badge.color} ${badge.textColor} text-xs px-2 py-1 rounded-full font-bold`}>
+                                                                {badge.text}
+                                                            </span>
+                                                        );
+                                                    })()}
                                                 </div>
                                                 <div className="flex flex-wrap gap-2 mt-2">
                                                     {game.hostName && (

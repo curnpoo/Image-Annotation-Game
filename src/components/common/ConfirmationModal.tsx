@@ -31,7 +31,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
     };
 
     return (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[150] flex items-center justify-center p-4 animate-fade-in">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[10000] flex items-center justify-center p-4 animate-fade-in">
             <div className="bg-zinc-900 rounded-3xl p-6 max-w-sm w-full text-center shadow-2xl border-4 border border-white/10 pop-in relative overflow-hidden">
                 {/* Content */}
                 <div className="relative z-10">

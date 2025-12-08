@@ -660,6 +660,39 @@ export const StorageService = {
     },
 
     removePlayerFromRoom: async (roomCode: string, playerId: string): Promise<void> => {
+        // First, check if the room will be empty after this player leaves
+        const currentRoom = await StorageService.getRoom(roomCode);
+        if (!currentRoom) {
+            // Room doesn't exist, just clear the user's room code
+            try {
+                await AuthService.updateUser(playerId, { currentRoomCode: null as any });
+            } catch (e) {
+                console.error("Failed to clear user room code on leave", e);
+            }
+            return;
+        }
+
+        const remainingPlayers = currentRoom.players.filter(p => p.id !== playerId);
+        const remainingWaiting = currentRoom.waitingPlayers?.filter(p => p.id !== playerId) || [];
+
+        // If no players will remain, close the room entirely
+        if (remainingPlayers.length === 0 && remainingWaiting.length === 0) {
+            console.log(`[Cleanup] Room ${roomCode} is empty, closing it`);
+            try {
+                await StorageService.closeRoom(roomCode);
+            } catch (e) {
+                console.error(`Failed to close empty room ${roomCode}`, e);
+            }
+            // Clear user's room code
+            try {
+                await AuthService.updateUser(playerId, { currentRoomCode: null as any });
+            } catch (e) {
+                console.error("Failed to clear user room code on leave", e);
+            }
+            return;
+        }
+
+        // Room will still have players, proceed with normal removal
         await StorageService.updateRoom(roomCode, (r) => {
             const newPlayers = r.players.filter(p => p.id !== playerId);
             const newWaiting = r.waitingPlayers?.filter(p => p.id !== playerId) || [];
@@ -687,9 +720,6 @@ export const StorageService = {
                 if (newPlayers.length > 0) {
                     const randomPlayer = newPlayers[Math.floor(Math.random() * newPlayers.length)];
                     newUploaderId = randomPlayer.id;
-                } else {
-                    // No players left? Game is effectively empty, but we'll set to null or handle in checkAndAdvance
-                    // Actually, if 0 players, room handling might close it or wait
                 }
             }
 

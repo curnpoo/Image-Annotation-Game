@@ -1234,7 +1234,12 @@ const App = () => {
     const roomCodeToLeave = roomCode;
     const playerToLeave = player;
 
-    // 2. IMMEDIATE UI Updates (Priority)
+    // 2. Mark this game as "left" in history BEFORE clearing
+    if (roomCodeToLeave) {
+      StorageService.updateHistoryStatus(roomCodeToLeave, 'left');
+    }
+
+    // 3. IMMEDIATE UI Updates (Priority)
     // Clear local session first to prevent auto-rejoin
     StorageService.leaveRoom();
     setRoomCode(null);
@@ -1243,7 +1248,7 @@ const App = () => {
     setIsLoadingTransition(false);
     showToast('Left game 👋', 'info');
 
-    // 3. Deferred Server Cleanup (Don't block UI)
+    // 4. Deferred Server Cleanup (Don't block UI)
     if (roomCodeToLeave && playerToLeave) {
       setTimeout(async () => {
         try {
