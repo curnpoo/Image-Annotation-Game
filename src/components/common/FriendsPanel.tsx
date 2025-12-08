@@ -60,6 +60,15 @@ export const FriendsPanel: React.FC<FriendsPanelProps> = ({ player: _player, onJ
         loadData(true);
     }, []);
 
+    // Real-time subscription for friend requests (badge updates without refresh)
+    useEffect(() => {
+        const unsubscribe = FriendsService.subscribeToFriendRequests((updatedRequests) => {
+            setRequests(updatedRequests);
+        });
+
+        return () => unsubscribe();
+    }, []);
+
     useEffect(() => {
         let unsubscribe: (() => void) | undefined;
 
@@ -185,13 +194,13 @@ export const FriendsPanel: React.FC<FriendsPanelProps> = ({ player: _player, onJ
                     vibrate();
                     setIsExpanded(true);
                 }}
-                className={`flex flex-col items-center justify-center p-4 relative group overflow-hidden rounded-[2.5rem] transition-all duration-300 backdrop-blur-md bg-black/70 border border-white/10 ${className || ''}`}
+                className={`flex flex-col items-center justify-center p-4 relative group rounded-[2.5rem] transition-all duration-300 backdrop-blur-md bg-black/70 border border-white/10 ${className || ''}`}
                 style={{
                     boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
                     ...style
                 }}
             >
-                <div className="absolute inset-0 bg-green-500/5 group-hover:bg-green-500/10 transition-colors" />
+                <div className="absolute inset-0 bg-green-500/5 group-hover:bg-green-500/10 transition-colors rounded-[2.5rem]" />
 
                 <div className="w-12 h-12 rounded-full flex items-center justify-center text-2xl shadow-inner mb-2 group-hover:scale-110 transition-transform bg-green-500/20 border border-green-500/30 text-green-400">
                     👥
@@ -206,7 +215,7 @@ export const FriendsPanel: React.FC<FriendsPanelProps> = ({ player: _player, onJ
 
                 {/* Notification Badge for Pending Requests */}
                 {requests.length > 0 && (
-                    <div className="absolute -top-1 -right-1 min-w-6 h-6 rounded-full bg-red-500 flex items-center justify-center text-white text-xs font-black shadow-lg shadow-red-500/50 animate-pulse border-2 border-black/50">
+                    <div className="absolute -top-1 -right-1 min-w-6 h-6 rounded-full bg-red-500 flex items-center justify-center text-white text-xs font-black shadow-lg shadow-red-500/50 animate-pulse border-2 border-black/50 z-10">
                         {requests.length}
                     </div>
                 )}

@@ -502,6 +502,39 @@ export const FriendsService = {
         }
     },
 
+    // Subscribe to pending friend requests (real-time updates)
+    subscribeToFriendRequests(onUpdate: (requests: FriendRequest[]) => void): () => void {
+        const currentUser = AuthService.getCurrentUser();
+        if (!currentUser) {
+            onUpdate([]);
+            return () => { };
+        }
+
+        const requestsRef = ref(database, FRIEND_REQUESTS_PATH);
+
+        const unsubscribe = onValue(requestsRef, (snapshot) => {
+            if (!snapshot.exists()) {
+                onUpdate([]);
+                return;
+            }
+
+            const requests: FriendRequest[] = [];
+            snapshot.forEach((child) => {
+                const req = child.val() as FriendRequest;
+                // Only include pending requests TO the current user
+                if (req.toUserId === currentUser.id && req.status === 'pending') {
+                    requests.push({ ...req, id: child.key! });
+                }
+            });
+
+            // Sort by most recent first
+            requests.sort((a, b) => b.createdAt - a.createdAt);
+            onUpdate(requests);
+        });
+
+        return unsubscribe;
+    },
+
     // Get pending friend requests (sent), populated with user details
     async getSentFriendRequests(): Promise<(FriendRequest & { toUser?: UserAccount })[]> {
         const currentUser = AuthService.getCurrentUser();

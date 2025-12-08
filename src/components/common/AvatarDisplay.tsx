@@ -22,13 +22,16 @@ const AvatarDisplayBase: React.FC<AvatarDisplayProps> = ({
     avatar,
     frame,
     color, // Used for border/text color usually
-    backgroundColor = 'white', // Default to white background
+    backgroundColor,
     size = 48,
     className = '',
     playerId
 }) => {
     // If strokes are NOT provided, try to fetch them
     const { strokes: fetchedStrokes, isLoading } = useAvatar(strokes ? undefined : playerId);
+
+    // Ensure backgroundColor has a valid default (handles undefined, null, empty string)
+    const bgColor = backgroundColor || '#ffffff';
 
     // Use provided strokes or fetched strokes
     const displayStrokes = strokes || fetchedStrokes;
@@ -45,7 +48,7 @@ const AvatarDisplayBase: React.FC<AvatarDisplayProps> = ({
                     color: color,
                     width: size,
                     height: size,
-                    backgroundColor: backgroundColor,
+                    backgroundColor: bgColor,
                     fontSize: size * 0.6
                 }}
             >
@@ -62,7 +65,7 @@ const AvatarDisplayBase: React.FC<AvatarDisplayProps> = ({
                 height: size,
                 borderColor: color,
                 color: color, // allows currentColor to work in classes
-                backgroundColor: backgroundColor
+                backgroundColor: bgColor
             }}
         >
             <svg

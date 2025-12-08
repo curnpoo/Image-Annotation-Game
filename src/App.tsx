@@ -48,6 +48,8 @@ import type { LoadingStage, RoomHistoryEntry } from './types';
 const App = () => {
   // --- PWA Update Detection ---
   const intervalMs = 15 * 1000; // Check for updates every 15 seconds
+  const [updateAvailable, setUpdateAvailable] = useState(false);
+  const initialBuildTime = useRef<string | null>(null);
 
   const {
     needRefresh: [needRefresh, setNeedRefresh],
@@ -74,13 +76,54 @@ const App = () => {
     },
   });
 
+  // Fallback: Version check via fetch (for iOS Safari and browsers with restrictive SW behavior)
+  useEffect(() => {
+    const checkVersion = async () => {
+      try {
+        const response = await fetch('/version.json?t=' + Date.now(), {
+          cache: 'no-store',
+          headers: { 'Cache-Control': 'no-cache' }
+        });
+        const data = await response.json();
+
+        if (initialBuildTime.current === null) {
+          // First check - store the initial build time
+          initialBuildTime.current = data.buildTime || data.version;
+          console.log('Initial version:', initialBuildTime.current);
+        } else if (data.buildTime && data.buildTime !== initialBuildTime.current) {
+          // Build time changed - update available!
+          console.log('Version changed:', initialBuildTime.current, '->', data.buildTime);
+          setUpdateAvailable(true);
+        }
+      } catch (error) {
+        console.log('Version check failed:', error);
+      }
+    };
+
+    // Check immediately on mount
+    checkVersion();
+
+    // Then check periodically
+    const interval = setInterval(checkVersion, intervalMs);
+    return () => clearInterval(interval);
+  }, []);
+
   const handleUpdateApp = () => {
-    updateServiceWorker(true);
+    // Try service worker update first, then force reload
+    if (needRefresh) {
+      updateServiceWorker(true);
+    } else {
+      window.location.reload();
+    }
   };
 
   const handleDismissUpdate = () => {
     setNeedRefresh(false);
+    setUpdateAvailable(false);
   };
+
+  // Show notification if either detection method finds an update
+  const showUpdateNotification = needRefresh || updateAvailable;
 
   const [currentScreen, setCurrentScreen] = useState<Screen>('welcome');
   const [lastGameDetails, setLastGameDetails] = useState<RoomHistoryEntry | null>(null);
@@ -1552,7 +1595,7 @@ const App = () => {
       />
 
       {/* Update Notification */}
-      {needRefresh && (
+      {showUpdateNotification && (
         <UpdateNotification
           onUpdate={handleUpdateApp}
           onDismiss={handleDismissUpdate}

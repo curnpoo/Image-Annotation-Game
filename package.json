@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "prebuild": "node -e \"const fs = require('fs'); const v = JSON.parse(fs.readFileSync('public/version.json')); v.buildTime = new Date().toISOString(); fs.writeFileSync('public/version.json', JSON.stringify(v, null, 2));\"",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
