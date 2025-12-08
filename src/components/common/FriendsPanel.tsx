@@ -15,7 +15,7 @@ interface FriendsPanelProps {
     style?: React.CSSProperties;
 }
 
-export const FriendsPanel: React.FC<FriendsPanelProps> = ({ player: _player, onJoinRoom }) => {
+export const FriendsPanel: React.FC<FriendsPanelProps> = ({ player: _player, onJoinRoom, className, style }) => {
     const [isExpanded, setIsExpanded] = useState(false);
     const [friends, setFriends] = useState<UserAccount[]>([]);
     const [requests, setRequests] = useState<FriendRequest[]>([]);
