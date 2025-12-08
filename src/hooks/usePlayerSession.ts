@@ -38,6 +38,21 @@ export const usePlayerSession = ({ setCurrentScreen, onProgress, onComplete }: U
 
                 if (authUser) {
                     onProgress?.('profile', 'loading');
+
+                    // Always sync profile data from AuthUser (Remote Source of Truth)
+                    if (session && session.id === authUser.id) {
+                        session = {
+                            ...session,
+                            name: authUser.username,
+                            color: authUser.color || session.color,
+                            frame: authUser.frame || session.frame || 'none',
+                            avatarStrokes: authUser.avatarStrokes || session.avatarStrokes,
+                            cosmetics: authUser.cosmetics || session.cosmetics
+                        };
+                        StorageService.saveSession(session);
+                        setPlayer(session);
+                    }
+
                     if (!session || session.id !== authUser.id) {
                         if (authUser.avatarStrokes && authUser.color) {
                             session = {
@@ -95,6 +110,33 @@ export const usePlayerSession = ({ setCurrentScreen, onProgress, onComplete }: U
 
         initSession();
     }, [setCurrentScreen]);
+
+    // Sync on visibility change (Foreground)
+    useEffect(() => {
+        const handleVisibilityChange = async () => {
+            if (document.visibilityState === 'visible' && player) {
+                const authUser = await AuthService.syncUser();
+                if (authUser && authUser.id === player.id) {
+                    const updatedSession = {
+                        ...player,
+                        name: authUser.username,
+                        color: authUser.color || player.color,
+                        frame: authUser.frame || player.frame,
+                        avatarStrokes: authUser.avatarStrokes || player.avatarStrokes,
+                        cosmetics: authUser.cosmetics || player.cosmetics
+                    };
+
+                    if (JSON.stringify(updatedSession) !== JSON.stringify(player)) {
+                        StorageService.saveSession(updatedSession);
+                        setPlayer(updatedSession);
+                    }
+                }
+            }
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+    }, [player]);
 
     const handleUpdateProfile = useCallback((profileData: Partial<Player>) => {
         if (!player) return;

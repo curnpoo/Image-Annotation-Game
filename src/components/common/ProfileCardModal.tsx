@@ -165,7 +165,7 @@ export const ProfileCardModal: React.FC<ProfileCardModalProps> = ({
             onClick={onClose}
         >
             <div
-                className="relative rounded-3xl p-8 shadow-2xl w-full max-w-sm pop-in overflow-hidden glass-panel !bg-black/90 border border-white/20"
+                className="relative rounded-3xl p-8 shadow-2xl w-full max-w-sm pop-in overflow-y-auto max-h-[85vh] overscroll-contain touch-pan-y glass-panel !bg-black/90 border border-white/20"
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Decorative Tier Gradient */}

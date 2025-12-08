@@ -271,7 +271,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 onClick={handleAnimatedClose}
             />
             <div
-                className={`relative z-10 w-full sm:w-[500px] sm:rounded-3xl rounded-t-3xl p-6 shadow-2xl pointer-events-auto max-h-[90vh] overflow-y-auto touch-scroll-allowed 
+                className={`relative z-10 w-full sm:w-[500px] sm:rounded-3xl rounded-t-3xl p-6 shadow-2xl pointer-events-auto max-h-[85vh] overflow-y-auto overscroll-contain touch-pan-y
                 glass-panel border-t border-x border-white/20 sm:border !bg-black/80 backdrop-blur-xl
                 ${isClosing ? 'modal-slide-down' : 'modal-slide-up'}`}
             >
@@ -492,9 +492,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                             vibrate();
                             setShowLogoutConfirm(true);
                         }}
-                        className="w-full py-4 px-4 text-white/40 font-bold hover:text-white transition-colors text-sm uppercase tracking-wider"
+                        className="w-full py-4 px-6 bg-white/5 text-white/50 hover:text-white font-black rounded-2xl border border-white/10 hover:bg-white/10 active:scale-95 transition-all uppercase tracking-wide text-sm flex items-center justify-center gap-2"
                     >
-                        Log Out
+                        👋 Log Out
                     </button>
 
                     {/* Danger Zone */}

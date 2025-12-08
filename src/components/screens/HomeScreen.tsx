@@ -76,13 +76,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 <div className="flex-1 min-h-0 flex flex-col justify-center gap-3">
 
                     {/* Split Action Card: FRIENDS (Left) + PLAY (Right) */}
-                    <div className="grid grid-cols-2 gap-3 h-[210px] shrink-0">
+                    <div className="grid grid-cols-2 gap-3 h-[170px] shrink-0">
                         {/* Friends Panel - Left Side */}
                         <div className="min-w-0 transition-all duration-300">
                             <FriendsPanel
                                 player={player}
                                 onJoinRoom={onRejoin}
-                                className="h-full !rounded-[2.5rem] !bg-black/40 border-2 !border-green-500/20 hover:!border-green-500/40"
+                                className="h-full !rounded-[2.5rem] !bg-black/40 border-2 !border-green-500/20 hover:!border-green-500/40 cursor-pointer active:scale-95"
                                 style={{
                                     boxShadow: '0 0 20px rgba(34, 197, 94, 0.05)'
                                 }}

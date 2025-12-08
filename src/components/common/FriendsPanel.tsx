@@ -143,326 +143,291 @@ export const FriendsPanel: React.FC<FriendsPanelProps> = ({ player: _player, onJ
 
     return (
         <>
-            {/* Friends Button / Panel */}
-            <div
-                className={`flex flex-col rounded-3xl shadow-2xl overflow-hidden transition-all duration-300 backdrop-blur-xl bg-black/60 border border-white/10 ${className || ''}`}
+            {/* Friends Trigger Card */}
+            <button
+                onClick={() => {
+                    vibrate();
+                    setIsExpanded(true);
+                }}
+                className={`flex flex-col items-center justify-center p-4 relative group overflow-hidden rounded-[2.5rem] transition-all duration-300 backdrop-blur-xl bg-black/60 border border-white/10 ${className || ''}`}
                 style={{
                     boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
                     ...style
                 }}
             >
-                {/* Header Button */}
-                <button
-                    onClick={() => {
-                        vibrate();
-                        setIsExpanded(!isExpanded);
-                    }}
-                    className={`w-full p-4 flex items-center justify-between hover:bg-white/5 transition-colors group ${isExpanded ? '' : 'flex-1'}`}
-                >
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full flex items-center justify-center text-xl shadow-inner group-hover:scale-110 transition-transform bg-green-500/20 border border-green-500/30 text-green-400">
-                            👥
-                        </div>
-                        <div className="text-left">
-                            <div className="font-bold text-white text-lg">Friends</div>
-                            <div className="text-xs text-white/50 font-medium">
-                                {friends.length} friend{friends.length !== 1 ? 's' : ''}
-                            </div>
-                        </div>
+                <div className="absolute inset-0 bg-green-500/5 group-hover:bg-green-500/10 transition-colors" />
+
+                <div className="w-12 h-12 rounded-full flex items-center justify-center text-2xl shadow-inner mb-2 group-hover:scale-110 transition-transform bg-green-500/20 border border-green-500/30 text-green-400">
+                    👥
+                </div>
+
+                <div className="text-center">
+                    <div className="font-black text-white text-2xl tracking-tight">FRIENDS</div>
+                    <div className="text-[10px] font-bold text-green-400/80 uppercase tracking-[0.2em] bg-green-500/10 px-2 py-0.5 rounded-full border border-green-500/20 mt-1">
+                        {friends.length} Online
                     </div>
-                    <div className="flex items-center gap-2">
+                </div>
+
+                {/* Subtitle / Status indicators */}
+                {(requests.length > 0 || sentRequests.length > 0) && (
+                    <div className="absolute top-3 right-3 flex gap-1">
+                        {requests.length > 0 && (
+                            <div className="w-3 h-3 rounded-full bg-red-500 animate-pulse shadow-[0_0_10px_rgba(239,68,68,0.5)]" />
+                        )}
                         {isRefreshing && (
                             <div className="w-3 h-3 rounded-full border-2 border-green-500 border-t-transparent animate-spin" />
                         )}
-                        <div
-                            className="text-green-400 font-black transition-transform duration-300 opacity-80 group-hover:opacity-100"
-                            style={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }}
-                        >
-                            ▼
-                        </div>
                     </div>
-                </button>
+                )}
+            </button>
 
-                {/* Expanded Panel */}
-                {isExpanded && (
-                    <div className="flex-1 min-h-0 overflow-hidden flex flex-col border-t border-white/10 animate-in slide-in-from-top-2 duration-200">
-                        {/* Segment Controller Tabs */}
-                        <div className="p-3">
-                            <div className="flex p-1 bg-black/40 rounded-xl border border-white/10">
-                                <button
-                                    onClick={() => {
-                                        vibrate();
-                                        setActiveTab('friends');
-                                    }}
-                                    className={`flex-1 py-2 px-3 rounded-lg text-sm font-bold transition-all duration-300 ${activeTab === 'friends'
-                                        ? 'bg-white/10 text-white shadow-lg border border-white/10'
-                                        : 'text-white/40 hover:text-white/70'}`}
-                                >
-                                    Friends ({friends.length})
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        vibrate();
-                                        setActiveTab('requests');
-                                    }}
-                                    className={`flex-1 py-2 px-3 rounded-lg text-sm font-bold transition-all duration-300 ${activeTab === 'requests'
-                                        ? 'bg-white/10 text-white shadow-lg border border-white/10'
-                                        : 'text-white/40 hover:text-white/70'}`}
-                                >
-                                    Requests ({requests.length})
-                                </button>
-                            </div>
+            {/* Friends Modal Overlay */}
+            {isExpanded && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+                    <div
+                        className="absolute inset-0 bg-black/60 backdrop-blur-md"
+                        onClick={() => setIsExpanded(false)}
+                    />
+
+                    <div className="w-full max-w-lg bg-[#1a1a1a] border border-white/10 rounded-[2rem] shadow-2xl overflow-hidden flex flex-col max-h-[85vh] relative z-10 animate-in zoom-in-95 duration-200">
+                        {/* Modal Header */}
+                        <div className="p-4 border-b border-white/5 flex items-center justify-between bg-white/5">
+                            <h2 className="text-xl font-black text-white flex items-center gap-2">
+                                👥 Friends
+                                <span className="text-base font-bold text-white/30 bg-white/10 px-2 py-0.5 rounded-lg">
+                                    {friends.length}
+                                </span>
+                            </h2>
+                            <button
+                                onClick={() => setIsExpanded(false)}
+                                className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white/50 hover:bg-white/20 active:scale-95 transition-all"
+                            >
+                                ✕
+                            </button>
                         </div>
 
-                        {/* Search Toggle (Only on Friends tab) */}
-                        {activeTab === 'friends' && (
-                            <div className="px-3 pb-3">
-                                <button
-                                    onClick={() => {
-                                        vibrate();
-                                        setShowSearch(!showSearch);
-                                    }}
-                                    className={`w-full py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 font-bold transition-all border ${showSearch
-                                        ? 'bg-white/5 border-white/10 text-white/70'
-                                        : 'bg-green-500/20 border-green-500/30 text-green-400 hover:bg-green-500/30'}`}
-                                >
-                                    {showSearch ? '✕ Close Search' : '➕ Add Friend'}
-                                </button>
-                            </div>
-                        )}
-
-                        {/* Search Input */}
-                        {showSearch && (
-                            <div className="p-4 border-b border-white/10 animate-in fade-in slide-in-from-top-2 bg-black/20">
-                                <div className="flex gap-2">
-                                    <input
-                                        type="text"
-                                        value={searchQuery}
-                                        onChange={(e) => setSearchQuery(e.target.value)}
-                                        onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                                        placeholder="Enter username..."
-                                        className="flex-1 px-4 py-2 rounded-xl bg-white/5 border border-white/10 focus:border-green-500/50 focus:outline-none font-bold text-white placeholder-white/20"
-                                        autoFocus
-                                    />
+                        {/* Flex Column for Content */}
+                        <div className="flex-1 overflow-hidden flex flex-col bg-black/20">
+                            {/* Tabs */}
+                            <div className="p-3 pb-0">
+                                <div className="flex p-1 bg-black/40 rounded-xl border border-white/10">
                                     <button
-                                        onClick={handleSearch}
-                                        disabled={isSearching}
-                                        className="px-4 py-2 rounded-xl font-bold transition-colors bg-green-500 text-white disabled:opacity-50 shadow-lg shadow-green-500/20"
+                                        onClick={() => {
+                                            vibrate();
+                                            setActiveTab('friends');
+                                        }}
+                                        className={`flex-1 py-2 px-3 rounded-lg text-sm font-bold transition-all duration-300 ${activeTab === 'friends'
+                                            ? 'bg-white/10 text-white shadow-lg border border-white/10'
+                                            : 'text-white/40 hover:text-white/70'}`}
                                     >
-                                        {isSearching ? '...' : '🔍'}
+                                        Friends
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            vibrate();
+                                            setActiveTab('requests');
+                                        }}
+                                        className={`flex-1 py-2 px-3 rounded-lg text-sm font-bold transition-all duration-300 relative ${activeTab === 'requests'
+                                            ? 'bg-white/10 text-white shadow-lg border border-white/10'
+                                            : 'text-white/40 hover:text-white/70'}`}
+                                    >
+                                        Requests
+                                        {requests.length > 0 && (
+                                            <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                                        )}
                                     </button>
                                 </div>
-                                {searchError && (
-                                    <div className="mt-2 text-sm text-red-400 font-bold px-1 animate-pulse">
-                                        ❌ {searchError}
-                                    </div>
-                                )}
-                                {/* Search Result Preview */}
-                                {searchResult && (
+                            </div>
+
+                            {/* Search Toggle */}
+                            {activeTab === 'friends' && (
+                                <div className="px-3 pt-3">
                                     <button
-                                        onClick={() => handleFriendClick(searchResult)}
-                                        className="mt-3 w-full p-3 rounded-xl flex items-center gap-3 transition-colors bg-white/10 hover:bg-white/20 border border-white/10 animate-in fade-in"
+                                        onClick={() => {
+                                            vibrate();
+                                            setShowSearch(!showSearch);
+                                        }}
+                                        className={`w-full py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 font-bold transition-all border ${showSearch
+                                            ? 'bg-white/5 border-white/10 text-white/70'
+                                            : 'bg-green-500/10 border-green-500/20 text-green-400 hover:bg-green-500/20'}`}
                                     >
-                                        <AvatarDisplay
-                                            strokes={searchResult.avatarStrokes}
-                                            avatar={searchResult.avatar}
-                                            color={searchResult.color}
-                                            backgroundColor={searchResult.backgroundColor}
-                                            size={40}
+                                        {showSearch ? '✕ Close Search' : '➕ Add Friend'}
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* Search Area */}
+                            {showSearch && (
+                                <div className="p-3 animate-in slide-in-from-top-2">
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="text"
+                                            value={searchQuery}
+                                            onChange={(e) => setSearchQuery(e.target.value)}
+                                            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                                            placeholder="Enter username..."
+                                            className="flex-1 px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-green-500/50 focus:outline-none font-bold text-white placeholder-white/20"
+                                            autoFocus
                                         />
-                                        <div className="flex-1 text-left">
-                                            <div className="font-bold text-white text-lg">
-                                                {searchResult.username}
-                                            </div>
-                                            <div className="text-xs text-white/50 font-bold uppercase tracking-wider">
-                                                Tap to view
-                                            </div>
+                                        <button
+                                            onClick={handleSearch}
+                                            disabled={isSearching}
+                                            className="px-4 py-2 rounded-xl font-bold transition-colors bg-green-500 text-white disabled:opacity-50 shadow-lg shadow-green-500/20"
+                                        >
+                                            {isSearching ? '...' : '🔍'}
+                                        </button>
+                                    </div>
+                                    {searchError && (
+                                        <div className="mt-2 text-sm text-red-400 font-bold px-1 animate-pulse">
+                                            ❌ {searchError}
                                         </div>
-                                        <div className="text-white/30 text-xl">→</div>
-                                    </button>
-                                )}
-                            </div>
-                        )}
-
-                        {/* Lists */}
-                        <div className="flex-1 overflow-y-auto custom-scrollbar bg-black/20 min-h-0">
-                            {isLoading && !friends.length ? (
-                                <div className="p-6 text-center">
-                                    <div className="text-2xl animate-pulse mb-2">⏳</div>
-                                    <div className="text-xs font-bold uppercase tracking-widest text-white/30">Loading...</div>
-                                </div>
-                            ) : (
-                                <>
-                                    {activeTab === 'requests' && (
-                                        requests.length === 0 && sentRequests.length === 0 ? (
-                                            <div className="p-8 text-center animate-in fade-in">
-                                                <div className="text-4xl mb-3 grayscale opacity-50">📭</div>
-                                                <div className="text-sm font-medium text-white/40">
-                                                    No pending requests
+                                    )}
+                                    {/* Search Result */}
+                                    {searchResult && (
+                                        <button
+                                            onClick={() => handleFriendClick(searchResult)}
+                                            className="mt-2 w-full p-3 rounded-xl flex items-center gap-3 transition-colors bg-white/10 hover:bg-white/20 border border-white/10 animate-in fade-in"
+                                        >
+                                            <AvatarDisplay
+                                                strokes={searchResult.avatarStrokes}
+                                                avatar={searchResult.avatar}
+                                                color={searchResult.color}
+                                                backgroundColor={searchResult.backgroundColor}
+                                                size={40}
+                                            />
+                                            <div className="flex-1 text-left">
+                                                <div className="font-bold text-white text-lg">
+                                                    {searchResult.username}
+                                                </div>
+                                                <div className="text-xs text-white/50 font-bold uppercase tracking-wider">
+                                                    Tap to view
                                                 </div>
                                             </div>
-                                        ) : (
-                                            <div className="p-3 space-y-4 animate-in fade-in">
-                                                {requests.length > 0 && (
-                                                    <div>
-                                                        <div className="text-[10px] font-black uppercase tracking-widest text-white/30 mb-2 px-2">
-                                                            Received
-                                                        </div>
-                                                        <div className="space-y-2">
-                                                            {requests.map((req) => (
-                                                                <div
-                                                                    key={req.id}
-                                                                    className="p-3 rounded-2xl flex items-center justify-between border border-white/10 bg-white/5 active:scale-[0.98] transition-all"
-                                                                >
-                                                                    <div className="font-bold text-white px-2">
-                                                                        {req.fromUsername}
-                                                                    </div>
-                                                                    <div className="flex gap-2">
-                                                                        <button
-                                                                            onClick={() => handleAcceptRequest(req.id)}
-                                                                            className="px-4 py-2 rounded-xl bg-green-500 text-white font-bold text-xs uppercase tracking-wider shadow-lg shadow-green-500/20 active:scale-95 transition-transform"
-                                                                        >
-                                                                            Accept
-                                                                        </button>
-                                                                        <button
-                                                                            onClick={() => handleDeclineRequest(req.id)}
-                                                                            className="w-8 h-8 flex items-center justify-center rounded-xl bg-white/10 text-white/50 hover:bg-red-500/20 hover:text-red-400 active:scale-95 transition-all text-sm font-bold"
-                                                                        >
-                                                                            ✕
-                                                                        </button>
-                                                                    </div>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-                                                )}
+                                            <div className="text-white/30 text-xl">→</div>
+                                        </button>
+                                    )}
+                                </div>
+                            )}
 
-                                                {sentRequests.length > 0 && (
-                                                    <div>
-                                                        <div className="text-[10px] font-black uppercase tracking-widest text-white/30 mb-2 px-2">
-                                                            Sent
+                            {/* Lists Content */}
+                            <div className="flex-1 overflow-y-auto custom-scrollbar p-3 touch-pan-y">
+                                {isLoading && !friends.length ? (
+                                    <div className="p-10 text-center text-white/30">
+                                        <div className="text-3xl animate-pulse mb-3">⏳</div>
+                                        <div className="text-xs font-bold uppercase tracking-widest">Loading...</div>
+                                    </div>
+                                ) : (
+                                    <>
+                                        {activeTab === 'requests' && (
+                                            requests.length === 0 && sentRequests.length === 0 ? (
+                                                <div className="p-10 text-center opacity-50">
+                                                    <div className="text-4xl mb-3 grayscale">📭</div>
+                                                    <div className="text-sm font-bold text-white/40">No pending requests</div>
+                                                </div>
+                                            ) : (
+                                                <div className="space-y-4 animate-in fade-in">
+                                                    {/* Incoming Requests */}
+                                                    {requests.length > 0 && (
+                                                        <div>
+                                                            <div className="text-[10px] font-black uppercase tracking-widest text-white/30 mb-2 px-2">
+                                                                Received
+                                                            </div>
+                                                            <div className="space-y-2">
+                                                                {requests.map((req) => (
+                                                                    <div key={req.id} className="p-3 rounded-2xl flex items-center justify-between border border-white/10 bg-white/5">
+                                                                        <div className="font-bold text-white px-2">
+                                                                            {req.fromUsername}
+                                                                        </div>
+                                                                        <div className="flex gap-2">
+                                                                            <button onClick={() => handleAcceptRequest(req.id)} className="px-4 py-2 rounded-xl bg-green-500 text-white font-bold text-xs uppercase shadow-lg shadow-green-500/20 active:scale-95">Accept</button>
+                                                                            <button onClick={() => handleDeclineRequest(req.id)} className="w-8 h-8 rounded-xl bg-white/10 text-white/50 hover:bg-red-500/20 active:scale-95">✕</button>
+                                                                        </div>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
                                                         </div>
-                                                        <div className="space-y-2">
-                                                            {sentRequests.map((req) => (
-                                                                <div
-                                                                    key={req.id}
-                                                                    className="p-3 rounded-2xl flex items-center justify-between opacity-60 border border-white/5 bg-white/5"
-                                                                >
-                                                                    <div className="flex items-center gap-3">
-                                                                        {req.toUser && (
-                                                                            <AvatarDisplay
-                                                                                strokes={req.toUser.avatarStrokes}
-                                                                                avatar={req.toUser.avatar}
-                                                                                color={req.toUser.color}
-                                                                                backgroundColor={req.toUser.backgroundColor}
-                                                                                size={36}
-                                                                            />
-                                                                        )}
-                                                                        <div>
-                                                                            <div className="font-bold text-white text-sm">
-                                                                                {req.toUser?.username || 'Unknown User'}
-                                                                            </div>
-                                                                            <div className="text-[10px] font-bold text-white/40 uppercase tracking-wider">
-                                                                                Pending
+                                                    )}
+                                                    {/* Sent Requests */}
+                                                    {sentRequests.length > 0 && (
+                                                        <div>
+                                                            <div className="text-[10px] font-black uppercase tracking-widest text-white/30 mb-2 px-2">
+                                                                Sent
+                                                            </div>
+                                                            <div className="space-y-2">
+                                                                {sentRequests.map((req) => (
+                                                                    <div key={req.id} className="p-3 rounded-2xl flex items-center justify-between opacity-60 border border-white/5 bg-white/5">
+                                                                        <div className="flex items-center gap-3">
+                                                                            {req.toUser && <AvatarDisplay strokes={req.toUser.avatarStrokes} avatar={req.toUser.avatar} color={req.toUser.color} backgroundColor={req.toUser.backgroundColor} size={36} />}
+                                                                            <div>
+                                                                                <div className="font-bold text-white text-sm">{req.toUser?.username || 'Unknown'}</div>
+                                                                                <div className="text-[10px] font-bold text-white/40 uppercase">Pending</div>
                                                                             </div>
                                                                         </div>
                                                                     </div>
-                                                                </div>
-                                                            ))}
+                                                                ))}
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        )
-                                    )}
-
-                                    {activeTab === 'friends' && (
-                                        friends.length === 0 ? (
-                                            <div className="p-8 text-center animate-in fade-in">
-                                                <div className="text-4xl mb-3 grayscale opacity-50">🫂</div>
-                                                <div className="text-sm font-medium text-white/40">
-                                                    No friends yet<br />
-                                                    <span className="text-green-400 font-bold mt-1 block">Add someone above!</span>
+                                                    )}
                                                 </div>
-                                            </div>
-                                        ) : (
-                                            <div className="p-2 space-y-2 animate-in fade-in">
-                                                {friends.map((friend) => {
-                                                    const level = XPService.getLevelFromXP(friend.xp || 0);
-                                                    const tier = XPService.getTierForLevel(level);
+                                            )
+                                        )}
 
-                                                    // Only show badge if level >= 5
-                                                    const activeBadge = (level >= 5 && friend.cosmetics?.activeBadge)
-                                                        ? BadgeService.getBadgeInfo(friend.cosmetics.activeBadge)
-                                                        : null;
+                                        {activeTab === 'friends' && (
+                                            friends.length === 0 ? (
+                                                <div className="p-10 text-center">
+                                                    <div className="text-4xl mb-3 grayscale opacity-50">🫂</div>
+                                                    <div className="text-sm font-bold text-white/40">No friends yet</div>
+                                                </div>
+                                            ) : (
+                                                <div className="space-y-2 animate-in fade-in">
+                                                    {friends.map((friend) => {
+                                                        const level = XPService.getLevelFromXP(friend.xp || 0);
+                                                        const tier = XPService.getTierForLevel(level);
+                                                        const activeBadge = (level >= 5 && friend.cosmetics?.activeBadge) ? BadgeService.getBadgeInfo(friend.cosmetics.activeBadge) : null;
+                                                        const cardColor = friend.cosmetics?.activeCardColor;
 
-                                                    const cardColor = friend.cosmetics?.activeCardColor;
-
-                                                    return (
-                                                        <button
-                                                            key={friend.id}
-                                                            onClick={() => handleFriendClick(friend)}
-                                                            className="w-full p-3 rounded-2xl flex items-center gap-3 relative overflow-hidden transition-all hover:scale-[1.02] active:scale-95 border border-white/5 bg-white/5 hover:bg-white/10 group"
-                                                            style={{
-                                                                borderLeft: cardColor ? `4px solid ${cardColor}` : `4px solid ${tier.color}`,
-                                                                background: cardColor
-                                                                    ? `linear-gradient(90deg, ${cardColor}10, rgba(255, 255, 255, 0.02) 100%)`
-                                                                    : undefined
-                                                            }}
-                                                        >
-                                                            <div className="relative z-10">
-                                                                <AvatarDisplay
-                                                                    strokes={friend.avatarStrokes}
-                                                                    avatar={friend.avatar}
-                                                                    color={friend.color}
-                                                                    backgroundColor={friend.backgroundColor}
-                                                                    size={48}
-                                                                />
-                                                                {activeBadge && (
-                                                                    <span className="absolute -bottom-1 -right-1 text-lg drop-shadow-md filter grayscale-[0.3] group-hover:grayscale-0 transition-all">
-                                                                        {activeBadge.emoji}
-                                                                    </span>
-                                                                )}
-                                                            </div>
-                                                            <div className="flex-1 text-left min-w-0 z-10">
-                                                                <div className="font-black text-white truncate text-base tracking-tight group-hover:tracking-normal transition-all">
-                                                                    {friend.username}
+                                                        return (
+                                                            <button
+                                                                key={friend.id}
+                                                                onClick={() => handleFriendClick(friend)}
+                                                                className="w-full p-3 rounded-2xl flex items-center gap-3 relative overflow-hidden transition-all hover:scale-[1.02] active:scale-95 border border-white/5 bg-white/5 hover:bg-white/10 group"
+                                                                style={{
+                                                                    borderLeft: cardColor ? `4px solid ${cardColor}` : `4px solid ${tier.color}`,
+                                                                    background: cardColor ? `linear-gradient(90deg, ${cardColor}10, rgba(255, 255, 255, 0.02) 100%)` : undefined
+                                                                }}
+                                                            >
+                                                                <div className="relative z-10">
+                                                                    <AvatarDisplay strokes={friend.avatarStrokes} avatar={friend.avatar} color={friend.color} backgroundColor={friend.backgroundColor} size={48} />
+                                                                    {activeBadge && <span className="absolute -bottom-1 -right-1 text-lg drop-shadow-md">{activeBadge.emoji}</span>}
                                                                 </div>
-                                                                <div className="flex items-center gap-1 mt-1">
-                                                                    <span
-                                                                        className="text-[9px] font-black px-1.5 py-0.5 rounded uppercase tracking-widest opacity-70"
-                                                                        style={{
-                                                                            backgroundColor: `${tier.color}20`,
-                                                                            color: tier.color
-                                                                        }}
-                                                                    >
-                                                                        {tier.name}
-                                                                    </span>
-                                                                    {friend.currentRoomCode && (
-                                                                        <span
-                                                                            className="text-[9px] font-black px-1.5 py-0.5 rounded uppercase tracking-widest bg-green-500/10 text-green-400 flex items-center gap-1 border border-green-500/20"
-                                                                        >
-                                                                            <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></span>
-                                                                            Playing
-                                                                        </span>
-                                                                    )}
+                                                                <div className="flex-1 text-left min-w-0 z-10">
+                                                                    <div className="font-black text-white truncate text-base">{friend.username}</div>
+                                                                    <div className="flex items-center gap-1 mt-1">
+                                                                        <span className="text-[9px] font-black px-1.5 py-0.5 rounded uppercase tracking-widest opacity-70" style={{ backgroundColor: `${tier.color}20`, color: tier.color }}>{tier.name}</span>
+                                                                        {friend.currentRoomCode && (
+                                                                            <span className="text-[9px] font-black px-1.5 py-0.5 rounded uppercase tracking-widest bg-green-500/10 text-green-400 flex items-center gap-1 border border-green-500/20">
+                                                                                <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></span>
+                                                                                Playing
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
                                                                 </div>
-                                                            </div>
-                                                            <div className="text-white/20 text-xl group-hover:text-white/50 transition-colors z-10">→</div>
-                                                        </button>
-                                                    );
-                                                })}
-                                            </div>
-                                        )
-                                    )}
-                                </>
-                            )}
+                                                                <div className="text-white/20 text-xl group-hover:text-white/50 transition-colors z-10">→</div>
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                            )
+                                        )}
+                                    </>
+                                )}
+                            </div>
                         </div>
                     </div>
-                )}
-            </div>
+                </div>
+            )}
 
-            {/* Profile Card Modal */}
+            {/* Profile Card Modal Overlay (Kept separate to stack on top if needed, though usually replaces) */}
             {selectedFriend && (
                 <ProfileCardModal
                     user={selectedFriend}

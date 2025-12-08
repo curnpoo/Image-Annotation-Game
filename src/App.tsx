@@ -20,6 +20,7 @@ import { LoadingScreen } from './components/common/LoadingScreen';
 import { NotificationPromptModal } from './components/common/NotificationPromptModal';
 import { SettingsModal } from './components/common/SettingsModal';
 import { TunnelTransition, CasinoTransition, GlobalBlurTransition } from './components/common/ScreenTransition';
+import { MonogramBackground } from './components/common/MonogramBackground';
 import {
   notifyYourTurnToUpload,
   notifyDrawingPhaseStarted,
@@ -1220,6 +1221,11 @@ const App = () => {
 
   return (
     <div className="fixed inset-0 overflow-hidden bg-black text-white select-none touch-none">
+
+      {/* Global Background - Applied to all screens */}
+      {/* Note: User requested safe storage of this background with subtle settings for screens */}
+      <MonogramBackground speed="slow" blur="sm" opacity={0.15} />
+
       {/* Main Router with Transitions */}
       <GlobalBlurTransition screenKey={currentScreen}>
         <ScreenRouter
@@ -1237,8 +1243,7 @@ const App = () => {
           onShowSettings={() => setShowSettings(true)}
           onRejoin={handleRejoin}
           onPlayWithTransition={() => {
-            setIsTransitionActive(true);
-            setTimeout(() => handlePlayNow(), 900);
+            setShowTunnelTransition(true);
           }}
 
           onNavigate={setCurrentScreen}
@@ -1465,7 +1470,7 @@ const App = () => {
         isDarkMode={player?.cosmetics?.activeTheme?.includes('dark') || false}
         onComplete={() => {
           setShowTunnelTransition(false);
-          setCurrentScreen('room-selection');
+          handlePlayNow();
         }}
       />
       <CasinoTransition

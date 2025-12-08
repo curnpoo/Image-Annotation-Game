@@ -68,7 +68,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 
     return (
         <div
-            className="min-h-screen flex flex-col"
+            className="h-[100dvh] w-full flex flex-col overflow-hidden"
             style={{
                 paddingTop: 'max(1.5rem, env(safe-area-inset-top) + 1rem)',
                 paddingBottom: 'max(1rem, env(safe-area-inset-bottom))',
@@ -125,7 +125,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             </div>
 
             {/* Tab Content */}
-            <div className="flex-1 flex flex-col px-4 pb-4 overflow-y-auto">
+            <div className="flex-1 flex flex-col px-4 pb-4 overflow-y-auto overscroll-contain touch-pan-y">
                 {activeTab === 'edit' ? (
                     /* Edit Tab Content */
                     <div className="flex-1 flex flex-col space-y-4">

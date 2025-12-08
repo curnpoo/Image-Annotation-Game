@@ -1,6 +1,16 @@
 import React, { useEffect, useMemo, useState } from 'react';
 
-export const MonogramBackground: React.FC = () => {
+interface MonogramBackgroundProps {
+    speed?: 'normal' | 'slow';
+    blur?: 'none' | 'sm' | 'md' | 'lg';
+    opacity?: number;
+}
+
+export const MonogramBackground: React.FC<MonogramBackgroundProps> = ({
+    speed = 'normal',
+    blur = 'none',
+    opacity = 0.2
+}) => {
     const [style, setStyle] = useState<React.CSSProperties>({});
 
     useEffect(() => {
@@ -49,10 +59,22 @@ export const MonogramBackground: React.FC = () => {
         return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
     }, []);
 
+    // Animation duration based on speed prop
+    const animationDuration = speed === 'slow' ? '60s' : '30s';
+    const panDuration = speed === 'slow' ? '240s' : '120s';
+
+    // Blur class based on prop
+    const blurClass = {
+        'none': '',
+        'sm': 'blur-sm',
+        'md': 'blur-md',
+        'lg': 'blur-lg'
+    }[blur];
+
     return (
         <div
-            className="absolute inset-0 pointer-events-none z-0 overflow-hidden opacity-20"
-            style={style}
+            className={`absolute inset-0 pointer-events-none z-0 overflow-hidden ${blurClass}`}
+            style={{ ...style, opacity }}
         >
             <div
                 className="absolute inset-0 w-full h-full"
@@ -65,7 +87,7 @@ export const MonogramBackground: React.FC = () => {
                     maskSize: '240px 240px',
                     WebkitMaskSize: '240px 240px',
                     // Use a long duration for "very slow"
-                    animation: 'pastel-cycle 30s infinite linear, mask-pan 120s infinite linear'
+                    animation: `pastel-cycle ${animationDuration} infinite linear, mask-pan ${panDuration} infinite linear`
                 }}
             />
         </div>

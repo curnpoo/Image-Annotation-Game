@@ -37,7 +37,7 @@ export const ProfileStatusCard: React.FC<ProfileStatusCardProps> = ({ player, on
 
             <div className="grid grid-cols-[130px_1fr] gap-3 relative z-10">
                 {/* Cell 1: Avatar (Tall on the left) */}
-                <div className="bg-white/5 rounded-2xl p-2 flex items-center justify-center border border-white/5 relative overflow-hidden">
+                <div className="bg-white/5 rounded-[2rem] p-2 flex items-center justify-center border border-white/5 relative overflow-hidden">
                     <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none" />
                     <AvatarDisplay
                         strokes={player.avatarStrokes}
@@ -46,6 +46,7 @@ export const ProfileStatusCard: React.FC<ProfileStatusCardProps> = ({ player, on
                         color={player.color}
                         backgroundColor={player.backgroundColor}
                         size={110}
+                        className="!rounded-3xl"
                     />
                 </div>
 

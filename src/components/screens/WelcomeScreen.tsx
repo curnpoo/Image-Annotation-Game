@@ -50,9 +50,8 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                 </button>
             </div>
 
-            {/* Main Content: Logo & Play */}
-            <div className="flex-1 flex flex-col items-center justify-center w-full max-w-md px-6 z-10 gap-8">
-
+            {/* Main Content: Logo & Play - Centered in remaining space */}
+            <div className="flex-1 flex flex-col items-center justify-center w-full max-w-md px-6 z-10 gap-8 min-h-0">
                 {/* Logo Section */}
                 <div className="text-center relative">
                     <div className="absolute -inset-10 bg-white/20 blur-3xl rounded-full opacity-30 animate-pulse"></div>
@@ -95,12 +94,14 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                         </div>
                     )}
                 </div>
+            </div>
 
-                {/* Install App Card */}
-                {!joiningRoomCode && (
+            {/* Install App Card - Bottom Section */}
+            {!joiningRoomCode && (
+                <div className="w-full max-w-md px-6 pb-2 z-10">
                     <button
                         onClick={() => setShowInstallModal(true)}
-                        className="w-full glass-panel p-4 rounded-2xl flex items-center justify-between group hover:bg-white/40 transition-all cursor-pointer active:scale-95 shadow-sm mt-auto md:mt-0"
+                        className="w-full glass-panel p-4 rounded-2xl flex items-center justify-between group hover:bg-white/40 transition-all cursor-pointer active:scale-95 shadow-sm"
                     >
                         <div className="flex items-center gap-3">
                             <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl flex items-center justify-center text-white shadow-md text-xl">
@@ -115,8 +116,8 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                             ⬇️
                         </div>
                     </button>
-                )}
-            </div>
+                </div>
+            )}
 
             {/* Footer / Copyright */}
             <div className="p-6 text-center z-10 space-y-1 mb-safe">
