@@ -20,11 +20,6 @@ export const UploadScreen: React.FC<UploadScreenProps> = ({
     const uploader = room.players.find(p => p.id === currentUploaderId);
     const uploaderName = uploader ? uploader.name : 'Unknown';
 
-    // Check for Dark Mode to ensure text readability
-    const localPlayer = room.players.find(p => p.id === currentPlayerId) || room.waitingPlayers?.find(p => p.id === currentPlayerId);
-    const activeTheme = localPlayer?.cosmetics?.activeTheme || 'default';
-    const isDarkMode = ['dark', 'premium-dark', 'galaxy', 'default'].includes(activeTheme);
-
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
             onUploadImage(e.target.files[0]);
@@ -110,4 +105,3 @@ export const UploadScreen: React.FC<UploadScreenProps> = ({
         </div>
     );
 };
-```

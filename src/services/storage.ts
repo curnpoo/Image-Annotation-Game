@@ -93,10 +93,21 @@ export const StorageService = {
     checkAndAdvanceState: (room: GameRoom): GameRoom => {
         // If we in drawing phase, check if all have submitted
         if (room.status === 'drawing') {
+            // Defensive check: Ensure playerStates exist for all players
+            const hasAllPlayerStates = room.players.every(p => room.playerStates[p.id]);
+            if (!hasAllPlayerStates) {
+                console.warn('checkAndAdvanceState: Not all players have playerStates yet, skipping advancement check');
+                return room;
+            }
+
             const allSubmitted = room.players.every(p =>
                 room.playerStates[p.id]?.status === 'submitted'
             );
+
+            console.log(`checkAndAdvanceState: drawing phase - ${room.players.length} players, allSubmitted: ${allSubmitted}`);
+
             if (allSubmitted && room.players.length > 0) {
+                console.log('checkAndAdvanceState: Advancing to voting');
                 room.status = 'voting';
             }
         }
