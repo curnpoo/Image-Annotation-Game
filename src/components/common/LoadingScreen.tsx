@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import type { LoadingStage } from '../../types';
 
 const TIPS = [
     "💡 Tip: Vote for the funniest answer, not just the best drawing!",
@@ -54,8 +55,6 @@ const TIPS = [
     "💡 Tip: Don't worry, be happy. And draw something funny."
 ];
 
-import type { LoadingStage } from '../../types';
-
 interface LoadingScreenProps {
     onGoHome?: () => void;
     stages?: LoadingStage[];
@@ -69,12 +68,12 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onGoHome, stages }
     useEffect(() => {
         setTip(TIPS[Math.floor(Math.random() * TIPS.length)]);
 
-        // Show stuck button after 8 seconds (increased for realism)
+        // 1. Show stuck button after 8 seconds
         const timer = setTimeout(() => {
             setShowStuckButton(true);
         }, 8000);
 
-        // Slow network warning after 5 seconds if showing stages
+        // 2. Slow network warning after 5 seconds
         const slowTimer = setTimeout(() => {
             if (stages && stages.some(s => s.status === 'loading')) {
                 setIsReallySlow(true);
@@ -87,33 +86,41 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onGoHome, stages }
         };
     }, []);
 
-    // Render Checklist Mode
+    // Render Checklist with polished visuals
     const renderChecklist = () => {
         if (!stages || stages.length === 0) return null;
 
         return (
-            <div className="mt-6 w-full space-y-3 font-medium">
+            <div className="mt-8 w-full space-y-4 animate-fade-in">
                 {stages.map((stage) => {
-                    let icon = '⬜'; // Pending
-                    let color = 'text-gray-400';
+                    let icon = (
+                        <div className="w-6 h-6 rounded-full border-2 border-zinc-700 transition-colors" />
+                    );
+                    let color = 'text-zinc-500';
                     let animate = '';
+                    let textClass = 'font-normal opacity-60';
 
                     if (stage.status === 'completed') {
-                        icon = '✅';
-                        color = 'text-green-600';
+                        icon = <span className="text-xl">✅</span>;
+                        color = 'text-green-400';
+                        textClass = 'font-medium text-green-400 opacity-90 line-through decoration-green-400/30';
                     } else if (stage.status === 'loading') {
-                        icon = '⏳';
+                        icon = (
+                            <div className="w-6 h-6 border-2 border-t-transparent border-[var(--theme-accent)] rounded-full animate-spin" />
+                        );
                         color = 'text-[var(--theme-accent)]';
-                        animate = 'animate-pulse';
+                        animate = 'scale-105';
+                        textClass = 'font-bold text-white';
                     } else if (stage.status === 'error') {
-                        icon = '❌';
+                        icon = <span className="text-xl">❌</span>;
                         color = 'text-red-500';
+                        textClass = 'font-bold text-red-500';
                     }
 
                     return (
-                        <div key={stage.id} className={`flex items-center gap-3 transition-colors ${color} ${animate}`}>
-                            <span className="text-xl">{icon}</span>
-                            <span className={stage.status === 'pending' ? 'opacity-60' : 'font-bold'}>
+                        <div key={stage.id} className={`flex items-center gap-4 transition-all duration-300 ${color} ${animate}`}>
+                            <div className="flex-shrink-0 w-8 flex justify-center">{icon}</div>
+                            <span className={`text-lg transition-all ${textClass}`}>
                                 {stage.label}
                             </span>
                         </div>
@@ -124,92 +131,82 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onGoHome, stages }
     };
 
     return (
-        <div className="fixed inset-0 flex flex-col items-center justify-center z-50 overflow-hidden"
-            style={{ background: 'var(--theme-background, #f3e8d0)' }}>
+        <div className="fixed inset-0 flex flex-col items-center justify-center z-[2000] overflow-hidden bg-black text-white font-sans"
+            style={{ backgroundColor: '#000000', color: '#fff' }}>
 
-            {/* Paint Tools Background - Large floating monogram */}
+            {/* Dark Grid Background Pattern */}
+            <div className="absolute inset-0 opacity-[0.1] pointer-events-none"
+                style={{
+                    backgroundImage: 'linear-gradient(#333 1px, transparent 1px), linear-gradient(90deg, #333 1px, transparent 1px)',
+                    backgroundSize: '40px 40px'
+                }}
+            />
+
+            {/* Animated Floating Tools (Subtle & Dark) */}
             <style>{`
-                @keyframes float-diagonal {
-                    0%, 100% { transform: translate(0, 0) rotate(-5deg); }
-                    50% { transform: translate(15px, -15px) rotate(5deg); }
+                @keyframes float-slow {
+                    0%, 100% { transform: translateY(0px) rotate(0deg); }
+                    50% { transform: translateY(-20px) rotate(5deg); }
                 }
-                @keyframes float-diagonal-reverse {
-                    0%, 100% { transform: translate(0, 0) rotate(5deg); }
-                    50% { transform: translate(-15px, 15px) rotate(-5deg); }
-                }
-                @keyframes float-diagonal-alt {
-                    0%, 100% { transform: translate(0, 0) rotate(0deg); }
-                    50% { transform: translate(12px, 12px) rotate(8deg); }
-                }
-                .tool-bg-1 { animation: float-diagonal 4s ease-in-out infinite; }
-                .tool-bg-2 { animation: float-diagonal-reverse 5s ease-in-out infinite; animation-delay: 0.5s; }
-                .tool-bg-3 { animation: float-diagonal-alt 4.5s ease-in-out infinite; animation-delay: 1s; }
-                .tool-bg-4 { animation: float-diagonal 5.5s ease-in-out infinite; animation-delay: 1.5s; }
-                .tool-bg-5 { animation: float-diagonal-reverse 4.2s ease-in-out infinite; animation-delay: 0.8s; }
+                .bg-icon { animation: float-slow 8s ease-in-out infinite; opacity: 0.15; filter: grayscale(100%); }
             `}</style>
 
-            {/* Background paint tools - scattered around */}
-            <div className="absolute inset-0 pointer-events-none opacity-30">
-                <div className="absolute tool-bg-1 text-8xl" style={{ top: '10%', left: '10%' }}>🖌️</div>
-                <div className="absolute tool-bg-2 text-7xl" style={{ top: '15%', right: '15%' }}>✏️</div>
-                <div className="absolute tool-bg-3 text-9xl" style={{ bottom: '20%', left: '5%' }}>🎨</div>
-                <div className="absolute tool-bg-4 text-6xl" style={{ bottom: '25%', right: '10%' }}>🖍️</div>
-                <div className="absolute tool-bg-5 text-7xl" style={{ top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}>🖼️</div>
+            <div className="absolute inset-0 pointer-events-none overflow-hidden select-none">
+                <div className="absolute bg-icon text-9xl top-10 -left-10" style={{ animationDelay: '0s' }}>🎨</div>
+                <div className="absolute bg-icon text-8xl bottom-20 -right-10" style={{ animationDelay: '2s' }}>✏️</div>
+                <div className="absolute bg-icon text-6xl top-1/4 right-20" style={{ animationDelay: '4s' }}>🖍️</div>
             </div>
 
-            {/* Content Card */}
-            <div
-                className="relative backdrop-blur-sm p-8 rounded-[2rem] shadow-2xl max-w-md w-full mx-4 animate-bounce-in flex flex-col items-center"
-                style={{
-                    background: 'var(--theme-card-bg, rgba(255,255,255,0.95))',
-                    border: '3px solid var(--theme-accent, #FFB74D)'
-                }}
-            >
-                <div className="text-4xl mb-2 animate-spin-slow">
-                    🔃
+            {/* Main Content Area */}
+            <div className="relative z-10 flex flex-col items-center max-w-md w-full px-6">
+
+                {/* 1. Main Spinner */}
+                <div className="mb-8 relative transition-all duration-500 scale-90">
+                    {/* Outer ring */}
+                    <div className="w-20 h-20 rounded-full border-8 border-zinc-800"></div>
+                    {/* Spinner */}
+                    <div className="absolute top-0 left-0 w-20 h-20 rounded-full border-8 border-t-[var(--theme-accent,orange)] border-r-transparent border-b-transparent border-l-transparent animate-spin"></div>
                 </div>
-                <h2 className="text-2xl font-black mb-2 animate-pulse tracking-wider text-center"
-                    style={{ color: 'var(--theme-text, #333)' }}>
+
+                {/* 2. Headline */}
+                <h2 className="text-2xl font-black mb-2 tracking-wide text-center uppercase text-white animate-pulse">
                     {stages ? 'Connecting...' : 'Loading...'}
                 </h2>
 
-                {/* Progress Checklist */}
-                {renderChecklist()}
+                {/* 3. Smart Content (Checklist + Tips) - Always Visible now */}
+                <div className="w-full flex flex-col items-center animate-slide-up-fade">
 
-                {/* Tip Section (Only show if not showing full checklist, or push to bottom) */}
-                {!stages && (
-                    <p className="font-bold text-base italic text-center mt-4"
-                        style={{ color: 'var(--theme-text-secondary, #666)' }}>
-                        {tip}
-                    </p>
-                )}
+                    {/* Checklist */}
+                    {renderChecklist()}
 
-                {/* Slow Network Warning */}
+                    {/* Tip Box */}
+                    <div className="mt-12 w-full p-6 bg-zinc-900/50 rounded-xl border border-zinc-800 shadow-sm text-center backdrop-blur-sm">
+                        <p className="text-zinc-400 font-medium italic text-lg leading-relaxed">
+                            {tip}
+                        </p>
+                    </div>
+                </div>
+
+                {/* 4. Slow Network & Stuck Actions */}
                 {isReallySlow && stages && (
-                    <div className="mt-6 bg-yellow-50 border-2 border-yellow-200 rounded-xl p-3 flex items-center gap-3 animate-fade-in">
+                    <div className="mt-6 animate-fade-in bg-yellow-900/20 text-yellow-500 px-4 py-3 rounded-xl text-sm font-bold border border-yellow-700/30 flex items-center gap-2 shadow-sm">
                         <span className="text-2xl">🐢</span>
-                        <div className="text-sm font-bold text-yellow-800 text-left">
-                            Taking longer than usual...
-                            <div className="font-normal text-xs opacity-80">Check your internet connection</div>
+                        <div>
+                            Slow connection detected...
+                            <div className="font-normal text-xs opacity-80">Hang tight!</div>
                         </div>
                     </div>
                 )}
 
                 {showStuckButton && onGoHome && (
-                    <div className="animate-fade-in pt-4 border-t mt-6 text-center w-full"
-                        style={{ borderColor: 'var(--theme-border, #e0e0e0)' }}>
-                        <p className="text-sm mb-2" style={{ color: 'var(--theme-text-secondary, #888)' }}>
-                            Taking a while?
-                        </p>
-                        <button
-                            onClick={onGoHome}
-                            className="text-sm font-bold underline hover:opacity-80"
-                            style={{ color: 'var(--theme-accent, #FFB74D)' }}
-                        >
-                            Stuck? Reset App 🔄
-                        </button>
-                    </div>
+                    <button
+                        onClick={onGoHome}
+                        className="mt-8 py-2 px-6 rounded-full bg-zinc-800 hover:bg-red-900/30 text-zinc-500 hover:text-red-400 text-xs font-bold uppercase tracking-wider transition-colors animate-fade-in"
+                    >
+                        Stuck? Reload App 🔄
+                    </button>
                 )}
+
             </div>
         </div>
     );

@@ -21,6 +21,7 @@ import { LoadingScreen } from './components/common/LoadingScreen';
 import { NotificationPromptModal } from './components/common/NotificationPromptModal';
 import { SettingsModal } from './components/common/SettingsModal';
 import { UpdateNotification } from './components/common/UpdateNotification';
+import { ConfirmationModal } from './components/common/ConfirmationModal';
 import { TunnelTransition, CasinoTransition, GlobalBlurTransition } from './components/common/ScreenTransition';
 import { MonogramBackground } from './components/common/MonogramBackground';
 import {
@@ -276,6 +277,9 @@ const App = () => {
 
   const [pendingGameStats, setPendingGameStats] = useState<{ xp: number, coins: number, isWinner: boolean, action: 'home' | 'replay' } | null>(null);
   const [optimisticTimerStart, setOptimisticTimerStart] = useState<number | null>(null);
+
+  // Session Restriction State
+  const [pendingConfirmation, setPendingConfirmation] = useState<{ type: 'host' | 'join', data?: any } | null>(null);
 
   // Fetch last game details when on home screen
   useEffect(() => {
@@ -967,8 +971,15 @@ const App = () => {
 
 
 
-  async function handleCreateRoom() {
+  async function handleCreateRoom(force: boolean = false) {
     if (!player) return;
+
+    // SINGLE GAME RESTRICTION: Host Check
+    if (!force && roomCode && room) {
+      setPendingConfirmation({ type: 'host' });
+      return;
+    }
+
     setIsLoading(true);
     try {
       const code = await StorageService.createRoom(player);
@@ -983,8 +994,15 @@ const App = () => {
     setIsLoading(false);
   };
 
-  async function handleJoinRoom(code: string) {
+  async function handleJoinRoom(code: string, force: boolean = false) {
     if (!player) return;
+
+    // SINGLE GAME RESTRICTION: Join Check
+    // If we are already in a room (and it's not the same one we are re-joining)
+    if (!force && roomCode && room && roomCode !== code) {
+      setPendingConfirmation({ type: 'join', data: code });
+      return;
+    }
 
     setIsBrowsing(false);
     startLoading('join'); // Smart Loading Checklist
@@ -1321,6 +1339,39 @@ const App = () => {
     window.location.reload();
   };
 
+  const handleConfirmSessionSwitch = async () => {
+    if (!pendingConfirmation) return;
+
+    const { type, data } = pendingConfirmation;
+    setPendingConfirmation(null); // Close modal
+
+    if (type === 'host') {
+      // 1. Leave/End current game
+      // If host, maybe we should end it? For now, let's just leave cleanly or "End" if we are host?
+      // The requirement says "ask if they want to END the old game" if host.
+      if (room?.hostId === player?.id) {
+        await handleEndGame();
+      } else {
+        await handleLeaveGame('room-selection');
+      }
+
+      // 2. Create new room (Force)
+      // Wait a bit for cleanup
+      setTimeout(() => {
+        handleCreateRoom(true);
+      }, 500);
+
+    } else if (type === 'join') {
+      // 1. Leave current game
+      await handleLeaveGame('room-selection');
+
+      // 2. Join new room (Force)
+      setTimeout(() => {
+        if (data) handleJoinRoom(data, true);
+      }, 500);
+    }
+  };
+
 
 
   // Foreground Notification Listener
@@ -1570,6 +1621,25 @@ const App = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Session Confirmation Modal */}
+      {pendingConfirmation && (
+        <ConfirmationModal
+          isOpen={!!pendingConfirmation}
+          title={pendingConfirmation.type === 'host' ? (room?.hostId === player?.id ? "End Current Game?" : "Leave Current Game?") : "Leave Current Game?"}
+          message={
+            pendingConfirmation.type === 'host'
+              ? (room?.hostId === player?.id
+                ? "You are hosting a game. Starting a new one will end the current game for everyone."
+                : "You are in a game. Hosting a new one will remove you from the current game.")
+              : "You are already in a game. Joining this new room will remove you from the current one."
+          }
+          confirmLabel={pendingConfirmation.type === 'host' ? (room?.hostId === player?.id ? "End & Host New" : "Leave & Host") : "Leave & Join"}
+          confirmColor={pendingConfirmation.type === 'host' && room?.hostId === player?.id ? 'red' : 'blue'}
+          onConfirm={handleConfirmSessionSwitch}
+          onCancel={() => setPendingConfirmation(null)}
+        />
       )}
 
       {/* Game Rewards Modal */}
