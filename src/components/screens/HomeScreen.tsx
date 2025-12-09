@@ -91,7 +91,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                         {/* Play Button - Right Side (Special & Glowing) */}
                         <button
                             onClick={onPlay}
-                            className="relative group overflow-hidden rounded-[2.5rem] shadow-2xl border-4 transform transition-all duration-300 hover:scale-[1.02] active:scale-95 flex flex-col items-center justify-center p-4 glass-panel !bg-black/95"
+                            className="relative group overflow-hidden rounded-[2.5rem] shadow-2xl border-4 transform transition-all duration-300 hover:scale-[1.02] active:scale-95 flex flex-col items-center justify-center p-4 glass-panel !bg-black/40"
                             style={{
                                 borderColor: 'var(--theme-accent)',
                                 boxShadow: '0 0 50px -10px var(--theme-accent-glow), 0 20px 40px -10px rgba(0,0,0,0.6)'
@@ -144,9 +144,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                                     glass-panel rounded-3xl p-4 shadow-lg
                                     transform transition-all duration-200 hover:scale-[1.02] active:scale-95
                                     flex flex-col items-center justify-center gap-3 group relative
-                                    !bg-black/95 !border-white/10
+                                    !border-white/10
                                 `}
                                 style={{
+                                    backgroundColor: 'color-mix(in srgb, var(--theme-card-bg) 70%, transparent)',
                                     animationDelay: card.delay
                                 }}
                             >
@@ -169,7 +170,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                     {/* Match History Button */}
                     <button
                         onClick={onGallery}
-                        className="w-full glass-panel !bg-black/95 hover:!bg-black/90 rounded-2xl p-3 !border-white/10 flex items-center justify-between group active:scale-95 transition-all"
+                        className="w-full glass-panel rounded-2xl p-3 !border-white/10 flex items-center justify-between group active:scale-95 transition-all hover:brightness-110"
+                        style={{ backgroundColor: 'color-mix(in srgb, var(--theme-card-bg) 70%, transparent)' }}
                     >
                         <div className="flex items-center gap-3">
                             <div className="w-8 h-8 bg-pink-500/20 rounded-lg flex items-center justify-center text-sm group-hover:scale-110 transition-transform">

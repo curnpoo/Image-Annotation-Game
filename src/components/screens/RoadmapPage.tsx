@@ -88,6 +88,7 @@ const roadmapData: RoadmapColumn[] = [
             { id: 'b1', type: 'FIX', title: 'Polish animations for iOS native feel', description: 'Research Apple HIG, implement spring physics, plan for future iOS app' },
             { id: 'b2', type: 'FIX', title: 'Smooth transitions overhaul', description: 'Make all screen transitions butter-smooth' },
             { id: 'b3', type: 'REFACTOR', title: 'Performance optimization', description: 'Fix lag on slow connections, optimize for all users' },
+            { id: 'b4', type: 'REFACTOR', title: 'Universal Button Components', description: 'Create reusable GlassButton, IconButton, ActionButton components for consistent styling' },
         ]
     }
 ];
