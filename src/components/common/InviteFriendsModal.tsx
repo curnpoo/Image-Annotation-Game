@@ -104,6 +104,7 @@ export const InviteFriendsModal: React.FC<InviteFriendsModalProps> = ({
                             color={user.color}
                             backgroundColor={user.backgroundColor}
                             size={48}
+                            playerId={user.id}
                         />
                     </div>
                     <div className="flex-1 text-left min-w-0">
@@ -130,8 +131,8 @@ export const InviteFriendsModal: React.FC<InviteFriendsModalProps> = ({
                         onClick={() => handleInvite(user.id)}
                         disabled={cooldown > 0 || isInviting}
                         className={`px-4 py-2 rounded-xl font-bold text-sm transition-all flex-shrink-0 ${cooldown > 0 || isInviting
-                                ? 'opacity-50 cursor-not-allowed'
-                                : 'hover:scale-105 active:scale-95'
+                            ? 'opacity-50 cursor-not-allowed'
+                            : 'hover:scale-105 active:scale-95'
                             }`}
                         style={{
                             backgroundColor: cooldown > 0 ? 'var(--theme-bg-secondary)' : '#6366f1',

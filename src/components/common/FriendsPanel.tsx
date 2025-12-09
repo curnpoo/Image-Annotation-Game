@@ -368,6 +368,7 @@ export const FriendsPanel: React.FC<FriendsPanelProps> = ({ player: _player, onJ
                                                         color={user.color}
                                                         backgroundColor={user.backgroundColor}
                                                         size={40}
+                                                        playerId={user.id}
                                                     />
                                                     <div className="flex-1 text-left">
                                                         <div className="font-bold text-white text-base">
@@ -433,7 +434,7 @@ export const FriendsPanel: React.FC<FriendsPanelProps> = ({ player: _player, onJ
                                                                 {sentRequests.map((req) => (
                                                                     <div key={req.id} className="p-3 rounded-2xl flex items-center justify-between opacity-60 border border-white/5 bg-white/5">
                                                                         <div className="flex items-center gap-3">
-                                                                            {req.toUser && <AvatarDisplay strokes={req.toUser.avatarStrokes} avatar={req.toUser.avatar} color={req.toUser.color} backgroundColor={req.toUser.backgroundColor} size={36} />}
+                                                                            {req.toUser && <AvatarDisplay strokes={req.toUser.avatarStrokes} avatar={req.toUser.avatar} color={req.toUser.color} backgroundColor={req.toUser.backgroundColor} size={36} playerId={req.toUser.id} />}
                                                                             <div>
                                                                                 <div className="font-bold text-white text-sm">{req.toUser?.username || 'Unknown'}</div>
                                                                                 <div className="text-[10px] font-bold text-white/40 uppercase">Pending</div>
@@ -473,7 +474,7 @@ export const FriendsPanel: React.FC<FriendsPanelProps> = ({ player: _player, onJ
                                                                 }}
                                                             >
                                                                 <div className="relative z-10">
-                                                                    <AvatarDisplay strokes={friend.avatarStrokes} avatar={friend.avatar} color={friend.color} backgroundColor={friend.backgroundColor} size={48} />
+                                                                    <AvatarDisplay strokes={friend.avatarStrokes} avatar={friend.avatar} color={friend.color} backgroundColor={friend.backgroundColor} size={48} playerId={friend.id} />
                                                                     {activeBadge && <span className="absolute -bottom-1 -right-1 text-lg drop-shadow-md">{activeBadge.emoji}</span>}
                                                                 </div>
                                                                 <div className="flex-1 text-left min-w-0 z-10">

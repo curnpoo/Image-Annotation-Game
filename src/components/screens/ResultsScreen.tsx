@@ -236,6 +236,7 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
                                         backgroundColor={p?.backgroundColor}
                                         size={70}
                                         className="shadow-xl ring-4 ring-gray-300 relative z-10"
+                                        playerId={p?.id}
                                     />
                                 </div>
                                 <div className="w-24 h-32 bg-gradient-to-b from-gray-300 via-gray-400 to-gray-500 rounded-t-lg flex flex-col items-center justify-start pt-4 border-t border-white/40 shadow-2xl relative"
@@ -269,6 +270,7 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
                                         backgroundColor={p?.backgroundColor}
                                         size={90}
                                         className="shadow-[0_0_20px_rgba(255,215,0,0.5)] ring-4 ring-yellow-400 relative z-10"
+                                        playerId={p?.id}
                                     />
                                     {/* Glow effect back */}
                                     <div className="absolute inset-0 bg-yellow-400/30 blur-xl rounded-full -z-10 animate-pulse"></div>
@@ -307,6 +309,7 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
                                         backgroundColor={p?.backgroundColor}
                                         size={60}
                                         className="shadow-xl ring-4 ring-orange-300 relative z-10"
+                                        playerId={p?.id}
                                     />
                                 </div>
                                 <div className="w-20 h-24 bg-gradient-to-b from-orange-300 via-orange-400 to-orange-600 rounded-t-lg flex flex-col items-center justify-start pt-3 border-t border-white/40 shadow-2xl"
@@ -369,6 +372,7 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
                                                 backgroundColor={player.backgroundColor}
                                                 size={36}
                                                 className="shadow-sm group-hover:scale-110 transition-transform"
+                                                playerId={player.id}
                                             />
                                             <div className="flex flex-col">
                                                 <span className="font-bold text-sm leading-tight" style={{ color: 'var(--theme-text)' }}>{player.name}</span>

@@ -81,13 +81,14 @@ export const UploadScreen: React.FC<UploadScreenProps> = ({
                         <div className="space-y-6">
                             <div className="flex justify-center">
                                 <AvatarDisplay
-                                    strokes={uploader?.avatarStrokes || []}
+                                    strokes={uploader?.avatarStrokes}
                                     avatar={uploader?.avatar}
                                     frame={uploader?.frame}
                                     color={uploader?.color}
                                     backgroundColor={uploader?.backgroundColor}
                                     size={120}
                                     className="animate-bounce"
+                                    playerId={uploader?.id}
                                 />
                             </div>
 
