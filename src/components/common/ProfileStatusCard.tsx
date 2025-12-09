@@ -23,7 +23,7 @@ export const ProfileStatusCard: React.FC<ProfileStatusCardProps> = ({ player, on
             onClick={onClick}
             className="glass-panel rounded-[2rem] p-3 shadow-xl relative overflow-hidden transition-all hover:scale-[1.01] cursor-pointer !border-white/10 group"
             style={{
-                background: 'linear-gradient(135deg, rgba(44, 36, 27, 0.85), rgba(30, 30, 30, 0.85))',
+                background: 'linear-gradient(135deg, rgba(44, 36, 27, 0.6), rgba(30, 30, 30, 0.6))',
                 boxShadow: `0 4px 20px -5px ${tier.color}40`,
                 borderColor: `${tier.color}40`
             }}

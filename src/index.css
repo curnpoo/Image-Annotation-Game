@@ -87,8 +87,8 @@ body.light-mode {
   background-color: var(--glass-bg);
   border-color: var(--glass-border);
   color: var(--glass-text);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 .glass-button {
