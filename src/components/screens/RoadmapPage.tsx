@@ -29,6 +29,7 @@ const roadmapData: RoadmapColumn[] = [
             { id: 'd3', type: 'FIX', title: 'Results screen scrolling', description: 'Results can now be scrolled' },
             { id: 'd4', type: 'FIX', title: 'Drawing round UI and UX', description: 'Timer aligned with canvas, Bento style toolbar, touch-friendly interface' },
             { id: 'd5', type: 'REMOVE', title: 'Circle above color picker', description: 'Removed preview circle, color reflects on profile photo directly' },
+            { id: 'd6', type: 'FIX', title: 'Popup z-index issue', description: 'Leave/join popup is now front and foremost above all menus' },
         ]
     },
     {
@@ -39,7 +40,6 @@ const roadmapData: RoadmapColumn[] = [
         tasks: [
             { id: 'w1', type: 'FIX', title: 'Remove Landscape mode', description: 'Enforcing portrait-only orientation' },
             { id: 'w2', type: 'FEAT', title: 'Add zooming to drawing canvas', description: 'Pinch-to-zoom with iOS-native feel' },
-            { id: 'w3', type: 'FIX', title: 'Popup z-index issue', description: 'Leave/join popup needs to be front and foremost above all menus' },
         ]
     },
     {
@@ -52,6 +52,7 @@ const roadmapData: RoadmapColumn[] = [
             { id: 't2', type: 'FIX', title: 'Loading screen transition', description: 'Show all green checks → 300ms delay → smooth fade with preloaded screen' },
             { id: 't3', type: 'FIX', title: 'Level 0 bug', description: 'Older accounts showing Level 0 in lobby' },
             { id: 't4', type: 'ADD', title: 'Profile picture loading state', description: 'Universal loading indicator instead of default photo' },
+            { id: 't5', type: 'FEAT', title: 'Friend request popups', description: 'In-game and out-of-app notifications for friend requests' },
         ]
     },
     {
