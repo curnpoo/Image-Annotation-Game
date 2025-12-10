@@ -26,6 +26,9 @@ const doneItems: RoadmapTask[] = [
     { id: 'd4', type: 'FIX', title: 'Drawing round UI and UX', description: 'Timer aligned with canvas, Bento style toolbar, touch-friendly interface', completedDate: 'Dec 8' },
     { id: 'd5', type: 'REMOVE', title: 'Circle above color picker', description: 'Removed preview circle, color reflects on profile photo directly', completedDate: 'Dec 8' },
     { id: 'd6', type: 'FIX', title: 'Popup z-index issue', description: 'Leave/join popup is now front and foremost above all menus', completedDate: 'Dec 9' },
+    { id: 'd7', type: 'FIX', title: 'Remove Landscape mode', description: 'App locked to portrait-only orientation with landscape blocker overlay', completedDate: 'Dec 10' },
+    { id: 'd8', type: 'ADD', title: 'Profile picture loading state', description: 'Universal loading spinner shown when fetching profile pictures', completedDate: 'Dec 10' },
+    { id: 'd9', type: 'FIX', title: 'Level 0 bug', description: 'XP synced from Firebase to fix level calculation for older accounts', completedDate: 'Dec 10' },
 ];
 
 const roadmapData: RoadmapColumn[] = [
@@ -35,10 +38,10 @@ const roadmapData: RoadmapColumn[] = [
         emoji: '🔧',
         color: '#f59e0b',
         tasks: [
-            { id: 'w1', type: 'FIX', title: 'Remove Landscape mode', description: '[App.tsx, manifest.json] Lock app to portrait-only orientation, prevent rotation on all screens' },
-            { id: 'w2', type: 'FEAT', title: 'Add zooming to drawing canvas', description: '[DrawingScreen.tsx, DrawingCanvas component] Add pinch-to-zoom gesture with iOS-native spring physics, prevent drawing during zoom' },
-            { id: 't4', type: 'ADD', title: 'Profile picture loading state', description: '[AvatarDisplay component] Show universal loading spinner instead of default avatar when fetching profile pictures across all screens' },
-            { id: 't3', type: 'FIX', title: 'Level 0 bug', description: '[LobbyScreen.tsx, usePlayerSession] Older accounts display Level 0 - sync XP from Firebase to fix level calculation' },
+            { id: 'w1', type: 'FEAT', title: 'Add zooming to drawing canvas', description: '[DrawingScreen.tsx, useZoomPan hook] Pinch-to-zoom with iOS-native spring physics, drawing disabled during zoom' },
+            { id: 'w2', type: 'FIX', title: 'Loading screen transition', description: '[LoadingScreen.tsx, useLoadingProgress hook] Smooth transition with 500ms delay after all checks complete' },
+            { id: 'w3', type: 'FEAT', title: 'In-app friend request notifications', description: '[useInAppNotifications hook, Toast.tsx] Real-time toast notifications when receiving friend requests' },
+            { id: 'w4', type: 'FEAT', title: 'Push notifications for friend requests', description: '[FCM, NotificationService] Send push notifications when receiving friend requests while app is closed' },
         ]
     },
     {
@@ -48,8 +51,6 @@ const roadmapData: RoadmapColumn[] = [
         color: '#eab308',
         tasks: [
             { id: 't1', type: 'FEAT', title: 'Add invites section', description: '[HomeScreen.tsx, new InvitesPanel component] Add section showing game invites from friends, auto-clear after 5 hours, allow late join to active games' },
-            { id: 't2', type: 'FIX', title: 'Loading screen transition', description: '[LoadingScreen.tsx, useLoadingProgress hook] After all checks complete, add 300ms delay then smooth fade transition to preloaded HomeScreen' },
-            { id: 't5', type: 'FEAT', title: 'Friend request popups', description: '[NotificationSystem, FriendsScreen.tsx] Show in-app toast notifications and push notifications when receiving friend requests' },
         ]
     },
     {
@@ -125,7 +126,7 @@ export const RoadmapPage: React.FC = () => {
                 <div className="header-content">
                     <h1>🗺️ Roadmap</h1>
                     <p className="subtitle">What's coming to ANO</p>
-                    <p className="last-updated">Last updated: December 9, 2025</p>
+                    <p className="last-updated">Last updated: December 10, 2025</p>
                 </div>
             </header>
 
@@ -212,7 +213,7 @@ export const RoadmapPage: React.FC = () => {
 
             {/* Footer */}
             <footer className="roadmap-footer">
-                <p>Last updated: December 9, 2025</p>
+                <p>Last updated: December 10, 2025</p>
                 <p className="footer-note">Built with ❤️ by Curren</p>
             </footer>
         </div>
