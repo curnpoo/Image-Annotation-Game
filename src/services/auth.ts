@@ -3,6 +3,7 @@ import { ref, get, set, query, orderByChild, equalTo } from 'firebase/database';
 import { database } from '../firebase';
 import type { UserAccount, PlayerStats, PlayerCosmetics } from '../types';
 import { CurrencyService } from './currency';
+import { XPService } from './xp';
 
 const USERS_PATH = 'users';
 const LOCAL_USER_KEY = 'logged_in_user';
@@ -156,9 +157,9 @@ export const AuthService = {
             // Sync Currency
             CurrencyService.setCurrency(updatedUser.currency);
 
-            // Sync XP
+            // Sync XP - Use XPService for correct progressive level calculation
             const xp = updatedUser.xp || 0;
-            const level = Math.floor(xp / 100);
+            const level = XPService.getLevelFromXP(xp);
             localStorage.setItem('player_xp', xp.toString());
             localStorage.setItem('player_level', level.toString());
 
@@ -252,6 +253,22 @@ export const AuthService = {
                 if (user.currency !== undefined) {
                     CurrencyService.setCurrency(user.currency);
                 }
+
+                // MIGRATION: Sync XP from localStorage to Firebase if Firebase has no XP
+                // This handles older accounts that accumulated XP locally before Firebase sync
+                const localXP = parseInt(localStorage.getItem('player_xp') || '0', 10);
+                if ((!user.xp || user.xp === 0) && localXP > 0) {
+                    console.log(`📈 Migrating XP: localStorage has ${localXP}, Firebase has ${user.xp || 0}`);
+                    user.xp = localXP;
+                    await set(userRef, user);
+                }
+
+                // Sync XP - Critical for correct level display in lobby
+                // Use the higher value between Firebase and localStorage
+                const xp = Math.max(user.xp || 0, localXP);
+                const level = XPService.getLevelFromXP(xp);
+                localStorage.setItem('player_xp', xp.toString());
+                localStorage.setItem('player_level', level.toString());
 
                 return user;
             }

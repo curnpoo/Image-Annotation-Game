@@ -38,6 +38,7 @@ const roadmapData: RoadmapColumn[] = [
             { id: 'w1', type: 'FIX', title: 'Remove Landscape mode', description: 'Enforcing portrait-only orientation' },
             { id: 'w2', type: 'FEAT', title: 'Add zooming to drawing canvas', description: 'Pinch-to-zoom with iOS-native feel' },
             { id: 't4', type: 'ADD', title: 'Profile picture loading state', description: 'Universal loading indicator instead of default photo' },
+            { id: 't3', type: 'FIX', title: 'Level 0 bug', description: 'Older accounts showing Level 0 in lobby' },
         ]
     },
     {
@@ -48,7 +49,6 @@ const roadmapData: RoadmapColumn[] = [
         tasks: [
             { id: 't1', type: 'FEAT', title: 'Add invites section', description: 'Shows invites from friends, clears after 5 hours, allows late acceptance' },
             { id: 't2', type: 'FIX', title: 'Loading screen transition', description: 'Show all green checks → 300ms delay → smooth fade with preloaded screen' },
-            { id: 't3', type: 'FIX', title: 'Level 0 bug', description: 'Older accounts showing Level 0 in lobby' },
             { id: 't5', type: 'FEAT', title: 'Friend request popups', description: 'In-game and out-of-app notifications for friend requests' },
         ]
     },
@@ -63,6 +63,7 @@ const roadmapData: RoadmapColumn[] = [
             { id: 'tm3', type: 'FIX', title: 'Timer end screen flow', description: 'Controls should stay visible, blurred background when clicking ready' },
             { id: 'tm4', type: 'FIX', title: 'Home from results = left game', description: 'Count as "left game", no rejoin button on homescreen' },
             { id: 'tm5', type: 'REFACTOR', title: 'Host starts while player in menu', description: 'Save avatar edits, show idle state, in-app and external notifications' },
+            { id: 'tm6', type: 'FIX', title: 'Fix sabotage mechanic', description: 'Entire sabotage mechanic is broken and needs to be fixed' },
         ]
     },
     {
@@ -117,7 +118,7 @@ export const RoadmapPage: React.FC = () => {
                     <button onClick={handleBackToGame} className="back-button">
                         ← Back
                     </button>
-                    <div className="version-badge">v0.7.3 Alpha</div>
+                    <div className="version-badge">v0.8 Alpha</div>
                 </div>
                 <div className="header-content">
                     <h1>🗺️ Roadmap</h1>

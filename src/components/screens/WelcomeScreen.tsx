@@ -125,7 +125,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                     made with love by curren ❤️
                 </div>
                 <div className="text-[10px] text-white/50 font-mono tracking-widest uppercase">
-                    v0.7.1 Alpha
+                    v0.8 Alpha
                 </div>
             </div>
 
@@ -157,7 +157,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                                     The ultimate party drawing game for friends! Draw vague prompts, guess the results, and laugh at the chaos. 🎨
                                 </p>
                                 <div className="bg-yellow-50/80 p-4 rounded-xl border-2 border-yellow-100 text-sm">
-                                    <p className="font-bold text-yellow-700 mb-1">Version 0.7.1 Alpha</p>
+                                    <p className="font-bold text-yellow-700 mb-1">Version 0.8 Alpha</p>
                                     <p>made with love by curren ❤️</p>
                                 </div>
                             </div>

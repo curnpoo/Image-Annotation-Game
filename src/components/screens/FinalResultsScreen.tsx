@@ -59,17 +59,18 @@ export const FinalResultsScreen: React.FC<FinalResultsScreenProps> = ({
                     totalXPEarned: 0, highestLevel: 1
                 };
 
+                // Award Currency (e.g., 50 coins for playing, +100 for winning)
+                const currencyEarned = 50 + (isWinner ? 100 : 0);
+                const newCurrency = (currentUser.currency || 0) + currencyEarned;
+
                 const newStats = {
                     ...currentStats,
                     gamesPlayed: currentStats.gamesPlayed + 1,
                     gamesWon: currentStats.gamesWon + (isWinner ? 1 : 0),
                     totalXPEarned: currentStats.totalXPEarned + 100,
+                    totalCurrencyEarned: currentStats.totalCurrencyEarned + currencyEarned,
                     highestLevel: Math.max(currentStats.highestLevel, newLevel || 1)
                 };
-
-                // Award Currency (e.g., 50 coins for playing, +100 for winning)
-                const currencyEarned = 50 + (isWinner ? 100 : 0);
-                const newCurrency = (currentUser.currency || 0) + currencyEarned;
 
                 // Track currency earned in stats
                 await StatsService.recordCurrencyEarned(currencyEarned);

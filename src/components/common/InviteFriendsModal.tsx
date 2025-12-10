@@ -82,7 +82,8 @@ export const InviteFriendsModal: React.FC<InviteFriendsModalProps> = ({
     };
 
     const renderUserRow = (user: UserAccount, showInviteButton: boolean = true) => {
-        const tier = XPService.getTierForLevel(user.xp ? Math.floor(user.xp / 100) : 0);
+        const level = XPService.getLevelFromXP(user.xp || 0);
+        const tier = XPService.getTierForLevel(level);
         const cooldown = FriendsService.getInviteCooldown(user.id);
         const isInviting = invitingUserId === user.id;
 
@@ -119,7 +120,7 @@ export const InviteFriendsModal: React.FC<InviteFriendsModalProps> = ({
                                     color: tier.color
                                 }}
                             >
-                                {tier.icon} Lvl {user.xp ? Math.floor(user.xp / 100) : 0}
+                                {tier.icon} Lvl {level}
                             </span>
                         </div>
                     </div>

@@ -12,7 +12,7 @@
 | Attribute | Value |
 |-----------|-------|
 | **URL** | [anogame.xyz](https://anogame.xyz) |
-| **Version** | 0.7.x Alpha |
+| **Version** | 0.8 Alpha |
 | **Platform** | Mobile-first PWA (Portrait only) |
 | **Tech Stack** | React 19, TypeScript, Firebase Realtime DB, Tailwind CSS |
 | **Target Feel** | **Native iOS app** — fluid, responsive, premium |
@@ -251,7 +251,7 @@ For complex gestures, consider:
 
 | Version | Date | Notes |
 |---------|------|-------|
-| 0.7.3 Alpha | Dec 2025 | Current |
+| 0.8 Alpha | Dec 2025 | Current |
 
 ---
 
