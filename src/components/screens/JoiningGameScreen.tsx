@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { LoadingScreen } from '../common/LoadingScreen';
-import { LoadingStage } from '../../types';
+import type { LoadingStage } from '../../types';
 
 interface JoiningGameScreenProps {
     roomCode: string;
