@@ -33,6 +33,8 @@ const doneItems: RoadmapTask[] = [
     { id: 'd11', type: 'FEAT', title: 'iOS-style toast notifications', description: 'Redesigned toasts with glassmorphism, spring animations, and action buttons', completedDate: 'Dec 10' },
     { id: 'd12', type: 'FEAT', title: 'Grouped notifications', description: 'Multiple notifications batch together with dynamic sizing', completedDate: 'Dec 10' },
     { id: 'd13', type: 'ADD', title: 'Database cleanup script', description: 'Script to clear stale rooms, drawings, presence, invites, and friendRequests', completedDate: 'Dec 10' },
+    { id: 'd14', type: 'FEAT', title: 'Tappable notification cards', description: 'Tap anywhere on notification to take action, left pill to dismiss', completedDate: 'Dec 10' },
+    { id: 'd15', type: 'ADD', title: 'Notification timer progress bar', description: 'Gradient line shrinks inward showing time remaining before auto-dismiss', completedDate: 'Dec 10' },
 ];
 
 const roadmapData: RoadmapColumn[] = [

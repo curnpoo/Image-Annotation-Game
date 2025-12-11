@@ -808,30 +808,10 @@ const App = () => {
     onGameInvite: handleGameInviteNotification
   }), [handleFriendRequestNotification, handleGameInviteNotification]));
 
-  // Foreground Push Notification Handler
-  useEffect(() => {
-    const unsubscribe = onForegroundMessage((payload) => {
-      const type = payload.data?.type;
+  // Note: Foreground push messages are NOT shown as toasts here
+  // because the real-time subscription (useInAppNotifications) already handles it
+  // with proper action buttons. Push notifications only show when app is in background.
 
-      // Only show toast if not already handled by real-time subscription
-      // (The real-time subscription usually handles it first, but push is a backup)
-      if (type === 'friend_request') {
-        // Friend request - show info toast
-        vibrate();
-        showToast(payload.notification?.body || '👋 New friend request!', 'info');
-      } else if (type === 'game_invite') {
-        // Game invite - show toast with join action
-        const inviteRoomCode = payload.data?.roomCode;
-        vibrate();
-        showToast(payload.notification?.body || '🎮 Game invite!', 'info', inviteRoomCode ? {
-          label: 'Join',
-          onClick: () => handleJoinRoom(inviteRoomCode)
-        } : undefined);
-      }
-    });
-
-    return () => unsubscribe();
-  }, [showToast]);
 
   // Check for pending invites/requests on app open (runs once when player loads)
   // Skip if user is joining via URL (they clicked a push notification)
