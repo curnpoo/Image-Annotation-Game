@@ -808,9 +808,28 @@ const App = () => {
     onGameInvite: handleGameInviteNotification
   }), [handleFriendRequestNotification, handleGameInviteNotification]));
 
-  // Note: Foreground push messages are NOT shown as toasts here
-  // because the real-time subscription (useInAppNotifications) already handles it
-  // with proper action buttons. Push notifications only show when app is in background.
+  // Listen for messages from service worker (notification clicks)
+  // This allows joining a room without a full page refresh
+  useEffect(() => {
+    const handleServiceWorkerMessage = (event: MessageEvent) => {
+      console.log('[App] Received SW message:', event.data);
+      
+      if (event.data?.type === 'NOTIFICATION_CLICK') {
+        const { notificationType, roomCode } = event.data;
+        
+        if (notificationType === 'game_invite' && roomCode) {
+          console.log('[App] Joining room from notification click:', roomCode);
+          handleJoinRoom(roomCode);
+        }
+        // For friend requests, just let the user see the app (they can check friends panel)
+      }
+    };
+
+    navigator.serviceWorker?.addEventListener('message', handleServiceWorkerMessage);
+    return () => {
+      navigator.serviceWorker?.removeEventListener('message', handleServiceWorkerMessage);
+    };
+  }, []);
 
 
   // Check for pending invites/requests on app open (runs once when player loads)

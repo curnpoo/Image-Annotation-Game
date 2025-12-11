@@ -58,16 +58,24 @@ messaging.onBackgroundMessage((payload: any) => {
     console.log('[SW] Received background message:', payload);
 
     const notificationTitle = payload.notification?.title || 'ANO Game';
+    const roomCode = payload.data?.roomCode;
+    const clickUrl = payload.data?.click_action || (roomCode ? `/?join=${roomCode}` : '/');
+    
     const notificationOptions = {
         body: payload.notification?.body || 'You have a new notification!',
         icon: '/pwa-icon.png',
         badge: '/pwa-icon.png',
         tag: payload.data?.type || 'game-notification',
-        data: payload.data,
+        data: {
+            ...payload.data,
+            click_action: clickUrl,
+            roomCode: roomCode
+        },
         vibrate: [100, 50, 100],
         requireInteraction: true
     } as NotificationOptions;
 
+    console.log('[SW] Showing notification with data:', notificationOptions.data);
     self.registration.showNotification(notificationTitle, notificationOptions);
 });
 
@@ -76,32 +84,44 @@ self.addEventListener('notificationclick', (event: NotificationEvent) => {
     console.log('[SW] Notification clicked:', event);
     event.notification.close();
 
-    // Build URL from notification data
-    let urlToOpen = '/';
-    if (event.notification.data?.click_action) {
-        urlToOpen = event.notification.data.click_action;
-    } else if (event.notification.data?.roomCode) {
-        urlToOpen = `/?join=${event.notification.data.roomCode}`;
-    }
+    const notifData = event.notification.data;
+    const roomCode = notifData?.roomCode;
+    const notifType = notifData?.type;
+    
+    console.log('[SW] Notification type:', notifType, 'roomCode:', roomCode);
 
     event.waitUntil(
         self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
-            // If a window is already open, focus it and navigate
+            // If a window is already open, focus it and send a message (no page refresh!)
             for (const client of clientList) {
                 if (client.url.includes(self.location.origin) && 'focus' in client) {
-                    (client as WindowClient).focus();
-                    if (urlToOpen !== '/') {
-                        (client as WindowClient).navigate(urlToOpen);
-                    }
+                    const windowClient = client as WindowClient;
+                    windowClient.focus();
+                    
+                    // Post message to the app instead of navigating
+                    // This avoids a full page refresh
+                    windowClient.postMessage({
+                        type: 'NOTIFICATION_CLICK',
+                        notificationType: notifType,
+                        roomCode: roomCode,
+                        data: notifData
+                    });
+                    
+                    console.log('[SW] Posted message to client instead of navigating');
                     return;
                 }
             }
-            // Otherwise open a new window
-            if (self.clients.openWindow) {
-                return self.clients.openWindow(urlToOpen);
+            
+            // No window open - open a new one with the join URL
+            if (self.clients.openWindow && roomCode) {
+                console.log('[SW] Opening new window with join URL');
+                return self.clients.openWindow(`/?join=${roomCode}`);
+            } else if (self.clients.openWindow) {
+                return self.clients.openWindow('/');
             }
         })
     );
 });
 
 console.log('[SW] Custom service worker with FCM support loaded');
+

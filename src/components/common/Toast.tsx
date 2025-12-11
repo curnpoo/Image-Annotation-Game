@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import type { ToastMessage } from '../../types';
 
 interface ToastProps {
@@ -9,6 +9,13 @@ interface ToastProps {
 
 export const Toast: React.FC<ToastProps> = ({ messages, onClose, duration = 3000 }) => {
     const [animationState, setAnimationState] = useState<'entering' | 'visible' | 'leaving'>('entering');
+    const [swipeOffset, setSwipeOffset] = useState(0);
+    const [isSwiping, setIsSwiping] = useState(false);
+    
+    // Touch tracking refs
+    const touchStartX = useRef(0);
+    const touchStartY = useRef(0);
+    const isSwipeGesture = useRef(false);
 
     useEffect(() => {
         // Small delay to trigger enter animation
@@ -31,6 +38,48 @@ export const Toast: React.FC<ToastProps> = ({ messages, onClose, duration = 3000
     const handleDismiss = () => {
         setAnimationState('leaving');
         setTimeout(onClose, 400);
+    };
+
+    // Swipe gesture handlers
+    const handleTouchStart = (e: React.TouchEvent) => {
+        touchStartX.current = e.touches[0].clientX;
+        touchStartY.current = e.touches[0].clientY;
+        isSwipeGesture.current = false;
+        setIsSwiping(true);
+    };
+
+    const handleTouchMove = (e: React.TouchEvent) => {
+        if (!isSwiping) return;
+        
+        const deltaX = e.touches[0].clientX - touchStartX.current;
+        const deltaY = e.touches[0].clientY - touchStartY.current;
+        
+        // Only track horizontal swipes (ignore vertical scrolling)
+        if (!isSwipeGesture.current && Math.abs(deltaX) > 10) {
+            isSwipeGesture.current = Math.abs(deltaX) > Math.abs(deltaY);
+        }
+        
+        if (isSwipeGesture.current) {
+            // Allow swiping in both directions, but with resistance
+            setSwipeOffset(deltaX * 0.8);
+        }
+    };
+
+    const handleTouchEnd = () => {
+        setIsSwiping(false);
+        
+        // If swiped far enough (50px) or fast enough, dismiss
+        if (Math.abs(swipeOffset) > 50) {
+            // Animate out in the direction of swipe
+            const direction = swipeOffset > 0 ? 1 : -1;
+            setSwipeOffset(direction * 400); // Slide completely off
+            setTimeout(onClose, 200);
+        } else {
+            // Spring back to center
+            setSwipeOffset(0);
+        }
+        
+        isSwipeGesture.current = false;
     };
 
     // Determine the primary type (error > info > success) for accent color
@@ -115,12 +164,17 @@ export const Toast: React.FC<ToastProps> = ({ messages, onClose, duration = 3000
             <div
                 className="pointer-events-auto w-full max-w-[400px]"
                 style={{
-                    transform: getTransform(),
-                    opacity: animationState === 'entering' ? 0 : 1,
-                    transition: animationState === 'leaving'
-                        ? 'transform 0.35s cubic-bezier(0.4, 0, 1, 1), opacity 0.25s ease-out'
-                        : 'transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease-out'
+                    transform: `${getTransform()} translateX(${swipeOffset}px)`,
+                    opacity: animationState === 'entering' ? 0 : Math.max(0, 1 - Math.abs(swipeOffset) / 200),
+                    transition: isSwiping 
+                        ? 'none' 
+                        : animationState === 'leaving'
+                            ? 'transform 0.35s cubic-bezier(0.4, 0, 1, 1), opacity 0.25s ease-out'
+                            : 'transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease-out'
                 }}
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
             >
                 {/* iOS Notification Card */}
                 <div
@@ -135,104 +189,80 @@ export const Toast: React.FC<ToastProps> = ({ messages, onClose, duration = 3000
                 >
                     {/* Single Message Layout */}
                     {isSingleMessage && (
-                        <div className="flex">
-                            {/* Left dismiss pill */}
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
+                        <div 
+                            className={`flex items-start gap-3 p-4 ${messages[0].action ? 'cursor-pointer active:bg-white/5 transition-colors' : ''}`}
+                            onClick={() => {
+                                if (messages[0].action) {
+                                    messages[0].action.onClick();
                                     handleDismiss();
+                                }
+                            }}
+                        >
+                            {/* Icon */}
+                            <div
+                                className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center"
+                                style={{
+                                    background: primaryConfig.iconBg,
+                                    color: primaryConfig.accentColor,
+                                    boxShadow: `inset 0 1px 0 rgba(255, 255, 255, 0.1)`
                                 }}
-                                className="flex-shrink-0 w-8 flex items-center justify-center transition-all active:bg-white/10 rounded-l-[20px]"
-                                style={{ background: 'rgba(255, 255, 255, 0.03)' }}
                             >
-                                <div 
-                                    className="w-1 h-8 rounded-full"
-                                    style={{ background: 'rgba(255, 255, 255, 0.2)' }}
-                                />
-                            </button>
+                                {messages[0].type === 'success' && (
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                )}
+                                {messages[0].type === 'error' && (
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                    </svg>
+                                )}
+                                {messages[0].type === 'info' && (
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                )}
+                            </div>
 
-                            {/* Main content - clickable for action */}
-                            <div 
-                                className={`flex-1 flex items-start gap-3 p-4 pl-2 ${messages[0].action ? 'cursor-pointer active:bg-white/5 transition-colors' : ''}`}
-                                onClick={() => {
-                                    if (messages[0].action) {
-                                        messages[0].action.onClick();
-                                        handleDismiss();
-                                    }
-                                }}
-                            >
-                                {/* Icon */}
-                                <div
-                                    className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center text-lg font-bold"
+                            {/* Content */}
+                            <div className="flex-1 min-w-0 pt-0.5">
+                                <p
+                                    className="text-[15px] font-medium leading-snug"
                                     style={{
-                                        background: primaryConfig.iconBg,
-                                        color: primaryConfig.accentColor,
-                                        boxShadow: `inset 0 1px 0 rgba(255, 255, 255, 0.1)`
+                                        color: 'rgba(255, 255, 255, 0.95)',
+                                        letterSpacing: '-0.01em'
                                     }}
                                 >
-                                    {messages[0].type === 'success' ? (
-                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
-                                        </svg>
-                                    ) : (
-                                        <span>{primaryConfig.icon}</span>
-                                    )}
-                                </div>
+                                    {messages[0].message}
+                                </p>
 
-                                {/* Content */}
-                                <div className="flex-1 min-w-0 pt-0.5">
-                                    <p
-                                        className="text-[15px] font-medium leading-snug"
-                                        style={{
-                                            color: 'rgba(255, 255, 255, 0.95)',
-                                            letterSpacing: '-0.01em'
-                                        }}
-                                    >
-                                        {messages[0].message}
+                                {/* Tap hint for actionable toasts */}
+                                {messages[0].action && (
+                                    <p className="mt-1 text-xs text-white/40">
+                                        Tap to {messages[0].action.label.toLowerCase()} →
                                     </p>
-
-                                    {/* Tap hint for actionable toasts */}
-                                    {messages[0].action && (
-                                        <p className="mt-1 text-xs text-white/40">
-                                            Tap to {messages[0].action.label.toLowerCase()} →
-                                        </p>
-                                    )}
-                                </div>
+                                )}
                             </div>
                         </div>
                     )}
 
                     {!isSingleMessage && (
-                        <div className="flex">
-                            {/* Left dismiss pill */}
-                            <button
-                                onClick={handleDismiss}
-                                className="flex-shrink-0 w-8 flex items-center justify-center transition-all active:bg-white/10 rounded-l-[20px]"
-                                style={{ background: 'rgba(255, 255, 255, 0.03)' }}
-                            >
-                                <div 
-                                    className="w-1 h-10 rounded-full"
-                                    style={{ background: 'rgba(255, 255, 255, 0.2)' }}
-                                />
-                            </button>
-
-                            {/* Main content */}
-                            <div className="flex-1 p-4 pl-2">
-                                {/* Header */}
-                                <div className="flex items-center gap-2 mb-3">
-                                    <div
-                                        className="w-6 h-6 rounded-lg flex items-center justify-center text-sm"
-                                        style={{
-                                            background: primaryConfig.iconBg,
-                                            color: primaryConfig.accentColor
-                                        }}
-                                    >
-                                        {messages.length}
-                                    </div>
-                                    <span className="text-xs font-medium text-white/50 uppercase tracking-wide">
-                                        Notifications
-                                    </span>
+                        <div className="p-4">
+                            {/* Header */}
+                            <div className="flex items-center gap-2 mb-3">
+                                <div
+                                    className="w-6 h-6 rounded-lg flex items-center justify-center text-sm font-semibold"
+                                    style={{
+                                        background: primaryConfig.iconBg,
+                                        color: primaryConfig.accentColor
+                                    }}
+                                >
+                                    {messages.length}
                                 </div>
+                                <span className="text-xs font-medium text-white/50 uppercase tracking-wide">
+                                    Notifications
+                                </span>
+                            </div>
 
                             {/* Stacked Messages */}
                             <div className="space-y-2">
@@ -287,7 +317,6 @@ export const Toast: React.FC<ToastProps> = ({ messages, onClose, duration = 3000
                                         </div>
                                     );
                                 })}
-                            </div>
                             </div>
                         </div>
                     )}
