@@ -834,42 +834,36 @@ const App = () => {
 
   // Check for URL-based join or invite logic on mount
   useEffect(() => {
-    // Check for ?invite=CODE (from background notification)
+    // Check for ?invite=CODE or ?join=CODE (legacy/direct link)
     const checkInviteParam = async () => {
       const params = new URLSearchParams(window.location.search);
-      const inviteCode = params.get('invite');
+      // Treat 'join' as 'invite' to show modal first (User preference: "I think I wanted to see the modal first")
+      // This also fixes the issue if the Old Service Worker sends ?join=
+      const inviteCode = params.get('invite') || params.get('join');
       
       if (inviteCode && player) {
-        console.log('[App] Found invite param from notification:', inviteCode);
-        // Clean URL without refresh
-        window.history.replaceState({}, '', window.location.pathname);
+        console.log('[App] Found invite/join param:', inviteCode);
         
         // Show the modal card!
-        // We need to fetch basic info or just show the code.
-        // For now, construct a placeholder invite
         const placeholderInvite: GameInvite = {
            id: 'url-invite',
            fromUserId: 'unknown',
-           fromUsername: 'A Friend', // We don't have this from URL, but could fetch room info??
+           fromUsername: 'A Friend',
            toUserId: player.id,
            roomCode: inviteCode,
            sentAt: Date.now(),
            status: 'pending'
         };
-        
-        // Try to fetch room info to get host name?
-        try {
-           // Optional: Fetch room details to show correct inviter name
-           // storageService.getRoom(inviteCode)...
-        } catch (e) {
-           console.warn('Could not fetch room details for invite card');
-        }
-
         setActiveInvite(placeholderInvite);
+
+        // Clean URL without refresh AFTER processing
+        // Delay slightly to ensure other hooks (like checkPendingNotifications) can see the param?
+        // Actually, we should set a Ref that we correspond to "joining via url"
+        // But cleaning it here is cleaner for UI.
+        window.history.replaceState({}, '', window.location.pathname);
       }
     };
     
-    // Slight delay to let player load? 
     if (player) {
       checkInviteParam();
     }
@@ -936,60 +930,72 @@ const App = () => {
 
   // Check for pending invites/requests on app open (runs once when player loads)
   // Skip if user is joining via URL (they clicked a push notification)
+  // Check for pending invites/requests on app open (runs once when player loads)
   const hasCheckedPendingRef = useRef(false);
   useEffect(() => {
     if (!player?.id || hasCheckedPendingRef.current) return;
-    hasCheckedPendingRef.current = true;
-
-    // If user is joining via URL (from push notification), skip pending notification check
+    
+    // Check params synchronously BEFORE the timeout
     const params = new URLSearchParams(window.location.search);
-    if (params.has('join') || params.has('invite')) {
-      console.log('Skipping pending notifications - user joining via URL/Invite');
+    const hasJoinOrInvite = params.has('join') || params.has('invite');
+    
+    if (hasJoinOrInvite) {
+      console.log('Skipping pending notifications - user entering via URL/Invite param');
+      // Mark as checked so we don't run it later
+      hasCheckedPendingRef.current = true;
       return;
     }
 
     const checkPendingNotifications = async () => {
+       // logic...
+       if (hasCheckedPendingRef.current) return; // Double check
+       hasCheckedPendingRef.current = true;
+
+       // ... implementation
       // Check pending game invites
       const invites = await FriendsService.getPendingInvites();
       if (invites.length > 0) {
         const latest = invites[0];
-        vibrate();
-        showToast(`🎮 ${latest.fromUsername} invited you to play!`, 'info', {
-          label: 'Join',
-          onClick: () => {
-            vibrate();
-            handleJoinRoom(latest.roomCode);
-          }
-        });
+        // Only show if we aren't already showing a modal
+        if (!activeInvite) { 
+           vibrate();
+           showToast(`🎮 ${latest.fromUsername} invited you to play!`, 'info', {
+             label: 'Join',
+             onClick: () => {
+               vibrate();
+               handleJoinRoom(latest.roomCode);
+             }
+           });
+        }
       }
 
       // Check pending friend requests
       const requests = await FriendsService.getFriendRequests();
       if (requests.length > 0) {
-        // Delay to avoid overlapping toasts
         setTimeout(async () => {
           vibrate();
           if (requests.length === 1) {
-            const req = requests[0];
-            showToast(`👋 ${req.fromUsername} wants to be friends!`, 'info', {
-              label: 'View',
-              onClick: async () => {
-                vibrate();
-                const user = await FriendsService.getUserById(req.fromUserId);
-                if (user) setViewProfileUser(user);
-              }
-            });
+             const req = requests[0];
+             showToast(`👋 ${req.fromUsername} wants to be friends!`, 'info', {
+               label: 'View',
+               onClick: async () => {
+                 vibrate();
+                 const user = await FriendsService.getUserById(req.fromUserId);
+                 if (user) setViewProfileUser(user);
+               }
+             });
           } else {
-            showToast(`👋 You have ${requests.length} friend requests!`, 'info');
+             showToast(`👋 You have ${requests.length} friend requests!`, 'info');
           }
-        }, invites.length > 0 ? 4000 : 0);
+        }, 1500); // reduced delay
       }
     };
 
     // Small delay to let app settle after login
+    // BUT we marked "checked" if url present, so this timer effectively only runs if NO url.
     const timer = setTimeout(checkPendingNotifications, 1500);
     return () => clearTimeout(timer);
-  }, [player?.id, showToast]);
+  }, [player?.id, showToast, activeInvite]);
 
 
   // --- XP & Stats Helpers ---
