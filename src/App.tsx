@@ -930,18 +930,21 @@ const App = () => {
 
   // Check for pending invites/requests on app open (runs once when player loads)
   // Skip if user is joining via URL (they clicked a push notification)
+  // Capture entry intent (invite/join URL) immediately on render, before any effects or cleanup.
+  // This persists even if URL is cleaned by other hooks.
+  const entryIntent = useRef(
+     new URLSearchParams(window.location.search).has('invite') || 
+     new URLSearchParams(window.location.search).has('join')
+  );
+
   // Check for pending invites/requests on app open (runs once when player loads)
   const hasCheckedPendingRef = useRef(false);
   useEffect(() => {
     if (!player?.id || hasCheckedPendingRef.current) return;
     
-    // Check params synchronously BEFORE the timeout
-    const params = new URLSearchParams(window.location.search);
-    const hasJoinOrInvite = params.has('join') || params.has('invite');
-    
-    if (hasJoinOrInvite) {
-      console.log('Skipping pending notifications - user entering via URL/Invite param');
-      // Mark as checked so we don't run it later
+    // Check intent ref instead of live URL (which might be race-cleaned)
+    if (entryIntent.current) {
+      console.log('Skipping pending notifications - user entering via URL/Invite intent');
       hasCheckedPendingRef.current = true;
       return;
     }
@@ -1097,6 +1100,14 @@ const App = () => {
 
   // Helper: Common Join Logic after Auth
   function attemptPendingJoin() {
+    // If we have an intentional URL entry (invite/join param), DO NOT auto-join room.
+    // The Modal Card logic will handle it.
+    const params = new URLSearchParams(window.location.search); // check raw just in case
+    if (entryIntent.current || params.has('invite') || params.has('join')) {
+       console.log('[App] Skipping pending join - handling via Modal/Entry Intent');
+       return;
+    }
+
     if (pendingRoomCode) {
       setCurrentScreen('joining-game');
       handleJoinRoom(pendingRoomCode);
