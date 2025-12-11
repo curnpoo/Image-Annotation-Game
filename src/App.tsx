@@ -26,6 +26,8 @@ import { ConfirmationModal } from './components/common/ConfirmationModal';
 import { ProfileCardModal } from './components/common/ProfileCardModal';
 import { TunnelTransition, CasinoTransition, GlobalBlurTransition } from './components/common/ScreenTransition';
 import { MonogramBackground } from './components/common/MonogramBackground';
+import { GameInviteCard } from './components/common/GameInviteCard';
+import { TurnReminderCard } from './components/common/TurnReminderCard';
 import {
   notifyYourTurnToUpload,
   notifyDrawingPhaseStarted,
@@ -157,6 +159,28 @@ const App = () => {
 
   const [currentScreen, setCurrentScreen] = useState<Screen>('welcome');
   const [lastGameDetails, setLastGameDetails] = useState<RoomHistoryEntry | null>(null);
+
+  // --- Auto-Refresh Logic (Only on Homescreen) ---
+  // Screens where the user is considered "idle" and can be auto-refreshed
+  const idleScreens = ['home', 'room-selection', 'welcome'];
+  const isOnIdleScreen = idleScreens.includes(currentScreen);
+  
+  // Auto-refresh after 60s if update is available AND user is on idle screen
+  useEffect(() => {
+    if (showUpdateNotification && isOnIdleScreen) {
+      console.log('Update available on idle screen, will auto-refresh in 60s...');
+      const autoRefreshTimer = setTimeout(() => {
+        console.log('Auto-refreshing: user idle on homescreen with update available');
+        if (needRefresh) {
+          updateServiceWorker(true);
+        } else {
+          window.location.reload();
+        }
+      }, 60 * 1000); // 60 seconds
+      
+      return () => clearTimeout(autoRefreshTimer);
+    }
+  }, [showUpdateNotification, isOnIdleScreen, needRefresh, updateServiceWorker]);
 
   // --- Smart Loading System ---
   const {
@@ -776,23 +800,29 @@ const App = () => {
 
   // --- In-App Notification System (Friend Requests & Game Invites) ---
   // Memoize callbacks so useInAppNotifications doesn't re-subscribe constantly
-  const handleFriendRequestNotification = useCallback(async (request: FriendRequest) => {
-    vibrate();
-    showToast(`👋 ${request.fromUsername} wants to be friends!`, 'info', {
-      label: 'View',
-      onClick: async () => {
-        vibrate();
-        // Fetch user data and show their profile card
-        const user = await FriendsService.getUserById(request.fromUserId);
-        if (user) {
-          setViewProfileUser(user);
-        }
-      }
-    });
-  }, [showToast]);
 
-  const handleGameInviteNotification = useCallback((invite: GameInvite) => {
+  // --- Modal Notification State ---
+  const [activeInvite, setActiveInvite] = useState<GameInvite | null>(null);
+  const [activeTurnReminder, setActiveTurnReminder] = useState<{ roomCode?: string } | null>(null);
+
+  // --- Notification Handlers ---
+  const handleFriendRequestNotification = useCallback((_request: FriendRequest) => {
     vibrate();
+    // User requested to REMOVE the "Blue" toast duplicate.
+    // We rely on the FCM (Green) toast for the visual alert.
+    // However, if the user clicked a notification to get here, show the modal.
+    
+    // Check if we should auto-show the profile modal (e.g. from background click)
+    // For now, friend requests handled via standard ProfileCardModal logic
+  }, []);
+
+  const handleGameInviteNotification = useCallback((_invite: GameInvite) => {
+    vibrate();
+    // User requested to REMOVE the "Blue" toast duplicate.
+    // We rely on the FCM (Green) toast for the visual alert in foreground.
+    
+    // NOTE: If we wanted to show the blue toast again, uncomment below:
+    /*
     showToast(`🎮 ${invite.fromUsername} invited you to play!`, 'info', {
       label: 'Join',
       onClick: () => {
@@ -800,36 +830,66 @@ const App = () => {
         handleJoinRoom(invite.roomCode);
       }
     });
-  }, [showToast]);
+    */
+  }, []);
 
-  // Use the in-app notifications hook
+  // Use the in-app notifications hook (keeps local storage sync'd but toasts are silenced)
   useInAppNotifications(player?.id || null, useMemo(() => ({
     onFriendRequest: handleFriendRequestNotification,
     onGameInvite: handleGameInviteNotification
   }), [handleFriendRequestNotification, handleGameInviteNotification]));
 
   // Listen for messages from service worker (notification clicks)
-  // This allows joining a room without a full page refresh
   useEffect(() => {
     const handleServiceWorkerMessage = (event: MessageEvent) => {
       console.log('[App] Received SW message:', event.data);
       
       if (event.data?.type === 'NOTIFICATION_CLICK') {
-        const { notificationType, roomCode } = event.data;
+        const { notificationType, data } = event.data;
         
-        if (notificationType === 'game_invite' && roomCode) {
-          console.log('[App] Joining room from notification click:', roomCode);
-          handleJoinRoom(roomCode);
+        // Handle background click -> Modal Popup
+        if (notificationType === 'game-invite' || data?.type === 'game_invite') {
+          // Construct invite object from data
+          const invite: GameInvite = {
+             id: data.id || 'unknown',
+             fromUserId: data.fromUserId,
+             fromUsername: data.fromUsername || 'Someone',
+             toUserId: player?.id || '',
+             roomCode: data.roomCode,
+             sentAt: Date.now(),
+             status: 'pending'
+          };
+          setActiveInvite(invite);
         }
-        // For friend requests, just let the user see the app (they can check friends panel)
+        else if (notificationType === 'turn_reminder' || data?.type === 'turn_reminder') {
+          setActiveTurnReminder({ roomCode: data.roomCode });
+        }
+        else if (notificationType === 'friend-request' || data?.type === 'friend_request') {
+           // For friend requests, we can open the profile modal directly
+           if (data.fromUserId) {
+             FriendsService.getUserById(data.fromUserId).then(user => {
+               if (user) setViewProfileUser(user);
+             });
+           }
+        }
+        // Fallback for generic "join" clicks
+        else if (data?.roomCode) {
+           handleJoinRoom(data.roomCode);
+        }
       }
     };
 
-    navigator.serviceWorker?.addEventListener('message', handleServiceWorkerMessage);
+    if (navigator.serviceWorker) {
+      navigator.serviceWorker.addEventListener('message', handleServiceWorkerMessage);
+    }
+
     return () => {
-      navigator.serviceWorker?.removeEventListener('message', handleServiceWorkerMessage);
+      if (navigator.serviceWorker) {
+        navigator.serviceWorker.removeEventListener('message', handleServiceWorkerMessage);
+      }
     };
-  }, []);
+  }, [player?.id, handleJoinRoom]);
+
 
 
   // Check for pending invites/requests on app open (runs once when player loads)
@@ -1829,8 +1889,8 @@ const App = () => {
         }}
       />
 
-      {/* Update Notification */}
-      {showUpdateNotification && (
+      {/* Update Notification - Hidden during critical gameplay screens */}
+      {showUpdateNotification && !['drawing', 'voting', 'uploading', 'sabotage-selection'].includes(currentScreen) && (
         <UpdateNotification
           onUpdate={handleUpdateApp}
           onDismiss={handleDismissUpdate}
@@ -1843,6 +1903,32 @@ const App = () => {
           user={viewProfileUser}
           onClose={() => setViewProfileUser(null)}
           onJoin={handleJoinRoom}
+        />
+      )}
+
+      {/* Game Invite Modal - Shown from background notification click */}
+      {activeInvite && (
+        <GameInviteCard
+          invite={activeInvite}
+          onJoin={(code) => {
+            setActiveInvite(null);
+            handleJoinRoom(code);
+          }}
+          onDecline={() => setActiveInvite(null)}
+        />
+      )}
+
+      {/* Turn Reminder Modal - Shown from background notification click */}
+      {activeTurnReminder && (
+        <TurnReminderCard
+          roomCode={activeTurnReminder.roomCode}
+          onGoToGame={() => {
+             setActiveTurnReminder(null);
+             if (activeTurnReminder.roomCode) {
+               handleJoinRoom(activeTurnReminder.roomCode);
+             }
+          }}
+          onDismiss={() => setActiveTurnReminder(null)}
         />
       )}
 

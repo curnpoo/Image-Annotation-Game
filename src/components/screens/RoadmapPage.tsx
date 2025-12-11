@@ -35,6 +35,8 @@ const doneItems: RoadmapTask[] = [
     { id: 'd13', type: 'ADD', title: 'Database cleanup script', description: 'Script to clear stale rooms, drawings, presence, invites, and friendRequests', completedDate: 'Dec 10' },
     { id: 'd14', type: 'FEAT', title: 'Tappable notification cards', description: 'Tap anywhere on notification to take action, left pill to dismiss', completedDate: 'Dec 10' },
     { id: 'd15', type: 'ADD', title: 'Notification timer progress bar', description: 'Gradient line shrinks inward showing time remaining before auto-dismiss', completedDate: 'Dec 10' },
+    { id: 'd16', type: 'FIX', title: 'Loading screen transition', description: 'Smooth transition with 500ms delay after all checks complete', completedDate: 'Dec 10' },
+    { id: 'd17', type: 'FIX', title: 'Help overlay animation polish', description: 'Refined animation timing and line endpoints for help guide', completedDate: 'Dec 11' },
 ];
 
 const roadmapData: RoadmapColumn[] = [
@@ -44,8 +46,10 @@ const roadmapData: RoadmapColumn[] = [
         emoji: '🔧',
         color: '#f59e0b',
         tasks: [
-            { id: 'w2', type: 'FIX', title: 'Loading screen transition', description: '[LoadingScreen.tsx, useLoadingProgress hook] Smooth transition with 500ms delay after all checks complete' },
             { id: 'w4', type: 'FEAT', title: 'Push notifications for friend requests', description: '[FCM, NotificationService] Send push notifications when receiving friend requests while app is closed' },
+            { id: 'w5', type: 'FIX', title: 'Match history accuracy', description: '[ProfileScreen.tsx, MatchHistory component] Fix incorrect game count, add dropdown per round showing winner\'s drawing' },
+            { id: 'w6', type: 'FEAT', title: 'Update/Version Popup Logic', description: '[App.tsx, UpdateNotification.tsx] Check version.json vs running version to show "Update Available" only when needed' },
+            { id: 'w7', type: 'FEAT', title: 'Add invites section', description: '[HomeScreen.tsx, new InvitesPanel component] Add section showing game invites from friends, auto-clear after 5 hours, allow late join' },
         ]
     },
     {
@@ -54,7 +58,12 @@ const roadmapData: RoadmapColumn[] = [
         emoji: '📅',
         color: '#eab308',
         tasks: [
-            { id: 't1', type: 'FEAT', title: 'Add invites section', description: '[HomeScreen.tsx, new InvitesPanel component] Add section showing game invites from friends, auto-clear after 5 hours, allow late join to active games' },
+            { id: 't2', type: 'FIX', title: 'Fix sabotage mechanic', description: '[DrawingScreen.tsx, VotingScreen.tsx, GameService] Entire sabotage game mode is broken - fix saboteur assignment, voting logic, and reveal flow' },
+            { id: 't3', type: 'FIX', title: 'Player card online status', description: '[FriendsScreen.tsx, LobbyScreen.tsx] Fix presence system, show accurate game status, clear status when offline' },
+            { id: 't4', type: 'FIX', title: 'Empty game join prevention', description: '[RoomSelectionScreen.tsx, GameService] Auto-close empty games in Firebase, gray out "left" games in room list' },
+            { id: 't5', type: 'FIX', title: 'Timer end screen flow', description: '[DrawingScreen.tsx] Keep toolbar visible when timer ends, add blurred overlay when player clicks ready button' },
+            { id: 't6', type: 'FIX', title: 'Home from results = left game', description: '[FinalResultsScreen.tsx, HomeScreen.tsx] Clicking home marks player as "left game", remove rejoin button from HomeScreen current game section' },
+            { id: 't7', type: 'REFACTOR', title: 'Host starts while player in menu', description: '[AvatarEditorScreen.tsx, LobbyScreen.tsx] Auto-save avatar edits on game start, show idle overlay' },
         ]
     },
     {
@@ -63,13 +72,9 @@ const roadmapData: RoadmapColumn[] = [
         emoji: '📆',
         color: '#3b82f6',
         tasks: [
-            { id: 'tm1', type: 'FIX', title: 'Match history accuracy', description: '[ProfileScreen.tsx, MatchHistory component] Fix incorrect game count, add dropdown per round showing winner\'s drawing' },
-            { id: 'tm2', type: 'FIX', title: 'Empty game join prevention', description: '[RoomSelectionScreen.tsx, GameService] Auto-close empty games in Firebase, gray out "left" games in room list with rejoin option' },
-            { id: 'tm3', type: 'FIX', title: 'Timer end screen flow', description: '[DrawingScreen.tsx, timer end state] Keep toolbar visible when timer ends, add blurred overlay when player clicks ready button' },
-            { id: 'tm4', type: 'FIX', title: 'Home from results = left game', description: '[FinalResultsScreen.tsx, HomeScreen.tsx] Clicking home marks player as "left game", remove rejoin button from HomeScreen current game section' },
-            { id: 'tm5', type: 'REFACTOR', title: 'Host starts while player in menu', description: '[AvatarEditorScreen.tsx, LobbyScreen.tsx] Auto-save avatar edits on game start, show idle overlay, send push notification if in other screen' },
-            { id: 'tm6', type: 'FIX', title: 'Fix sabotage mechanic', description: '[DrawingScreen.tsx, VotingScreen.tsx, GameService] Entire sabotage game mode is broken - fix saboteur assignment, voting logic, and reveal flow' },
-            { id: 'tm7', type: 'FIX', title: 'Player card online status', description: '[FriendsScreen.tsx, LobbyScreen.tsx, PlayerCard component] Cards show everyone online incorrectly - fix presence system, show accurate game status, clear status when offline or game closes' },
+            { id: 'tm8', type: 'FIX', title: 'Fix "Money Earned" stat', description: '[FinalResultsScreen.tsx, UserService] Ensure totalCurrencyEarned is correctly tracked and incremented' },
+            { id: 'tm9', type: 'FEAT', title: 'Conditional Idle Refresh', description: '[App.tsx] Ensure auto-refresh only triggers when user is on homescreen and truly idle' },
+            { id: 'tm10', type: 'FIX', title: 'Verify Database Cleanup', description: 'Run and verify the database cleanup script on production data' },
         ]
     },
     {
@@ -82,6 +87,7 @@ const roadmapData: RoadmapColumn[] = [
             { id: 'l2', type: 'FEAT', title: 'Waiting room minigame', description: '[LobbyScreen.tsx, new WaitingMinigame component] Add interactive activities while waiting for other players between rounds' },
             { id: 'l3', type: 'FEAT', title: 'NEW GAME MODES!', description: '[GameService, RoomSelectionScreen.tsx] Add new game mode options beyond standard drawing guessing' },
             { id: 'l4', type: 'FEAT', title: 'Dark and Light mode', description: '[ThemeProvider, all screens] Add theme toggle with cohesive dark/light color schemes across entire app' },
+            { id: 'l5', type: 'FEAT', title: 'Release iOS app', description: 'Deploy to App Store' },
         ]
     },
     {
@@ -130,7 +136,7 @@ export const RoadmapPage: React.FC = () => {
                 <div className="header-content">
                     <h1>🗺️ Roadmap</h1>
                     <p className="subtitle">What's coming to ANO</p>
-                    <p className="last-updated">Last updated: December 10, 2025</p>
+                    <p className="last-updated">Last updated: December 11, 2025</p>
                 </div>
             </header>
 

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ProfileStatusCard } from '../common/ProfileStatusCard';
 import { FriendsPanel } from '../common/FriendsPanel';
 import { AdminModal } from '../common/AdminModal';
+import { HelpGuideOverlay } from '../common/HelpGuideOverlay';
 import { MonogramBackground } from '../common/MonogramBackground';
 import type { Player } from '../../types';
 
@@ -35,6 +36,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     onRejoin
 }) => {
     const [showAdminModal, setShowAdminModal] = useState(false);
+    const [showHelpGuide, setShowHelpGuide] = useState(false);
     const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
@@ -196,6 +198,27 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             {showAdminModal && (
                 <AdminModal onClose={() => setShowAdminModal(false)} />
             )}
+
+            {/* Help Guide Overlay */}
+            {showHelpGuide && (
+                <HelpGuideOverlay onClose={() => setShowHelpGuide(false)} />
+            )}
+
+            {/* Help Button - Bottom Left Corner */}
+            <button
+                onClick={() => setShowHelpGuide(true)}
+                className="fixed bottom-0 left-0 z-50 px-4 py-2.5 bg-white/10 backdrop-blur-xl text-white/70 font-bold text-sm border-t border-r border-white/20 hover:bg-white/20 hover:text-white active:scale-95 transition-all"
+                style={{
+                    borderTopRightRadius: '1.25rem',
+                    paddingBottom: 'calc(0.625rem + env(safe-area-inset-bottom))',
+                    paddingLeft: 'calc(1rem + env(safe-area-inset-left))',
+                }}
+            >
+                <span className="flex items-center gap-1.5">
+                    <span>❓</span>
+                    <span>Help</span>
+                </span>
+            </button>
 
             {/* Hidden admin trigger */}
             {isAdmin && (
