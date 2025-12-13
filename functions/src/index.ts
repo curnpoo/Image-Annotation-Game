@@ -150,19 +150,26 @@ export const login = functions.https.onCall(async (data, context) => {
     if (userIds.length === 0) {
         throw new functions.https.HttpsError('not-found', 'User not found');
     }
-    const user = usersMap[userIds[0]] as UserAccount;
+    const userId = userIds[0];
+    const userData = usersMap[userId];
+    const user = { ...userData, id: userId } as UserAccount;
 
     if (user.pinHash !== pinHash) {
         throw new functions.https.HttpsError('unauthenticated', 'Incorrect PIN');
     }
 
     // Update last login
-    await db.ref(`users/${user.id}`).update({ lastLoginAt: Date.now() });
+    const userRef = db.ref(`users/${user.id}`);
+    await userRef.update({ lastLoginAt: Date.now() });
 
-    // Mint custom token
-    const token = await admin.auth().createCustomToken(user.id, { username: user.username });
-
-    return { token, user };
+    try {
+        // Mint custom token
+        const token = await admin.auth().createCustomToken(user.id, { username: user.username });
+        return { token, user };
+    } catch (error) {
+        console.error('Error creating custom token:', error);
+        throw new functions.https.HttpsError('internal', 'Failed to create auth token. Please check server logs.');
+    }
 });
 
 /**

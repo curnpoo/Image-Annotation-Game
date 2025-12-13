@@ -204,8 +204,15 @@ export const AuthService = {
 
                 return user;
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('Failed to sync user:', error);
+            // CRITICAL: If we get Permission Denied, it means our local session 
+            // is not authenticated with Firebase (Zombie Session). Force Logout.
+            if (error.code === 'PERMISSION_DENIED' || error.message?.includes('permission_denied')) {
+                console.warn('SyncUser: Permission denied. Invalidating session.');
+                await this.logout();
+                return null;
+            }
         }
         return local;
     },

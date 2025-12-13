@@ -1867,7 +1867,7 @@ const App = () => {
       {showCasino && player && (
       <Suspense fallback={null}>
         <CasinoScreen
-          onClose={() => setShowCasinoTransition(false)}
+          onClose={() => setShowCasino(false)}
         />
       </Suspense>
       )}
