@@ -108,8 +108,9 @@ export const FriendsPanel: React.FC<FriendsPanelProps> = ({ player: _player, onJ
     }, [isExpanded]);
 
     // Separate effect for Presence Subscription that depends on friends list
+    // Now runs always, not just when expanded, to keep "X Online" badge accurate
     useEffect(() => {
-        if (!isExpanded || friends.length === 0) return;
+        if (friends.length === 0) return;
 
         const friendIds = friends.map(f => f.id);
         const unsubscribe = PresenceService.subscribeToFriendsPresence(friendIds, (newPresenceMap) => {
@@ -117,7 +118,7 @@ export const FriendsPanel: React.FC<FriendsPanelProps> = ({ player: _player, onJ
         });
 
         return () => unsubscribe();
-    }, [isExpanded, friends]);
+    }, [friends]);
 
     // Update selected friend when friends list changes
 
