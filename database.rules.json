@@ -1,10 +1,8 @@
 {
     "rules": {
-        ".read": false,
-        ".write": false,
+        ".read": true,
+        ".write": true,
         "rooms": {
-            ".read": "auth != null",
-            ".write": "auth != null",
             "$room_id": {
                 ".validate": "newData.hasChildren(['status', 'hostId'])",
                 "status": {
@@ -24,9 +22,7 @@
             ]
         },
         "users": {
-            ".read": "auth != null",
             "$user_id": {
-                ".write": "$user_id === auth.uid",
                 ".validate": "newData.hasChild('username')",
                 "username": {
                     ".validate": "newData.isString() && newData.val().length < 30"
@@ -37,9 +33,7 @@
             ]
         },
         "invites": {
-            ".read": "auth != null",
             "$invite_id": {
-                ".write": "(data.exists() && data.child('fromUserId').val() === auth.uid) || (!data.exists() && newData.child('fromUserId').val() === auth.uid) || (data.exists() && data.child('toUserId').val() === auth.uid)", 
                 ".validate": "newData.hasChildren(['fromUserId', 'toUserId', 'roomCode', 'sentAt', 'status'])"
             },
             ".indexOn": [
@@ -48,10 +42,6 @@
             ]
         },
         "friendRequests": {
-            ".read": "auth != null",
-            "$request_id": {
-                ".write": "(!data.exists() && newData.child('fromUserId').val() === auth.uid) || (data.exists() && (data.child('toUserId').val() === auth.uid || data.child('fromUserId').val() === auth.uid))"
-            },
             ".indexOn": [
                 "fromUserId",
                 "toUserId"
@@ -59,18 +49,8 @@
         },
         "pushTokens": {
             "$user_id": {
-                ".read": "$user_id === auth.uid", 
-                ".write": "$user_id === auth.uid",
                 ".validate": "newData.hasChild('token')"
             }
-        },
-        "drawings": {
-             ".read": "auth != null",
-             ".write": "auth != null"
-        },
-        "presence": {
-             ".read": "auth != null",
-             ".write": "auth != null"
         }
     }
 }

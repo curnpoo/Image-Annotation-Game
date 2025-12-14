@@ -1,115 +1,183 @@
 // Auth Service - Username/PIN authentication with Firebase
 import { ref, get, set, query, orderByChild, equalTo } from 'firebase/database';
-import { database, auth, functions } from '../firebase';
-import { signInWithCustomToken, signOut } from 'firebase/auth';
-import { httpsCallable } from 'firebase/functions';
-import type { UserAccount } from '../types';
+import { database } from '../firebase';
+import type { UserAccount, PlayerStats, PlayerCosmetics } from '../types';
 import { CurrencyService } from './currency';
 import { XPService } from './xp';
 
 const USERS_PATH = 'users';
 const LOCAL_USER_KEY = 'logged_in_user';
 
-// Simple hash function moved to backend
+// Simple hash function for PIN (not cryptographically secure, but sufficient for game PIN)
+function hashPin(pin: string): string {
+    let hash = 0;
+    for (let i = 0; i < pin.length; i++) {
+        const char = pin.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash; // Convert to 32bit integer
+    }
+    return Math.abs(hash).toString(16);
+}
 
+// Default stats for new users
+const defaultStats: PlayerStats = {
+    gamesPlayed: 0,
+    gamesWon: 0,
+    roundsWon: 0,
+    roundsLost: 0,
+    timesSabotaged: 0,
+    timesSaboteur: 0,
+    totalCurrencyEarned: 0,
+    totalXPEarned: 0,
+    highestLevel: 0
+};
 
-// Default stats and cosmetics moved to backend
-
+const defaultCosmetics: PlayerCosmetics = {
+    brushesUnlocked: ['basic'],
+    colorsUnlocked: ['#000000', '#FFFFFF', '#FF0000', '#00FF00', '#0000FF'],
+    badges: []
+};
 
 export const AuthService = {
-    // Check if a username already exists (Public read is still allowed for this specific check? No, we might need a function or public read on usernames)
-    // Update: We'll leave public read on users for now or create a function.
-    // For now, let's assume we can still read usernames or use the register function's error.
+    // Check if a username already exists
     async usernameExists(username: string): Promise<boolean> {
-        // Optimization: The register function checks this.
-        // But for UI feedback, we might want to check.
-        // If we lock down read, this will fail. 
-        // We should PROBABLY just let the register function handle it.
         try {
             const usersRef = ref(database, USERS_PATH);
             const usernameQuery = query(usersRef, orderByChild('username'), equalTo(username.toLowerCase()));
             const snapshot = await get(usernameQuery);
             return snapshot.exists();
         } catch (error) {
-            // Assume false if we can't check, let register fail
-            return false;
+            console.error('Error checking username:', error);
+            // Default to false so user can TRY to register if it's just a permission/network blip?
+            // Or true to be safe? 
+            // If permissions are denied (read: false), this throws. 
+            // We should probably let the registration attempt fail with a specific error if write also fails.
+            throw error;
         }
     },
 
     // Register a new user
     async register(username: string, pin: string): Promise<{ success: boolean; user?: UserAccount; error?: string }> {
         try {
-            // Validate PIN client-side too
+            // Validate PIN
             if (pin.length !== 4 || !/^\d+$/.test(pin)) {
                 return { success: false, error: 'PIN must be 4 digits' };
             }
 
-            // Call Cloud Function
-            const registerFn = httpsCallable(functions, 'register');
-            const result = await registerFn({ username, pin });
-            const { token, user } = result.data as { token: string, user: UserAccount };
-
-            // Sign in with custom token
-            await signInWithCustomToken(auth, token);
-
-            // Clean stale local data
+            // CRITICAL: Ensure no stale data leaks into new account
             localStorage.removeItem('player_purchased_items');
             localStorage.removeItem('player_currency');
             localStorage.removeItem('player_xp');
             localStorage.removeItem('player_level');
 
-            // Save to LocalStorage (maintain existing app flow)
-            localStorage.setItem(LOCAL_USER_KEY, JSON.stringify(user));
+            // Check username availability
+            if (await this.usernameExists(username)) {
+                return { success: false, error: 'Username already taken' };
+            }
 
-            // Sync Currency/XP
-            CurrencyService.setCurrency(user.currency || 0);
+            const userId = crypto.randomUUID ? crypto.randomUUID() : Date.now().toString();
+            const now = Date.now();
+
+            const newUser: UserAccount = {
+                id: userId,
+                username: username.toLowerCase(),
+                pinHash: hashPin(pin),
+                createdAt: now,
+                lastLoginAt: now,
+                stats: defaultStats,
+                currency: 5, // Starting currency ($5)
+                xp: 0,
+                purchasedItems: [],
+                cosmetics: {
+                    ...defaultCosmetics,
+                    activeFont: 'default'
+                }
+            };
+
+            // Save to Firebase
+            await set(ref(database, `${USERS_PATH}/${userId}`), newUser);
+
+            // Save locally
+            localStorage.setItem(LOCAL_USER_KEY, JSON.stringify(newUser));
+
+            // Sync Currency
+            CurrencyService.setCurrency(newUser.currency || 0);
+            // reset purchased items key just in case
             localStorage.setItem('player_purchased_items', '[]');
+
+            // Sync XP (Initialize for new user)
             localStorage.setItem('player_xp', '0');
             localStorage.setItem('player_level', '0');
 
-            return { success: true, user };
+            return { success: true, user: newUser };
         } catch (error: any) {
             console.error('Registration failed:', error);
-            return { success: false, error: error.message || 'Registration failed.' };
+            if (error.code === 'PERMISSION_DENIED') {
+                return { success: false, error: 'Database access denied. Check Firebase rules.' };
+            }
+            return { success: false, error: error.message || 'Registration failed due to network or server error.' };
         }
     },
 
     // Login with username and PIN
     async login(username: string, pin: string): Promise<{ success: boolean; user?: UserAccount; error?: string }> {
         try {
-            // Call Cloud Function
-            const loginFn = httpsCallable(functions, 'login');
-            const result = await loginFn({ username, pin });
-            const { token, user } = result.data as { token: string, user: UserAccount };
+            const usersRef = ref(database, USERS_PATH);
+            const usernameQuery = query(usersRef, orderByChild('username'), equalTo(username.toLowerCase()));
+            const snapshot = await get(usernameQuery);
 
-            // Sign in with custom token
-            await signInWithCustomToken(auth, token);
+            if (!snapshot.exists()) {
+                return { success: false, error: 'User not found' };
+            }
 
-            // Update local storage
-            localStorage.setItem(LOCAL_USER_KEY, JSON.stringify(user));
+            // Should only be one user with this username
+            let user: UserAccount | null = null;
+            snapshot.forEach((child) => {
+                user = child.val();
+            });
+
+            if (!user) return { success: false, error: 'User data corrupted' };
+
+            // Check PIN
+            if ((user as UserAccount).pinHash !== hashPin(pin)) {
+                return { success: false, error: 'Incorrect PIN' };
+            }
+
+            // Update Login Time
+            const u = user as UserAccount;
+            const updates = { lastLoginAt: Date.now() };
+            // Fire and forget update
+            AuthService.updateUser(u.id, updates);
+
+            // Save locally
+            const updatedUser = { ...u, lastLoginAt: Date.now() };
+            localStorage.setItem(LOCAL_USER_KEY, JSON.stringify(updatedUser));
 
             // Sync Currency
-            CurrencyService.setCurrency(user.currency || 0);
+            // Sync Currency
+            CurrencyService.setCurrency(updatedUser.currency);
 
-            // Sync XP
-            const xp = user.xp || 0;
+            // Sync XP - Use XPService for correct progressive level calculation
+            const xp = updatedUser.xp || 0;
             const level = XPService.getLevelFromXP(xp);
             localStorage.setItem('player_xp', xp.toString());
             localStorage.setItem('player_level', level.toString());
 
-            return { success: true, user };
+            return { success: true, user: updatedUser };
 
         } catch (error: any) {
             console.error('Login failed:', error);
+            if (error.code === 'PERMISSION_DENIED') {
+                return { success: false, error: 'Database access denied. Check Firebase rules.' };
+            }
             return { success: false, error: error.message || 'Login failed' };
         }
     },
 
     // Logout
-    async logout(): Promise<void> {
-        await signOut(auth);
+    logout(): void {
         localStorage.removeItem(LOCAL_USER_KEY);
-        // Clear XP data
+        // Clear XP data to prevent visual glitches for next user
         localStorage.removeItem('player_xp');
         localStorage.removeItem('player_level');
         localStorage.removeItem('player_currency');
@@ -204,15 +272,8 @@ export const AuthService = {
 
                 return user;
             }
-        } catch (error: any) {
+        } catch (error) {
             console.error('Failed to sync user:', error);
-            // CRITICAL: If we get Permission Denied, it means our local session 
-            // is not authenticated with Firebase (Zombie Session). Force Logout.
-            if (error.code === 'PERMISSION_DENIED' || error.message?.includes('permission_denied')) {
-                console.warn('SyncUser: Permission denied. Invalidating session.');
-                await this.logout();
-                return null;
-            }
         }
         return local;
     },

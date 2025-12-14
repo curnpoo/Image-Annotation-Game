@@ -623,8 +623,29 @@ export const FriendsService = {
             // Update status
             await update(requestRef, { status: 'accepted' });
 
-            // Note: Mutual friend addition is now handled by the 'onFriendRequestStatusChanged' Cloud Function
-            // to ensure security and consistency. We don't write to users/friends here anymore.
+            // FORCE FRIEND ADDITION CLIENT-SIDE (Redundancy for Cloud Function)
+            try {
+                // Add sender to current user's friend list
+                const myFriends = [...(currentUser.friends || [])];
+                if (!myFriends.includes(req.fromUserId)) {
+                    myFriends.push(req.fromUserId);
+                    await AuthService.updateUser(currentUser.id, { friends: myFriends });
+                }
+
+                // Add current user to sender's friend list
+                const senderRef = ref(database, `${USERS_PATH}/${req.fromUserId}`);
+                const senderSnapshot = await get(senderRef);
+                if (senderSnapshot.exists()) {
+                    const sender = senderSnapshot.val() as UserAccount;
+                    const senderFriends = [...(sender.friends || [])];
+                    if (!senderFriends.includes(currentUser.id)) {
+                        senderFriends.push(currentUser.id);
+                        await update(senderRef, { friends: senderFriends });
+                    }
+                }
+            } catch (err) {
+                console.error('Manual friend addition failed, hoping Cloud Function works:', err);
+            }
 
             return { success: true };
         } catch (error) {
