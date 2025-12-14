@@ -4,6 +4,7 @@ import { database } from '../firebase';
 import type { UserAccount, PlayerStats, PlayerCosmetics } from '../types';
 import { CurrencyService } from './currency';
 import { XPService } from './xp';
+import { AvatarService } from './avatarService';
 
 const USERS_PATH = 'users';
 const LOCAL_USER_KEY = 'logged_in_user';
@@ -205,6 +206,13 @@ export const AuthService = {
             if (snapshot.exists()) {
                 const currentData = snapshot.val();
                 const updatedData = { ...currentData, ...updates };
+                
+                // CRITICAL: If avatar strokes are being updated, sync them to the public avatar path
+                // This ensures remote users can fetch them via AvatarService if they are stripped from room data
+                if (updates.avatarStrokes) {
+                    await AvatarService.uploadAvatarStrokes(userId, updates.avatarStrokes);
+                }
+
                 await set(userRef, updatedData);
                 localStorage.setItem(LOCAL_USER_KEY, JSON.stringify(updatedData));
             }
@@ -261,6 +269,16 @@ export const AuthService = {
                     console.log(`📈 Migrating XP: localStorage has ${localXP}, Firebase has ${user.xp || 0}`);
                     user.xp = localXP;
                     await set(userRef, user);
+                }
+
+                // MIGRATION: Ensure avatar strokes are in public path (for remote visibility)
+                if (user.avatarStrokes && user.avatarStrokes.length > 0) {
+                    const migrationKey = 'migrated_public_avatar_' + user.id;
+                    if (!localStorage.getItem(migrationKey)) {
+                         console.log('🖼️  Migrating avatar to public storage...');
+                         await AvatarService.uploadAvatarStrokes(user.id, user.avatarStrokes);
+                         localStorage.setItem(migrationKey, 'true');
+                    }
                 }
 
                 // Sync XP - Critical for correct level display in lobby

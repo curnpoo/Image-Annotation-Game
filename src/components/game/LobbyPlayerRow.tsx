@@ -57,6 +57,7 @@ const LobbyPlayerRowBase: React.FC<LobbyPlayerRowProps> = ({
                         backgroundColor={player.backgroundColor || '#ffffff'}
                         size={56}
                         playerId={player.id}
+                        imageUrl={player.avatarImageUrl}
                     />
                     {isHost && (
                         <span className="absolute -top-2 -right-2 text-xl filter drop-shadow-md">👑</span>

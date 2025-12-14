@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import type { Player, DrawingStroke } from '../../types';
 import { GameCanvas } from '../game/GameCanvas';
+import { AvatarService } from '../../services/avatarService';
 
 interface ProfileSetupScreenProps {
     onComplete: (player: Omit<Player, 'id' | 'joinedAt' | 'lastSeen'>) => void;
@@ -49,7 +50,9 @@ export const ProfileSetupScreen: React.FC<ProfileSetupScreenProps> = ({ onComple
                 avatarStrokes: strokes,
                 color,
                 backgroundColor,
-                frame: FRAMES.find(f => f.id === frame)?.class || ''
+                frame: FRAMES.find(f => f.id === frame)?.class || '',
+                // Render avatar to image for display optimization
+                avatarImageUrl: AvatarService.renderToDataUrl(strokes, backgroundColor, 200)
             });
         }
     };

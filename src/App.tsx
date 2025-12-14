@@ -1198,6 +1198,7 @@ const App = () => {
     if (authUser) {
       const updates = {
         avatarStrokes: profileData.avatarStrokes,
+        avatarImageUrl: profileData.avatarImageUrl,
         color: profileData.color,
         backgroundColor: profileData.backgroundColor,
         frame: profileData.frame,

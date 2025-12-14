@@ -195,6 +195,7 @@ export const FinalResultsScreen: React.FC<FinalResultsScreenProps> = ({
                                 backgroundColor={second.backgroundColor || '#ffffff'}
                                 size={96} // w-24 = 96px
                                 className="border-4 border-white shadow-xl"
+                                imageUrl={second.avatarImageUrl}
                             />
                             <div className="absolute -bottom-2 -right-2 bg-gray-400 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold border-2 border-white shadow-sm">
                                 2
@@ -223,6 +224,7 @@ export const FinalResultsScreen: React.FC<FinalResultsScreenProps> = ({
                                 backgroundColor={first.backgroundColor || '#ffffff'}
                                 size={128} // w-32 = 128px
                                 className="border-4 border-yellow-300 shadow-xl"
+                                imageUrl={first.avatarImageUrl}
                             />
                             <div className="absolute -bottom-3 -right-2 bg-yellow-400 text-white w-10 h-10 rounded-full flex items-center justify-center font-bold text-xl border-2 border-white shadow-sm">
                                 1
@@ -251,6 +253,7 @@ export const FinalResultsScreen: React.FC<FinalResultsScreenProps> = ({
                                 backgroundColor={third.backgroundColor || '#ffffff'}
                                 size={80} // w-20 = 80px
                                 className="border-4 border-white shadow-xl"
+                                imageUrl={third.avatarImageUrl}
                             />
                             <div className="absolute -bottom-2 -right-2 bg-orange-400 text-white w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold border-2 border-white shadow-sm">
                                 3
@@ -294,6 +297,7 @@ export const FinalResultsScreen: React.FC<FinalResultsScreenProps> = ({
                                     backgroundColor={player.backgroundColor || '#ffffff'}
                                     size={32}
                                     className="shadow-sm"
+                                    imageUrl={player.avatarImageUrl}
                                 />
                                 <span className="font-bold" style={{ color: 'var(--theme-text)' }}>{player.name}</span>
                                 {player.id === currentPlayerId && (

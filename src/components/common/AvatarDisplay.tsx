@@ -15,6 +15,7 @@ interface AvatarDisplayProps {
     size?: number; // pixel size (e.g. 48 for w-12)
     className?: string;
     playerId?: string; // NEW: ID to fetch avatar for
+    imageUrl?: string; // NEW: Pre-rendered image URL for efficiency
 }
 
 const AvatarDisplayBase: React.FC<AvatarDisplayProps> = ({
@@ -25,13 +26,38 @@ const AvatarDisplayBase: React.FC<AvatarDisplayProps> = ({
     backgroundColor,
     size = 48,
     className = '',
-    playerId
+    playerId,
+    imageUrl
 }) => {
     // If strokes are NOT provided (undefined OR empty array), try to fetch them
     const { strokes: fetchedStrokes, isLoading } = useAvatar((!strokes || strokes.length === 0) ? playerId : undefined);
 
     // Ensure backgroundColor has a valid default (handles undefined, null, empty string)
     const bgColor = backgroundColor || '#ffffff';
+
+    // If we have an image URL, use that for best performance (no strokes rendering)
+    if (imageUrl) {
+        return (
+            <div
+                className={`rounded-2xl overflow-hidden relative shadow-sm flex items-center justify-center ${frame || ''} ${className}`}
+                style={{
+                    width: size,
+                    height: size,
+                    borderColor: color,
+                    borderWidth: frame ? 0 : 2, // Only show border if no frame
+                    color: color,
+                    backgroundColor: bgColor
+                }}
+            >
+                <img 
+                    src={imageUrl} 
+                    alt="Avatar" 
+                    className="w-full h-full object-contain pointer-events-none select-none"
+                    loading="lazy" 
+                />
+            </div>
+        );
+    }
 
     // Use provided strokes or fetched strokes
     const displayStrokes = strokes || fetchedStrokes;
