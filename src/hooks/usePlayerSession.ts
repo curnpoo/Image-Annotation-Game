@@ -146,6 +146,7 @@ export const usePlayerSession = ({ setCurrentScreen, onProgress, onComplete }: U
                         color: authUser.color || player.color,
                         frame: authUser.frame || player.frame,
                         avatarStrokes: authUser.avatarStrokes || player.avatarStrokes,
+                        backgroundColor: authUser.backgroundColor || player.backgroundColor,
                         cosmetics: authUser.cosmetics || player.cosmetics
                     };
 

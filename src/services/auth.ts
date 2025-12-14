@@ -92,7 +92,8 @@ export const AuthService = {
                 cosmetics: {
                     ...defaultCosmetics,
                     activeFont: 'default'
-                }
+                },
+                backgroundColor: '#ffffff'
             };
 
             // Save to Firebase
@@ -247,7 +248,7 @@ export const AuthService = {
                 }
 
                 // MIGRATION: Add default backgroundColor for legacy users
-                if (!user.backgroundColor) {
+                if (user.backgroundColor === undefined) {
                     console.log('🎨 Migrating user: Adding default backgroundColor');
                     user.backgroundColor = '#ffffff';
 

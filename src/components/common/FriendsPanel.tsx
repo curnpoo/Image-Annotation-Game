@@ -5,6 +5,7 @@ import { FriendsService } from '../../services/friendsService';
 import { AuthService } from '../../services/auth';
 import { XPService } from '../../services/xp';
 import { BadgeService } from '../../services/badgeService';
+import { PresenceService, type UserPresence } from '../../services/presence';
 import type { UserAccount, Player, FriendRequest } from '../../types';
 import { vibrate } from '../../utils/haptics';
 
@@ -69,6 +70,8 @@ export const FriendsPanel: React.FC<FriendsPanelProps> = ({ player: _player, onJ
         return () => unsubscribe();
     }, []);
 
+    const [presenceMap, setPresenceMap] = useState<Record<string, UserPresence>>({});
+
     useEffect(() => {
         let unsubscribe: (() => void) | undefined;
 
@@ -80,8 +83,15 @@ export const FriendsPanel: React.FC<FriendsPanelProps> = ({ player: _player, onJ
                 setIsRefreshing(false);
             });
 
+            // Subscribe to presence for all friends
+            const friendIds = friends.map(f => f.id);
+            if (friendIds.length > 0) {
+                 // Note: Ideally this should update when friends list changes, but for simplicity we rely on the parent re-render or effect dependency
+            }
+            // Actually, we need to re-subscribe when friends list changes.
+            // Let's rely on the separate effect below for presence subscription to keep this clean.
+
             // Also fetch requests regularly (or just once on expand)
-            // For now, we'll just fetch requests once when expanded
             FriendsService.getFriendRequests().then(setRequests);
             FriendsService.getSentFriendRequests().then(setSentRequests);
         } else {
@@ -96,6 +106,20 @@ export const FriendsPanel: React.FC<FriendsPanelProps> = ({ player: _player, onJ
             if (unsubscribe) unsubscribe();
         };
     }, [isExpanded]);
+
+    // Separate effect for Presence Subscription that depends on friends list
+    useEffect(() => {
+        if (!isExpanded || friends.length === 0) return;
+
+        const friendIds = friends.map(f => f.id);
+        const unsubscribe = PresenceService.subscribeToFriendsPresence(friendIds, (newPresenceMap) => {
+            setPresenceMap(newPresenceMap);
+        });
+
+        return () => unsubscribe();
+    }, [isExpanded, friends]);
+
+    // Update selected friend when friends list changes
 
     // Update selected friend when friends list changes
     useEffect(() => {
@@ -209,7 +233,7 @@ export const FriendsPanel: React.FC<FriendsPanelProps> = ({ player: _player, onJ
                 <div className="text-center">
                     <div className="font-black text-white text-2xl tracking-tight">FRIENDS</div>
                     <div className="text-[10px] font-bold text-green-400/80 uppercase tracking-[0.2em] bg-green-500/10 px-2 py-0.5 rounded-full border border-green-500/20 mt-1">
-                        {friends.length} Online
+                        {Object.values(presenceMap).filter(p => p.status === 'online' || p.status === 'playing').length} Online
                     </div>
                 </div>
 
@@ -463,6 +487,9 @@ export const FriendsPanel: React.FC<FriendsPanelProps> = ({ player: _player, onJ
                                                         const tier = XPService.getTierForLevel(level);
                                                         const activeBadge = (level >= 5 && friend.cosmetics?.activeBadge) ? BadgeService.getBadgeInfo(friend.cosmetics.activeBadge) : null;
                                                         const cardColor = friend.cosmetics?.activeCardColor;
+                                                        const presence = presenceMap[friend.id];
+                                                        const isPlaying = presence?.status === 'playing';
+                                                        const isOnline = presence?.status === 'online';
 
                                                         return (
                                                             <button
@@ -477,12 +504,16 @@ export const FriendsPanel: React.FC<FriendsPanelProps> = ({ player: _player, onJ
                                                                 <div className="relative z-10">
                                         <AvatarDisplay strokes={friend.avatarStrokes} avatar={friend.avatar} color={friend.color} backgroundColor={friend.backgroundColor} size={48} playerId={friend.id} imageUrl={friend.avatarImageUrl} />
                                         {activeBadge && <span className="absolute -bottom-1 -right-1 text-lg drop-shadow-md">{activeBadge.emoji}</span>}
+                                        {/* Online Indicator Dot */}
+                                        {isOnline && !isPlaying && (
+                                            <div className="absolute top-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-[#1a1a1a] shadow-sm z-20" />
+                                        )}
                                     </div>
                                                                 <div className="flex-1 text-left min-w-0 z-10">
                                                                     <div className="font-black text-white truncate text-base">{friend.username}</div>
                                                                     <div className="flex items-center gap-1 mt-1">
                                                                         <span className="text-[9px] font-black px-1.5 py-0.5 rounded uppercase tracking-widest opacity-70" style={{ backgroundColor: `${tier.color}20`, color: tier.color }}>{tier.name}</span>
-                                                                        {friend.currentRoomCode && (
+                                                                        {isPlaying && (
                                                                             <span className="text-[9px] font-black px-1.5 py-0.5 rounded uppercase tracking-widest bg-green-500/10 text-green-400 flex items-center gap-1 border border-green-500/20">
                                                                                 <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></span>
                                                                                 Playing

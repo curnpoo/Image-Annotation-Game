@@ -26,6 +26,7 @@ import { StatsService } from './services/stats';
 import { BadgeService } from './services/badgeService';
 import { vibrate } from './utils/haptics';
 import { FriendsService } from './services/friendsService';
+import { PresenceService } from './services/presence';
 import { useDrawingState } from './hooks/useDrawingState';
 import { useGameFlow } from './hooks/useGameFlow';
 import { useRoom } from './hooks/useRoom';
@@ -662,6 +663,30 @@ const App = () => {
       lastWaitingRef.current = amWaiting;
     }
   }, [room?.status, room?.roundNumber, isLoading, currentScreen, isBrowsing, amWaiting, shouldShowWaitingRoom, roomCode, pendingRoomCode]);
+
+  // Presence Service Integration
+  useEffect(() => {
+    if (player?.id) {
+      PresenceService.initPresence(player.id);
+    }
+  }, [player?.id]);
+
+  // Update Status: 'playing' vs 'online'
+  useEffect(() => {
+    // Only update if we have a valid player ID
+    if (!player?.id) return;
+
+    // Conditions for being "in a game"
+    // Must have a room code AND be connected to the room AND not be just browsing/on home screen
+    const isPlaying = roomCode && room && !isBrowsing && ['lobby', 'uploading', 'sabotage-selection', 'drawing', 'voting', 'results', 'final', 'waiting'].includes(currentScreen);
+    
+    if (isPlaying) {
+      PresenceService.setStatus('playing', roomCode!);
+    } else {
+      // Revert to online if not playing
+      PresenceService.setStatus('online');
+    }
+  }, [player?.id, roomCode, room, isBrowsing, currentScreen]);
 
   // Effect: Kicked / Removed check
   useEffect(() => {
