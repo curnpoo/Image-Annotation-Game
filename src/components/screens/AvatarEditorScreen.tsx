@@ -83,7 +83,7 @@ export const AvatarEditorScreen: React.FC<AvatarEditorScreenProps> = ({
         // Render avatar to image for display with proper brush effects
         const avatarImageUrl = AvatarService.renderToDataUrl(
             strokes,
-            backgroundColor, // Use selected background color
+            'transparent', // Use transparent background for the image to allow dynamic background changes in UI
             200
         );
 

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import type { DrawingStroke } from '../../types';
 import { useAvatar } from '../../hooks/useAvatar';
 
@@ -29,6 +29,12 @@ const AvatarDisplayBase: React.FC<AvatarDisplayProps> = ({
     playerId,
     imageUrl
 }) => {
+    const [imageError, setImageError] = useState(false);
+
+    // Reset error if url changes
+    React.useEffect(() => {
+        setImageError(false);
+    }, [imageUrl]);
     // If strokes are NOT provided (undefined OR empty array), try to fetch them
     const { strokes: fetchedStrokes, isLoading } = useAvatar((!strokes || strokes.length === 0) ? playerId : undefined);
 
@@ -93,24 +99,54 @@ const AvatarDisplayBase: React.FC<AvatarDisplayProps> = ({
         );
     }
 
+    // Optimized Image Rendering
+    if (imageUrl && !imageError) {
+        return (
+            <div
+                className={`relative rounded-full overflow-hidden ${className || ''}`}
+                style={{
+                    width: size,
+                    height: size,
+                    backgroundColor: backgroundColor || '#ffffff',
+                    border: frame ? undefined : `2px solid ${color || '#000000'}`,
+                }}
+            >
+                {/* Frame Layer */}
+                {frame && (
+                    <div className={`absolute inset-0 z-20 pointer-events-none ${frame}`} style={{ color: color }}></div>
+                )}
+
+                <img
+                    src={imageUrl}
+                    alt="Avatar"
+                    className="w-full h-full object-contain pointer-events-none select-none relative z-10"
+                    loading="lazy"
+                    onError={() => setImageError(true)}
+                />
+            </div>
+        );
+    }
+
     return (
         <div
-            className={`rounded-2xl overflow-hidden relative shadow-sm flex items-center justify-center ${frame || ''} ${className}`}
+            className={`relative rounded-full overflow-hidden ${className || ''}`}
             style={{
                 width: size,
                 height: size,
-                borderColor: color,
-                color: color, // allows currentColor to work in classes
-                backgroundColor: bgColor
+                backgroundColor: backgroundColor || '#ffffff',
+                border: frame ? undefined : `2px solid ${color || '#000000'}`,
             }}
         >
+            {/* Frame Layer */}
+            {frame && (
+                <div className={`absolute inset-0 z-20 pointer-events-none ${frame}`} style={{ color: color }}></div>
+            )}
+
             <svg
                 viewBox="0 0 100 100"
-                className="w-full h-full"
-                style={{ color: color }}
+                className="w-full h-full absolute inset-0 z-10"
+                style={{ pointerEvents: 'none' }}
             >
-
-
                 {displayStrokes.map((stroke, i) => {
                     if (!stroke || !stroke.points || stroke.points.length === 0) return null;
 
@@ -121,7 +157,7 @@ const AvatarDisplayBase: React.FC<AvatarDisplayProps> = ({
                                 key={i}
                                 cx={p.x}
                                 cy={p.y}
-                                r={(stroke.size / 3) / 2}
+                                r={(stroke.size / 3) / 2} // Scaled down to match editor look
                                 fill={stroke.color}
                             />
                         );
@@ -134,7 +170,7 @@ const AvatarDisplayBase: React.FC<AvatarDisplayProps> = ({
                                 p ? `${j === 0 ? 'M' : 'L'} ${p.x} ${p.y}` : ''
                             ).join(' ')}
                             stroke={stroke.color}
-                            strokeWidth={stroke.size / 3}
+                            strokeWidth={stroke.size / 3} // Scaled down to match editor look
                             fill="none"
                             strokeLinecap="round"
                             strokeLinejoin="round"

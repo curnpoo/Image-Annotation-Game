@@ -50,6 +50,7 @@ export const WaitingRoomScreen: React.FC<WaitingRoomScreenProps> = ({
                         size={80}
                         className="shadow-lg"
                         playerId={me?.id}
+                        imageUrl={me?.avatarImageUrl}
                     />
                 </div>
 
@@ -106,6 +107,7 @@ export const WaitingRoomScreen: React.FC<WaitingRoomScreenProps> = ({
                                             size={24}
                                             className="flex-shrink-0"
                                             playerId={p.id}
+                                            imageUrl={p.avatarImageUrl}
                                         />
                                         <span className="text-xs font-bold truncate max-w-[90px]" style={{ color: 'var(--theme-text)' }}>{p.name}</span>
                                     </div>

@@ -48,6 +48,7 @@ export const ProfileStatusCard: React.FC<ProfileStatusCardProps> = ({ player, on
                         backgroundColor={player.backgroundColor}
                         size={95}
                         className="!rounded-3xl"
+                        imageUrl={player.avatarImageUrl}
                     />
                 </div>
 

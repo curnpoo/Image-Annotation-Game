@@ -174,6 +174,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                                         backgroundColor={backgroundColor}
                                         size={160}
                                         className="shadow-2xl"
+                                        imageUrl={player.avatarImageUrl}
                                     />
                                     <div className="absolute -bottom-2 -right-2 text-2xl text-white p-3 rounded-full shadow-lg border-2 border-white"
                                         style={{ backgroundColor: 'var(--theme-accent)' }}>
@@ -233,6 +234,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                                                 color={player.color}
                                                 backgroundColor={backgroundColor} // Use current background color selection
                                                 size={56}
+                                                imageUrl={player.avatarImageUrl}
                                             />
                                         </div>
                                         <div>

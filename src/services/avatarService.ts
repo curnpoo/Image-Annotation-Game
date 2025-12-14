@@ -26,9 +26,10 @@ export const AvatarService = {
 
         if (!ctx) return '';
 
-        // Fill background
-        ctx.fillStyle = backgroundColor;
-        ctx.fillRect(0, 0, size, size);
+        if (backgroundColor && backgroundColor !== 'transparent') {
+            ctx.fillStyle = backgroundColor;
+            ctx.fillRect(0, 0, size, size);
+        }
 
         // Render each stroke with proper effects
         for (const stroke of strokes) {
@@ -44,7 +45,10 @@ export const AvatarService = {
             ctx.lineJoin = 'round';
             ctx.strokeStyle = stroke.color;
             ctx.fillStyle = stroke.color;
-            ctx.lineWidth = stroke.size * (size / 100);
+            // SCALE FIX: Divide by 3 to match the visual proportions of the editor (approx 300px width vs 100 unit coord system)
+            const adjustedSize = stroke.size / 3;
+            ctx.lineWidth = adjustedSize * (size / 100);
+            
             ctx.globalCompositeOperation = stroke.isEraser ? 'destination-out' : 'source-over';
             ctx.shadowBlur = 0;
             ctx.shadowColor = 'transparent';
@@ -63,7 +67,7 @@ export const AvatarService = {
             switch (stroke.type) {
                 case 'marker':
                     ctx.globalAlpha = 0.5;
-                    ctx.shadowBlur = stroke.size * 0.2 * (size / 100);
+                    ctx.shadowBlur = adjustedSize * 0.2 * (size / 100);
                     ctx.shadowColor = stroke.color;
                     ctx.beginPath();
                     ctx.moveTo(points[0].x, points[0].y);
@@ -78,7 +82,7 @@ export const AvatarService = {
                     ctx.shadowBlur = 30 * (size / 200);
                     ctx.shadowColor = stroke.color;
                     ctx.globalAlpha = 0.5;
-                    ctx.lineWidth = stroke.size * 1.5 * (size / 100);
+                    ctx.lineWidth = adjustedSize * 1.5 * (size / 100);
                     ctx.beginPath();
                     ctx.moveTo(points[0].x, points[0].y);
                     for (let i = 1; i < points.length; i++) {
@@ -88,14 +92,14 @@ export const AvatarService = {
                     // White core
                     ctx.globalCompositeOperation = 'source-over';
                     ctx.strokeStyle = '#ffffff';
-                    ctx.lineWidth = Math.max(1, stroke.size / 3) * (size / 100);
+                    ctx.lineWidth = Math.max(1, adjustedSize / 3) * (size / 100);
                     ctx.globalAlpha = 1.0;
                     ctx.stroke();
                     break;
 
                 case 'pixel':
                     ctx.imageSmoothingEnabled = false;
-                    const gridSize = Math.max(1, Math.floor(stroke.size * (size / 100)));
+                    const gridSize = Math.max(1, Math.floor(adjustedSize * (size / 100)));
                     points.forEach((p) => {
                         const snapX = Math.floor(p.x / gridSize) * gridSize;
                         const snapY = Math.floor(p.y / gridSize) * gridSize;
@@ -106,7 +110,7 @@ export const AvatarService = {
 
                 case 'calligraphy':
                     const angle = -45 * Math.PI / 180;
-                    const penWidth = stroke.size * (size / 100);
+                    const penWidth = adjustedSize * (size / 100);
                     ctx.fillStyle = stroke.color;
                     points.forEach((p, i) => {
                         if (i > 0) {
@@ -126,8 +130,8 @@ export const AvatarService = {
 
                 case 'spray':
                     // Use deterministic seeded random for consistency
-                    const radiusS = stroke.size * 3 * (size / 100);
-                    const dotCountS = Math.floor(stroke.size * 1.5);
+                    const radiusS = adjustedSize * 3 * (size / 100);
+                    const dotCountS = Math.floor(adjustedSize * 1.5);
 
                     // Seed based on stroke properties for determinism
                     let seed = stroke.points.reduce((acc, p) => acc + p.x + p.y, 0);
@@ -139,7 +143,7 @@ export const AvatarService = {
                     points.forEach((p, i) => {
                         const prev = i > 0 ? points[i - 1] : p;
                         const dist = Math.hypot(p.x - prev.x, p.y - prev.y);
-                        const steps = Math.max(1, Math.ceil(dist / (stroke.size * 0.1 * (size / 100))));
+                        const steps = Math.max(1, Math.ceil(dist / (adjustedSize * 0.1 * (size / 100))));
 
                         for (let s = 0; s < steps; s++) {
                             const t = s / steps;
@@ -160,7 +164,7 @@ export const AvatarService = {
                 default:
                     ctx.beginPath();
                     if (points.length === 1) {
-                        ctx.arc(points[0].x, points[0].y, stroke.size / 2 * (size / 100), 0, Math.PI * 2);
+                        ctx.arc(points[0].x, points[0].y, adjustedSize / 2 * (size / 100), 0, Math.PI * 2);
                         ctx.fill();
                     } else {
                         ctx.moveTo(points[0].x, points[0].y);
