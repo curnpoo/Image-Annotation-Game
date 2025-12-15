@@ -823,7 +823,7 @@ export const StorageService = {
                     // Ideally: Math.max(r.roundNumber + 1, random...)
                     newSabotageRound = Math.floor(Math.random() * newSettings.totalRounds) + 1;
                 } else {
-                    newSabotageRound = undefined; // Disabled
+                    newSabotageRound = null; // Disabled
                 }
             }
 
@@ -858,9 +858,9 @@ export const StorageService = {
             // No random time bonus (User requested fairness)
             const timeBonusPlayerId = null;
 
-            // Check if this is the sabotage round
+            // Check if this is the sabotage round (MUST be enabled in settings)
             const nextRoundNumber = r.roundNumber + 1;
-            const isSabotageRound = r.sabotageRound === nextRoundNumber;
+            const isSabotageRound = r.settings.enableSabotage && r.sabotageRound === nextRoundNumber;
             let saboteurId: string | null = null;
             let nextStatus: 'drawing' | 'sabotage-selection' = 'drawing';
 

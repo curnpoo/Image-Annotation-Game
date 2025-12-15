@@ -249,7 +249,7 @@ export interface GameRoom {
     // === Phase 2: Fun Features ===
 
     // Sabotage Mode (one random round per game)
-    sabotageRound?: number; // Which round has sabotage (1-indexed)
+    sabotageRound?: number | null; // Which round has sabotage (1-indexed)
     saboteurId?: string | null; // Player doing the sabotaging
     sabotageTargetId?: string | null; // Player being sabotaged
     sabotageEffect?: SabotageEffect;

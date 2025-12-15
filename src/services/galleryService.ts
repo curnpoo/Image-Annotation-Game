@@ -14,7 +14,12 @@ export const GalleryService = {
      */
     saveGameToGallery: async (room: GameRoom): Promise<void> => {
         const currentUser = AuthService.getCurrentUser();
-        if (!currentUser) return;
+        console.log('[Gallery] Saving game:', { roomCode: room.roomCode, userId: currentUser?.id });
+        
+        if (!currentUser) {
+            console.error('[Gallery] Cannot save game: No current user authenticated');
+            return;
+        }
 
         // Use deterministic gameId based on roomCode and round count
         // This ensures all players write to the same record
