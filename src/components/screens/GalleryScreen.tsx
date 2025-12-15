@@ -88,10 +88,13 @@ export const GalleryScreen: React.FC<GalleryScreenProps> = ({ onBack, showToast 
             <MonogramBackground opacity={0.1} />
 
             {/* Header */}
-            <div className="relative z-10 pt-safe-top px-6 pb-4 flex items-center gap-4">
+            <div 
+                className="relative z-10 px-6 pb-4 flex items-center gap-4"
+                style={{ paddingTop: 'max(env(safe-area-inset-top), 40px)' }}
+            >
                 <button
                     onClick={onBack}
-                    className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/10 active:scale-95 transition-all"
+                    className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/10 active:scale-95 transition-all shadow-lg"
                 >
                     <span className="text-xl">←</span>
                 </button>

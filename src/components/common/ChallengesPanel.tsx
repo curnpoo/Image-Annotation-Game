@@ -88,18 +88,18 @@ export const ChallengesPanel: React.FC<ChallengesPanelProps> = ({ onClose, embed
 
                                 {/* Content */}
                                 <div className="flex-1 min-w-0">
-                                    <div className="flex justify-between items-start mb-1">
-                                        <h3 className="font-bold text-white leading-tight truncate pr-2">
+                                    <div className="mb-2">
+                                        <h3 className="font-bold text-white leading-tight mb-1.5 break-words">
                                             {def.description}
                                         </h3>
-                                        <div className="flex items-center gap-2 flex-shrink-0">
+                                        <div className="flex items-center gap-2">
                                             {def.reward.currency > 0 && (
-                                                <span className="text-xs font-bold text-yellow-400 bg-yellow-400/10 px-1.5 py-0.5 rounded">
+                                                <span className="text-[10px] font-bold text-yellow-400 bg-yellow-400/10 px-1.5 py-0.5 rounded border border-yellow-400/20">
                                                     +{def.reward.currency}$
                                                 </span>
                                             )}
                                             {def.reward.xp > 0 && (
-                                                <span className="text-xs font-bold text-cyan-400 bg-cyan-400/10 px-1.5 py-0.5 rounded">
+                                                <span className="text-[10px] font-bold text-cyan-400 bg-cyan-400/10 px-1.5 py-0.5 rounded border border-cyan-400/20">
                                                     +{def.reward.xp}XP
                                                 </span>
                                             )}
