@@ -1303,9 +1303,9 @@ const App = () => {
       setPendingRoomCode(code);
       // Ensure we are on a screen where we can process this
       if (currentScreen === 'welcome') {
-         // User clicked "Jump In" but isn't logged in. Send to name entry!
-         console.log('[App] Redirecting to name-entry for auth...');
-         setCurrentScreen('name-entry');
+        // User clicked "Jump In" but isn't logged in. Send to auth choice first!
+      console.log('[App] Redirecting to login for auth choice...');
+      setCurrentScreen('login');
       } else if (currentScreen === 'login') {
          // Do nothing, wait for login
       } else {
@@ -1736,7 +1736,38 @@ const App = () => {
         });
       }
     });
-    return () => unsubscribe();
+    
+    // Service Worker Message Listener (for Notification Clicks)
+    const handleSWMessage = (event: MessageEvent) => {
+      if (event.data && event.data.type === 'NOTIFICATION_CLICK') {
+        const { notificationType, roomCode, data } = event.data;
+        console.log('App received notification click:', notificationType, roomCode);
+        
+        // Handle Game Invite Click
+        if (notificationType === 'game_invite' || data?.type === 'game_invite') {
+          if (roomCode) {
+            // Check if we are already in a game
+            if (currentScreen !== 'home' && currentScreen !== 'welcome' && currentScreen !== 'room-selection') {
+              showToast('Invite received! Finish your current game to join.', 'info');
+            } else {
+              // Direct Join
+              handleJoinRoom(roomCode);
+            }
+          }
+        }
+      }
+    };
+    
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.addEventListener('message', handleSWMessage);
+    }
+    
+    return () => {
+      unsubscribe();
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.removeEventListener('message', handleSWMessage);
+      }
+    };
   }, [showToast, handleJoinRoom]);
 
   if (isLoading || isInitialLoading) {

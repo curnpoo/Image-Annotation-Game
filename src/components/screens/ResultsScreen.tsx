@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { XPService } from '../../services/xp';
 import { AuthService } from '../../services/auth';
 import { StatsService } from '../../services/stats';
+import { ChallengeService } from '../../services/challenges';
 import type { GameRoom, Player } from '../../types';
 import { AvatarDisplay } from '../common/AvatarDisplay';
 import { Confetti } from '../common/Confetti';
@@ -97,9 +98,25 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
                 // Track sabotage stats if applicable for this round
                 if (room.saboteurId === player.id && room.roundNumber === room.sabotageRound) {
                     StatsService.recordWasSaboteur();
+                    ChallengeService.updateProgress('sabotage', 1);
                 }
                 if (room.sabotageTargetId === player.id && room.sabotageTriggered && room.roundNumber === room.sabotageRound) {
                     StatsService.recordSabotaged();
+                }
+
+                // Update Round Challenges
+                if (wonRound) {
+                    ChallengeService.updateProgress('win_round', 1);
+                }
+
+                // Track Correct Voting (voted for the winner)
+                // We use room.votes from the current state.
+                // NOTE: This assumes room.votes hasn't been cleared yet.
+                const winnerId = latestResult.rankings[0]?.playerId;
+                const myVoteId = room.votes?.[player.id];
+                
+                if (winnerId && myVoteId === winnerId && winnerId !== player.id) {
+                     ChallengeService.updateProgress('vote_correctly', 1);
                 }
 
                 // Sync to AuthService (local + eventually firebase)

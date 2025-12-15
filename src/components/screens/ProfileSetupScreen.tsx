@@ -1,236 +1,286 @@
 import React, { useState } from 'react';
 import type { Player, DrawingStroke } from '../../types';
 import { GameCanvas } from '../game/GameCanvas';
+import { Toolbar } from '../game/Toolbar';
+import { ZoomResetButton } from '../game/ZoomResetButton';
 import { AvatarService } from '../../services/avatarService';
+import { CosmeticsService } from '../../services/cosmetics';
+import { useZoomPan } from '../../hooks/useZoomPan';
+import { vibrate, HapticPatterns } from '../../utils/haptics';
+import { FRAMES, THEMES } from '../../constants/cosmetics';
 
 interface ProfileSetupScreenProps {
     onComplete: (player: Omit<Player, 'id' | 'joinedAt' | 'lastSeen'>) => void;
     initialName?: string;
 }
 
-const PLAYER_COLORS = [
-    { id: '#000000', name: 'Black' },
-    { id: '#FFFFFF', name: 'White' },
-    { id: '#808080', name: 'Gray' },
-    { id: '#3B82F6', name: 'Blue' },
-    { id: '#EF4444', name: 'Red' }
-];
-
-const BACKGROUND_COLORS = [
-    { id: '#ffffff', name: 'White' },
-    { id: '#f3f4f6', name: 'Light Gray' },
-    { id: '#e5e7eb', name: 'Gray' },
-    { id: '#000000', name: 'Black' },
-    { id: '#EF4444', name: 'Red' }
-];
-
-const FRAMES = [
-    { id: 'none', name: 'Simple', class: 'border-2 border-current' },
-    { id: 'glow', name: 'Glow', class: 'shadow-[0_0_15px_currentColor]' },
-    { id: 'border', name: 'Bold', class: 'border-4 border-current' },
-    { id: 'dash', name: 'Dash', class: 'border-4 border-dashed border-current' },
-    { id: 'double', name: 'Double', class: 'border-double border-8 border-current' },
-    { id: 'ring', name: 'Ring', class: 'ring-4 ring-current ring-offset-2' }
-];
-
-const TRANSPARENT_PIXEL = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
-
 export const ProfileSetupScreen: React.FC<ProfileSetupScreenProps> = ({ onComplete, initialName = '' }) => {
-    const [name, setName] = useState(initialName);
+    const [name, setName] = useState(initialName || ''); // Ensure string
     const [strokes, setStrokes] = useState<DrawingStroke[]>([]);
-    const [color, setColor] = useState(PLAYER_COLORS[0].id);
+    
+    // Editor State
+    const [brushColor, setBrushColor] = useState('#FF69B4');
     const [backgroundColor, setBackgroundColor] = useState('#ffffff');
-    const [frame, setFrame] = useState(FRAMES[0].id);
+    const [selectedFrame, setSelectedFrame] = useState('none');
+    
+    const [brushSize, setBrushSize] = useState(8);
+    const [brushType, setBrushType] = useState('default');
+    const [isEraser, setIsEraser] = useState(false);
+    const [isEyedropper, setIsEyedropper] = useState(false);
+    const [history, setHistory] = useState<DrawingStroke[][]>([[]]);
+    
+    // Toggle for color picker mode (brush vs background)
+    const [colorMode, setColorMode] = useState<'brush' | 'background'>('brush');
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (name.trim()) {
-            onComplete({
-                name: name.trim(),
-                avatarStrokes: strokes,
-                color,
-                backgroundColor,
-                frame: FRAMES.find(f => f.id === frame)?.class || '',
-                // Render avatar to image for display optimization
-                avatarImageUrl: AvatarService.renderToDataUrl(strokes, backgroundColor, 200)
-            });
+    // Data from Cosmetics
+    const availableBrushes = CosmeticsService.getAllBrushes();
+    const availableColors = CosmeticsService.getAllColors();
+
+    const backgroundOptions = [
+        ...availableColors.map(c => ({ id: c.id, name: c.name, value: c.id, preview: '', type: 'color' })),
+        ...THEMES.map(t => ({ id: t.id, name: t.name, value: t.value, preview: t.preview, type: 'theme' }))
+    ];
+
+    // iOS-like pinch-to-zoom for canvas
+    const { scale, isZoomed, isPinching, resetZoom, bind, contentStyle } = useZoomPan({
+        minScale: 1,
+        maxScale: 4
+    });
+
+    const handleStrokesChange = (newStrokes: DrawingStroke[]) => {
+        setStrokes(newStrokes);
+        // Add to history if different
+        if (JSON.stringify(newStrokes) !== JSON.stringify(history[history.length - 1])) {
+            const newHistory = [...history, newStrokes];
+            if (newHistory.length > 20) newHistory.shift(); // Limit history
+            setHistory(newHistory);
+        }
+    };
+
+    const handleUndo = () => {
+        if (history.length > 1) {
+            const newHistory = history.slice(0, -1);
+            setHistory(newHistory);
+            setStrokes(newHistory[newHistory.length - 1]);
+            vibrate(HapticPatterns.light);
         }
     };
 
     const handleClear = () => {
         setStrokes([]);
+        setHistory([[]]);
+        vibrate(HapticPatterns.light);
     };
 
-    const handleUndo = () => {
-        setStrokes(prev => prev.slice(0, -1));
+    const handleSubmit = (e?: React.FormEvent) => {
+        e?.preventDefault();
+        
+        if (!name.trim()) {
+            vibrate(HapticPatterns.error);
+            return;
+        }
+
+        // Generate Avatar Image
+        const avatarImageUrl = AvatarService.renderToDataUrl(
+            strokes,
+            'transparent', // Keep transparent for dynamic preview flexibility, or bake it in? 
+            // Current app logic seems to prefer transparent + css background for flexibility,
+            // but for portability, we might want baked. Let's follow AvatarEditorScreen which uses transparent.
+            200
+        );
+
+        onComplete({
+            name: name.trim(),
+            avatarStrokes: strokes,
+            color: brushColor,
+            backgroundColor,
+            frame: selectedFrame, // Pass ID
+            avatarImageUrl
+        });
+        vibrate(HapticPatterns.success);
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center p-4">
-            <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh]">
-                {/* Header */}
-                <div className="bg-gray-50 p-6 border-b border-gray-100 text-center">
-                    <h1 className="text-2xl font-black text-gray-800">
-                        Create Your Profile
+        <div className="fixed inset-0 bg-gray-900 overflow-hidden flex flex-col items-center justify-center safe-area-padding">
+            {/* Background */}
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-900 via-gray-900 to-black z-0">
+                <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100 contrast-150 mix-blend-overlay"></div>
+            </div>
+
+            <div className="z-10 w-full max-w-md h-full flex flex-col p-4 animate-slide-up">
+                
+                {/* Header Section */}
+                <div className="text-center mb-4 shrink-0">
+                    <h1 className="text-3xl font-black text-white drop-shadow-md rainbow-text">
+                        Create Profile
                     </h1>
-                    <p className="text-sm text-gray-500 font-medium">Get ready to play!</p>
                 </div>
 
-                <div className="overflow-y-auto p-6 space-y-8 flex-1">
-                    <form id="profile-form" onSubmit={handleSubmit} className="space-y-8">
-                        {/* Name Input */}
-                        <div className="space-y-2">
-                            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider text-center">Your Name</label>
-                            <input
-                                type="text"
-                                value={name}
-                                onChange={(e) => setName(e.target.value)}
-                                placeholder="Enter Name"
-                                className="w-full px-4 py-4 rounded-2xl bg-gray-100 border-2 border-transparent focus:bg-white focus:border-purple-500 focus:outline-none text-xl font-bold text-center text-gray-900 placeholder-gray-400 transition-all"
-                                maxLength={12}
-                                autoFocus
+                {/* Name Input */}
+                <div className="w-full mb-4 shrink-0">
+                    <input
+                        type="text"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        placeholder="Your Name"
+                        maxLength={12}
+                        className="w-full px-6 py-4 bg-white/10 border border-white/20 rounded-2xl focus:border-white/50 focus:bg-white/20 focus:outline-none font-bold text-center text-2xl text-white placeholder-white/30 transition-all shadow-lg"
+                        autoCapitalize="words"
+                        autoCorrect="off"
+                        autoComplete="off"
+                    />
+                </div>
+
+                {/* Avatar Editor Area - Flexible Height */}
+                <div className="flex-1 min-h-0 relative flex flex-col items-center justify-center mb-4">
+                    
+                    {/* Canvas Container */}
+                    <div 
+                        {...bind()} 
+                        className="relative aspect-square w-full max-w-[280px] max-h-[40vh] touch-none mb-4"
+                    >
+                        {/* Zoom Reset */}
+                        <ZoomResetButton 
+                            scale={scale} 
+                            isVisible={isZoomed} 
+                            onReset={resetZoom} 
+                        />
+
+                        {/* Avatar Circle */}
+                        <div 
+                            className="w-full h-full rounded-full overflow-hidden shadow-2xl ring-4 ring-white/10 relative"
+                            style={{ ...contentStyle, background: backgroundColor }}
+                        >
+                            {/* Frame Overlay */}
+                            <div className={`absolute inset-0 pointer-events-none z-10 rounded-full ${FRAMES.find(f => f.id === selectedFrame)?.className || ''}`}></div>
+
+                            <GameCanvas
+                                imageUrl="" // Empty for new avatar
+                                brushColor={brushColor}
+                                brushSize={brushSize}
+                                brushType={brushType}
+                                isDrawingEnabled={!isPinching}
+                                strokes={strokes}
+                                onStrokesChange={handleStrokesChange}
+                                isEraser={isEraser}
+                                isEyedropper={isEyedropper}
+                                onColorPick={(c) => {
+                                    setBrushColor(c);
+                                    setIsEraser(false);
+                                    setIsEyedropper(false);
+                                }}
+                                zoomScale={scale}
                             />
                         </div>
+                    </div>
 
-                        {/* Avatar Creator */}
-                        <div className="space-y-4">
-                            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider text-center">Draw Your Avatar</label>
+                    {/* Controls Section */}
+                    <div className="w-full space-y-3">
+                        
+                        {/* Mode Switcher Buttons */}
+                        <div className="flex justify-center gap-3">
+                            <button
+                                onClick={() => setColorMode('brush')}
+                                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${colorMode === 'brush' ? 'bg-blue-500 text-white shadow-lg scale-105' : 'bg-white/5 text-white/70 hover:bg-white/10 border border-white/10'}`}
+                            >
+                                🖌️ Brush
+                            </button>
+                            <button
+                                onClick={() => setColorMode('background')}
+                                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${colorMode === 'background' ? 'bg-purple-500 text-white shadow-lg scale-105' : 'bg-white/5 text-white/70 hover:bg-white/10 border border-white/10'}`}
+                            >
+                                🎨 Theme
+                            </button>
+                        </div>
 
-                            {/* Canvas Container - Larger with horizontal margins */}
-                            <div className="flex justify-center px-4">
-                                <div
-                                    className={`relative w-56 h-56 rounded-3xl overflow-hidden shadow-lg transition-all ${FRAMES.find(f => f.id === frame)?.class}`}
-                                    style={{
-                                        color: color,
-                                        backgroundColor: backgroundColor
+                        {/* Frames (Horizontal Scroll) */}
+                        <div className="w-full overflow-x-auto no-scrollbar pb-1">
+                            <div className="flex gap-2 min-w-min px-2 justify-center">
+                                {FRAMES.map(f => (
+                                    <button
+                                        key={f.id}
+                                        onClick={() => setSelectedFrame(f.id)}
+                                        className={`w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center text-lg border-2 transition-all ${selectedFrame === f.id ? 'border-purple-500 scale-110 shadow-lg' : 'border-gray-700 opacity-70 hover:opacity-100'}`}
+                                    >
+                                        <div className={`${f.className} w-full h-full rounded-full`}></div>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Toolbar (or Theme Picker) */}
+                        <div className="relative">
+                            <div className={colorMode === 'background' ? 'opacity-30 pointer-events-none blur-[1px] transition-all' : 'transition-all'}>
+                                <Toolbar
+                                    brushColor={brushColor}
+                                    brushSize={brushSize}
+                                    brushType={brushType}
+                                    isEraser={isEraser}
+                                    isEyedropper={isEyedropper}
+                                    onColorChange={(c) => {
+                                        setBrushColor(c);
+                                        setIsEraser(false);
+                                        setIsEyedropper(false);
                                     }}
-                                >
-                                    <GameCanvas
-                                        imageUrl={TRANSPARENT_PIXEL}
-                                        brushColor={color === '#FFFFFF' && backgroundColor === '#FFFFFF' ? '#000000' : color}
-                                        brushSize={5}
-                                        isDrawingEnabled={true}
-                                        strokes={strokes}
-                                        onStrokesChange={setStrokes}
-                                    />
-                                </div>
+                                    onSizeChange={setBrushSize}
+                                    onTypeChange={setBrushType}
+                                    onEraserToggle={() => {
+                                        setIsEraser(!isEraser);
+                                        setIsEyedropper(false);
+                                    }}
+                                    onEyedropperToggle={() => {
+                                        setIsEyedropper(!isEyedropper);
+                                        setIsEraser(false);
+                                    }}
+                                    onUndo={handleUndo}
+                                    onClear={handleClear}
+                                    availableColors={availableColors}
+                                    availableBrushes={availableBrushes}
+                                />
                             </div>
 
-                            {/* Canvas Controls */}
-                            <div className="flex justify-center gap-2">
-                                <button
-                                    type="button"
-                                    onClick={handleUndo}
-                                    className="px-4 py-2 bg-gray-100 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-200 transition-colors flex items-center gap-1"
-                                    disabled={strokes.length === 0}
-                                >
-                                    <span>↩</span> Undo
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={handleClear}
-                                    className="px-4 py-2 bg-red-50 rounded-xl text-xs font-bold text-red-500 hover:bg-red-100 transition-colors flex items-center gap-1"
-                                    disabled={strokes.length === 0}
-                                >
-                                    <span>🗑️</span> Clear
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Styling Options */}
-                        <div className="bg-gray-50 rounded-3xl p-5 space-y-6">
-                            {/* Drawing Color Selection */}
-                            <div className="space-y-3">
-                                <div className="flex items-center justify-between">
-                                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">🎨 Drawing Color</label>
-                                    <span className="text-xs font-bold text-gray-900">{PLAYER_COLORS.find(c => c.id === color)?.name}</span>
-                                </div>
-                                <div className="flex justify-between gap-2">
-                                    {PLAYER_COLORS.map(c => (
-                                        <button
-                                            key={c.id}
-                                            type="button"
-                                            onClick={() => setColor(c.id)}
-                                            className={`w-12 h-12 rounded-full transition-all flex items-center justify-center border-2 border-black/30 ${color === c.id ? 'scale-110 shadow-lg ring-2 ring-purple-500 ring-offset-2' : 'hover:scale-105'}`}
-                                            style={{
-                                                backgroundColor: c.id
-                                            }}
-                                        >
-                                            {color === c.id && (
-                                                <span className={`text-sm font-bold ${c.id === '#FFFFFF' || c.id === '#f3f4f6' || c.id === '#e5e7eb' ? 'text-black' : 'text-white'}`}>✓</span>
-                                            )}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Background Color Selection */}
-                            <div className="space-y-3">
-                                <div className="flex items-center justify-between">
-                                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">🖼️ Background Color</label>
-                                    <span className="text-xs font-bold text-gray-900">{BACKGROUND_COLORS.find(c => c.id === backgroundColor)?.name}</span>
-                                </div>
-                                <div className="flex justify-between gap-2">
-                                    {BACKGROUND_COLORS.map(bg => (
-                                        <button
-                                            key={bg.id}
-                                            type="button"
-                                            onClick={() => setBackgroundColor(bg.id)}
-                                            className={`w-12 h-12 rounded-full transition-all flex items-center justify-center border-2 border-black/30 ${backgroundColor === bg.id ? 'scale-110 shadow-lg ring-2 ring-purple-500 ring-offset-2' : 'hover:scale-105'}`}
-                                            style={{ backgroundColor: bg.id }}
-                                        >
-                                            {backgroundColor === bg.id && (
-                                                <span className={`text-sm font-bold ${bg.id === '#FFFFFF' || bg.id === '#f3f4f6' || bg.id === '#e5e7eb' ? 'text-black' : 'text-white'}`}>✓</span>
-                                            )}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Frame Selection */}
-                            <div className="space-y-3">
-                                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider text-center">🖼️ Frame Style</label>
-                                <div className="grid grid-cols-3 gap-2">
-                                    {FRAMES.map(f => (
-                                        <button
-                                            key={f.id}
-                                            type="button"
-                                            onClick={() => setFrame(f.id)}
-                                            className={`
-                                                py-2 px-1 rounded-xl flex flex-col items-center justify-center gap-1 transition-all
-                                                ${frame === f.id ? 'bg-white shadow-sm ring-1 ring-purple-500' : 'hover:bg-gray-200'}
-                                            `}
-                                        >
-                                            <div
-                                                className={`w-8 h-8 rounded-full flex items-center justify-center border border-gray-100 ${f.class}`}
-                                                style={{ color: color, backgroundColor: backgroundColor }}
+                             {/* Theme/Background Picker Overlay */}
+                             {colorMode === 'background' && (
+                                <div className="absolute inset-0 bg-gray-900/95 backdrop-blur-md rounded-[1.5rem] p-4 z-20 animate-fade-in border border-white/10 flex flex-col">
+                                    <h3 className="text-white text-xs font-bold uppercase tracking-wider text-center mb-3">Choose Background</h3>
+                                    <div className="grid grid-cols-5 gap-3 overflow-y-auto pr-1 custom-scrollbar flex-1 content-start">
+                                        {backgroundOptions.map(option => (
+                                            <button
+                                                key={option.id}
+                                                onClick={() => setBackgroundColor(option.value)}
+                                                className={`aspect-square rounded-full border-2 transition-all relative overflow-hidden group
+                                                ${backgroundColor === option.value ? 'border-white scale-110 shadow-lg' : 'border-transparent hover:scale-105'}`}
+                                                style={{ background: option.value }}
                                             >
-                                                <div className="w-4 h-4 rounded-full" style={{ backgroundColor: color }} />
-                                            </div>
-                                            <span className={`text-[10px] font-bold ${frame === f.id ? 'text-purple-600' : 'text-gray-500'}`}>
-                                                {f.name}
-                                            </span>
-                                        </button>
-                                    ))}
+                                                {option.preview && (
+                                                    <span className="absolute inset-0 flex items-center justify-center text-[10px] opacity-0 group-hover:opacity-100">
+                                                        {option.preview}
+                                                    </span>
+                                                )}
+                                            </button>
+                                        ))}
+                                    </div>
                                 </div>
-                            </div>
+                            )}
                         </div>
-                    </form>
+
+                    </div>
                 </div>
 
-                {/* Footer */}
-                <div className="p-4 bg-white border-t border-gray-100">
-                    <button
-                        type="submit"
-                        form="profile-form"
-                        disabled={!name.trim()}
-                        className="w-full bg-gray-900 text-white py-4 rounded-2xl font-bold text-lg shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-                    >
+                {/* Footer Action */}
+                <button
+                    onClick={handleSubmit}
+                    disabled={!name.trim()}
+                    className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white py-4 rounded-2xl font-black text-xl shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:grayscale shrink-0 relative overflow-hidden group"
+                >
+                    <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+                    <span className="relative flex items-center justify-center gap-2">
                         Start Playing 🚀
-                    </button>
-                </div>
+                    </span>
+                </button>
             </div>
         </div>
     );
 };
+
 

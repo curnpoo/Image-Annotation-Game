@@ -309,6 +309,7 @@ export const ScreenRouter: React.FC<ScreenRouterProps> = ({
             screenContent = <GalleryScreen
                 onBack={onBackToHome}
                 showToast={showToast}
+                currentSessionId={player?.id}
             />;
             break;
 

@@ -12,13 +12,31 @@ export const GalleryService = {
     /**
      * Save a completed game to gallery for all participants
      */
-    saveGameToGallery: async (room: GameRoom): Promise<void> => {
-        const currentUser = AuthService.getCurrentUser();
-        console.log('[Gallery] Saving game:', { roomCode: room.roomCode, userId: currentUser?.id });
+    saveGameToGallery: async (room: GameRoom, targetPlayerId?: string): Promise<void> => {
+        let userId = targetPlayerId;
         
-        if (!currentUser) {
-            console.error('[Gallery] Cannot save game: No current user authenticated');
-            return;
+        if (!userId) {
+            const currentUser = AuthService.getCurrentUser();
+            userId = currentUser?.id;
+        }
+
+        console.log('[Gallery] Saving game:', { roomCode: room.roomCode, userId });
+        
+        if (!userId) {
+            console.error('[Gallery] Cannot save game: No user ID provided or authenticated');
+            // Try to fallback to session storage directly if all else fails
+            try {
+                const session = localStorage.getItem('aic_game_session');
+                if (session) {
+                    const parsed = JSON.parse(session);
+                    if (parsed.id) {
+                        userId = parsed.id;
+                        console.log('[Gallery] Found fallback ID from session:', userId);
+                    }
+                }
+            } catch (e) { console.warn('Failed to parse session fallback', e); }
+            
+            if (!userId) return;
         }
 
         // Use deterministic gameId based on roomCode and round count
@@ -94,11 +112,11 @@ export const GalleryService = {
         // Save ONLY to the current user's gallery
         // Each player's client handles their own saving
         try {
-            const galleryRef = ref(database, `${GALLERY_PATH}/${currentUser.id}/${gameId}`);
+            const galleryRef = ref(database, `${GALLERY_PATH}/${userId}/${gameId}`);
             await set(galleryRef, galleryGame);
             
             // Prune old games for current user
-            await GalleryService.pruneOldGames(currentUser.id);
+            await GalleryService.pruneOldGames(userId);
             console.log('Game saved to gallery successfully');
         } catch (error) {
             console.error('Error saving game to gallery:', error);
@@ -110,11 +128,28 @@ export const GalleryService = {
     /**
      * Get all gallery games for the current player
      */
-    getPlayerGallery: async (): Promise<GalleryGame[]> => {
-        const currentUser = AuthService.getCurrentUser();
-        if (!currentUser) return [];
+    getPlayerGallery: async (targetPlayerId?: string): Promise<GalleryGame[]> => {
+        let userId = targetPlayerId;
+        
+        if (!userId) {
+            const currentUser = AuthService.getCurrentUser();
+            userId = currentUser?.id;
+        }
 
-        const galleryRef = ref(database, `${GALLERY_PATH}/${currentUser.id}`);
+        if (!userId) {
+            // Fallback to session
+             try {
+                const session = localStorage.getItem('aic_game_session');
+                if (session) {
+                    const parsed = JSON.parse(session);
+                    if (parsed.id) userId = parsed.id;
+                }
+             } catch (e) {}
+        }
+
+        if (!userId) return [];
+
+        const galleryRef = ref(database, `${GALLERY_PATH}/${userId}`);
         const snapshot = await get(galleryRef);
 
         if (!snapshot.exists()) return [];

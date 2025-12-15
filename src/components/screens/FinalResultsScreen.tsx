@@ -4,6 +4,7 @@ import { AuthService } from '../../services/auth';
 import { StatsService } from '../../services/stats';
 import { StatsHistoryService } from '../../services/statsHistory';
 import { GalleryService } from '../../services/galleryService';
+import { ChallengeService } from '../../services/challenges';
 import type { GameRoom } from '../../types';
 import { Confetti } from '../common/Confetti';
 import { AvatarDisplay } from '../common/AvatarDisplay';
@@ -76,17 +77,22 @@ export const FinalResultsScreen: React.FC<FinalResultsScreenProps> = ({
                 // Track currency earned in stats
                 await StatsService.recordCurrencyEarned(currencyEarned);
 
+                // Update Challenges
+                ChallengeService.updateProgress('play_game', 1);
+                ChallengeService.updateProgress('earn_currency', currencyEarned);
+
                 // Track sabotage stats only if sabotage round was the final round
                 // (Earlier rounds' sabotage is tracked in ResultsScreen)
                 if (room.sabotageRound === room.roundNumber) {
                     if (room.saboteurId === currentPlayerId) {
                         await StatsService.recordWasSaboteur();
+                         ChallengeService.updateProgress('sabotage', 1);
                     }
                     if (room.sabotageTargetId === currentPlayerId && room.sabotageTriggered) {
                         await StatsService.recordSabotaged();
                     }
                 }
-
+                
                 AuthService.updateUser(currentPlayerId, { // Changed player.id to currentPlayerId
                     stats: newStats,
                     xp: XPService.getXP(),
@@ -118,7 +124,7 @@ export const FinalResultsScreen: React.FC<FinalResultsScreenProps> = ({
             }
 
             try {
-                await GalleryService.saveGameToGallery(room);
+                await GalleryService.saveGameToGallery(room, currentPlayerId);
                 sessionStorage.setItem(galleryKey, 'true');
                 console.log('[FinalResults] Game saved to gallery successfully, marking session.');
             } catch (err) {

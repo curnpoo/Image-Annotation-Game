@@ -62,9 +62,9 @@ messaging.onBackgroundMessage((payload: any) => {
     // contains a "notification" block.
     // We only need to manually show a notification if it's a "data-only" message.
     if (payload.notification) {
-        console.log('[SW] Payload has "notification" block. forcing manual display to ensure visibility.');
-        // console.log('[SW] Payload has "notification" block - letting OS handle display to prevent duplicates.');
-        // return;
+        // console.log('[SW] Payload has "notification" block. forcing manual display to ensure visibility.');
+        console.log('[SW] Payload has "notification" block - letting OS handle display to prevent duplicates.');
+        return;
     }
 
     const notificationTitle = payload.data?.title || payload.notification?.title || 'ANO Game';

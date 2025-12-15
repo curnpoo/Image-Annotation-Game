@@ -7,9 +7,10 @@ import { MonogramBackground } from '../common/MonogramBackground';
 interface GalleryScreenProps {
     onBack: () => void;
     showToast: (message: string, type: 'success' | 'error' | 'info') => void;
+    currentSessionId?: string;
 }
 
-export const GalleryScreen: React.FC<GalleryScreenProps> = ({ onBack, showToast }) => {
+export const GalleryScreen: React.FC<GalleryScreenProps> = ({ onBack, showToast, currentSessionId }) => {
     const [games, setGames] = useState<GalleryGame[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [expandedGameId, setExpandedGameId] = useState<string | null>(null);
@@ -26,13 +27,15 @@ export const GalleryScreen: React.FC<GalleryScreenProps> = ({ onBack, showToast 
     const loadGallery = async () => {
         setIsLoading(true);
         try {
-            const galleryGames = await GalleryService.getPlayerGallery();
-            setGames(galleryGames);
+            // Pass the session ID to support guest users
+            const history = await GalleryService.getPlayerGallery(currentSessionId);
+            setGames(history);
         } catch (error) {
             console.error('Failed to load gallery:', error);
-            showToast('Failed to load gallery', 'error');
+            showToast('Failed to load history', 'error');
+        } finally {
+            setIsLoading(false);
         }
-        setIsLoading(false);
     };
 
     const toggleGame = (gameId: string) => {

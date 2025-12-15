@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import type { DrawingStroke } from '../../types';
 import { useAvatar } from '../../hooks/useAvatar';
+import { FRAMES } from '../../constants/cosmetics';
 
 interface AvatarDisplayProps {
     strokes?: DrawingStroke[];
@@ -41,18 +42,26 @@ const AvatarDisplayBase: React.FC<AvatarDisplayProps> = ({
     // Ensure backgroundColor has a valid default (handles undefined, null, empty string)
     const bgColor = backgroundColor || '#ffffff';
 
+    // Helper to resolve frame class from ID (or use raw string if legacy/direct)
+    const resolveFrameClass = (frameId?: string) => {
+        if (!frameId) return '';
+        const found = FRAMES.find(f => f.id === frameId);
+        return found ? found.className : frameId;
+    };
+    const frameClass = resolveFrameClass(frame);
+
     // If we have an image URL, use that for best performance (no strokes rendering)
     if (imageUrl) {
         return (
             <div
-                className={`rounded-2xl overflow-hidden relative shadow-sm flex items-center justify-center ${frame || ''} ${className}`}
+                className={`rounded-2xl overflow-hidden relative shadow-sm flex items-center justify-center ${frameClass || ''} ${className}`}
                 style={{
                     width: size,
                     height: size,
                     borderColor: color,
-                    borderWidth: frame ? 0 : 2, // Only show border if no frame
+                    borderWidth: frameClass ? 0 : 2, // Only show border if no frame
                     color: color,
-                    backgroundColor: bgColor
+                    background: bgColor
                 }}
             >
                 <img 
@@ -75,12 +84,12 @@ const AvatarDisplayBase: React.FC<AvatarDisplayProps> = ({
     if (!displayStrokes || displayStrokes.length === 0) {
         return (
             <div
-                className={`rounded-2xl flex items-center justify-center shadow-sm relative overflow-hidden ${frame || ''} ${className}`}
+                className={`rounded-2xl flex items-center justify-center shadow-sm relative overflow-hidden ${frameClass || ''} ${className}`}
                 style={{
                     color: color,
                     width: size,
                     height: size,
-                    backgroundColor: bgColor,
+                    background: bgColor,
                     fontSize: size * 0.6
                 }}
             >
@@ -107,13 +116,13 @@ const AvatarDisplayBase: React.FC<AvatarDisplayProps> = ({
                 style={{
                     width: size,
                     height: size,
-                    backgroundColor: backgroundColor || '#ffffff',
-                    border: frame ? undefined : `2px solid ${color || '#000000'}`,
+                    background: backgroundColor || '#ffffff',
+                    border: frameClass ? undefined : `2px solid ${color || '#000000'}`,
                 }}
             >
                 {/* Frame Layer */}
-                {frame && (
-                    <div className={`absolute inset-0 z-20 pointer-events-none ${frame}`} style={{ color: color }}></div>
+                {frameClass && (
+                    <div className={`absolute inset-0 z-20 pointer-events-none ${frameClass}`} style={{ color: color }}></div>
                 )}
 
                 <img
@@ -133,13 +142,13 @@ const AvatarDisplayBase: React.FC<AvatarDisplayProps> = ({
             style={{
                 width: size,
                 height: size,
-                backgroundColor: backgroundColor || '#ffffff',
-                border: frame ? undefined : `2px solid ${color || '#000000'}`,
+                background: backgroundColor || '#ffffff',
+                border: frameClass ? undefined : `2px solid ${color || '#000000'}`,
             }}
         >
             {/* Frame Layer */}
-            {frame && (
-                <div className={`absolute inset-0 z-20 pointer-events-none ${frame}`} style={{ color: color }}></div>
+            {frameClass && (
+                <div className={`absolute inset-0 z-20 pointer-events-none ${frameClass}`} style={{ color: color }}></div>
             )}
 
             <svg
