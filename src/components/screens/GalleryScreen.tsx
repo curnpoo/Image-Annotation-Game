@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { GalleryService } from '../../services/galleryService';
-import type { GalleryGame, GalleryRound, GalleryDrawing } from '../../types';
+import type { GalleryGame, GalleryRound, BlockInfo, DrawingStroke } from '../../types';
 import { vibrate, HapticPatterns } from '../../utils/haptics';
+import { MonogramBackground } from '../common/MonogramBackground';
 
 interface GalleryScreenProps {
     onBack: () => void;
@@ -12,12 +13,11 @@ export const GalleryScreen: React.FC<GalleryScreenProps> = ({ onBack, showToast 
     const [games, setGames] = useState<GalleryGame[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [expandedGameId, setExpandedGameId] = useState<string | null>(null);
-    const [selectedDrawing, setSelectedDrawing] = useState<{
-        game: GalleryGame;
-        round: GalleryRound;
-        drawing: GalleryDrawing;
-    } | null>(null);
-    const [isDownloading, setIsDownloading] = useState(false);
+    const [expandedRoundId, setExpandedRoundId] = useState<string | null>(null);
+
+    // Fullscreen View State
+    const [viewingImage, setViewingImage] = useState<{ url: string; round: GalleryRound; winnerName: string } | null>(null);
+    const [isGeneratingImage, setIsGeneratingImage] = useState(false);
 
     useEffect(() => {
         loadGallery();
@@ -35,388 +35,388 @@ export const GalleryScreen: React.FC<GalleryScreenProps> = ({ onBack, showToast 
         setIsLoading(false);
     };
 
-    const formatTimeAgo = (timestamp: number): string => {
-        const now = Date.now();
-        const diff = now - timestamp;
-        const minutes = Math.floor(diff / 60000);
-        const hours = Math.floor(diff / 3600000);
-        const days = Math.floor(diff / 86400000);
-
-        if (minutes < 1) return 'Just now';
-        if (minutes < 60) return `${minutes}m ago`;
-        if (hours < 24) return `${hours}h ago`;
-        if (days === 1) return 'Yesterday';
-        return `${days} days ago`;
+    const toggleGame = (gameId: string) => {
+        vibrate(HapticPatterns.light);
+        if (expandedGameId === gameId) {
+            setExpandedGameId(null);
+            setExpandedRoundId(null);
+        } else {
+            setExpandedGameId(gameId);
+            setExpandedRoundId(null);
+        }
     };
 
-    const handleDownload = async (drawing: GalleryDrawing, round: GalleryRound) => {
-        setIsDownloading(true);
+    const toggleRound = (roundId: string) => {
+        vibrate(HapticPatterns.light);
+        setExpandedRoundId(expandedRoundId === roundId ? null : roundId);
+    };
+
+    const handleViewDrawing = async (round: GalleryRound) => {
+        // Find winner's drawing (safe access)
+        const winnerDrawing = round.drawings?.find(d => d.playerId === round.winner?.playerId);
+        
+        setIsGeneratingImage(true);
         vibrate(HapticPatterns.light);
 
         try {
-            const filename = `ano_drawing_r${round.roundNumber}_${drawing.playerName}.png`;
-            await GalleryService.downloadRenderedDrawing(
+            // Generate watermarked image
+            const dataUrl = await GalleryService.renderDrawingToDataUrl(
                 round.imageUrl,
-                drawing.strokes,
-                filename
+                winnerDrawing?.strokes || [],
+                {
+                    block: round.block,
+                    watermark: true,
+                    canvasSize: 1080 // High res for saving
+                }
             );
-            showToast('Drawing saved! 📸', 'success');
-            vibrate(HapticPatterns.success);
+
+            setViewingImage({
+                url: dataUrl,
+                round,
+                winnerName: round.winner.playerName
+            });
         } catch (error) {
-            console.error('Failed to download:', error);
-            showToast('Failed to save drawing', 'error');
+            console.error('Failed to generate image:', error);
+            showToast('Failed to generate image', 'error');
+        } finally {
+            setIsGeneratingImage(false);
         }
-
-        setIsDownloading(false);
     };
-
-    const toggleGame = (gameId: string) => {
-        vibrate(HapticPatterns.light);
-        setExpandedGameId(expandedGameId === gameId ? null : gameId);
-    };
-
-    // Drawing detail modal
-    if (selectedDrawing) {
-        const { round, drawing } = selectedDrawing;
-
-        return (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
-                style={{ background: 'var(--theme-background)' }}>
-
-                {/* Back button */}
-                <button
-                    onClick={() => setSelectedDrawing(null)}
-                    className="absolute top-4 left-4 p-3 rounded-full bg-white/10 hover:bg-white/20 transition-all z-10"
-                >
-                    <span className="text-2xl">←</span>
-                </button>
-
-                <div className="w-full max-w-lg space-y-4">
-                    {/* Player info */}
-                    <div className="text-center">
-                        <h2 className="text-xl font-bold" style={{ color: 'var(--theme-text)' }}>
-                            <span style={{ color: drawing.playerColor }}>{drawing.playerName}</span>'s Drawing
-                        </h2>
-                        <p className="text-sm opacity-60" style={{ color: 'var(--theme-text)' }}>
-                            Round {round.roundNumber} • {drawing.votes} vote{drawing.votes !== 1 ? 's' : ''}
-                        </p>
-                    </div>
-
-                    {/* Drawing preview - render on canvas */}
-                    <DrawingPreview
-                        baseImageUrl={round.imageUrl}
-                        strokes={drawing.strokes}
-                    />
-
-                    {/* Actions */}
-                    <div className="flex gap-3">
-                        <button
-                            onClick={() => setSelectedDrawing(null)}
-                            className="flex-1 py-3 rounded-xl font-bold transition-all"
-                            style={{
-                                backgroundColor: 'var(--theme-card-bg)',
-                                color: 'var(--theme-text)'
-                            }}
-                        >
-                            Close
-                        </button>
-                        <button
-                            onClick={() => handleDownload(drawing, round)}
-                            disabled={isDownloading}
-                            className="flex-1 py-3 rounded-xl font-bold transition-all bg-gradient-to-r from-green-500 to-emerald-600 text-white disabled:opacity-50"
-                        >
-                            {isDownloading ? 'Saving...' : '💾 Save to Device'}
-                        </button>
-                    </div>
-                </div>
-            </div>
-        );
-    }
 
     return (
-        <div
-            className="min-h-screen flex flex-col"
-            style={{
-                paddingTop: 'max(1.5rem, env(safe-area-inset-top) + 1rem)',
-                paddingBottom: 'max(1rem, env(safe-area-inset-bottom))',
-                backgroundColor: 'var(--theme-bg-primary)'
-            }}
-        >
-            {/* Header Card Button */}
-            <button
-                onClick={onBack}
-                className="mx-4 mb-4 rounded-[2rem] p-4 border-2 flex items-center gap-4 hover:brightness-110 active:scale-95 transition-all shadow-lg"
-                style={{
-                    backgroundColor: 'var(--theme-card-bg)',
-                    borderColor: 'var(--theme-border)'
-                }}
-            >
-                <div className="text-3xl">📊</div>
-                <div className="flex-1 text-left">
-                    <div className="text-lg font-bold" style={{ color: 'var(--theme-text)' }}>Match History</div>
-                    <div className="text-sm font-medium" style={{ color: 'var(--theme-text-secondary)' }}>View your completed games</div>
-                </div>
-                <div className="text-2xl" style={{ color: 'var(--theme-text-secondary)' }}>←</div>
-            </button>
+        <div className="fixed inset-0 z-0 bg-black text-white overflow-hidden flex flex-col font-sans">
+            <MonogramBackground opacity={0.1} />
 
+            {/* Header */}
+            <div className="relative z-10 pt-safe-top px-6 pb-4 flex items-center gap-4">
+                <button
+                    onClick={onBack}
+                    className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/10 active:scale-95 transition-all"
+                >
+                    <span className="text-xl">←</span>
+                </button>
+                <h1 className="text-2xl font-black tracking-tight">Match History</h1>
+            </div>
 
-            {isLoading ? (
-                <div className="flex items-center justify-center h-64 px-4">
-                    <div className="text-center">
-                        <div className="text-4xl animate-bounce">🎮</div>
-                        <p className="mt-2 opacity-60" style={{ color: 'var(--theme-text)' }}>
-                            Loading history...
-                        </p>
+            {/* Main Content */}
+            <div className="flex-1 relative z-10 overflow-y-auto px-4 pb-safe-bottom">
+                {isLoading ? (
+                    <div className="flex flex-col items-center justify-center h-64 opacity-50 space-y-4">
+                        <div className="animate-spin rounded-full h-8 w-8 border-2 border-white/20 border-t-white"></div>
+                        <p className="text-sm font-medium">Loading history...</p>
+                    </div>
+                ) : games.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-64 text-center p-8 opacity-60">
+                        <div className="text-4xl mb-4">📜</div>
+                        <h3 className="text-lg font-bold mb-2">No Games Yet</h3>
+                        <p className="text-sm">Finish a game to see it here!</p>
+                    </div>
+                ) : (
+                    <div className="space-y-4 pb-8">
+                        {games.map(game => (
+                            <GameCard
+                                key={game.gameId}
+                                game={game}
+                                isExpanded={expandedGameId === game.gameId}
+                                onToggle={() => toggleGame(game.gameId)}
+                                expandedRoundId={expandedRoundId}
+                                onToggleRound={toggleRound}
+                                onViewDrawing={(round) => handleViewDrawing(round)}
+                            />
+                        ))}
+                    </div>
+                )}
+            </div>
+
+            {/* Fullscreen Image Viewer Modal */}
+            {viewingImage && (
+                <div className="fixed inset-0 z-50 bg-black/95 backdrop-blur-xl flex flex-col animate-fade-in safe-area-padding">
+                    {/* Header */}
+                    <div className="h-16 flex items-center justify-between px-6 z-10">
+                        <div className="flex flex-col">
+                            <span className="font-bold text-lg">{viewingImage.winnerName}'s Masterpiece</span>
+                            <span className="text-xs text-white/50">Round {viewingImage.round.roundNumber} Winner</span>
+                        </div>
+                        <button
+                            onClick={() => setViewingImage(null)}
+                            className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-sm font-bold active:scale-90 transition-transform"
+                        >
+                            ✕
+                        </button>
+                    </div>
+
+                    {/* Image Container */}
+                    <div className="flex-1 flex items-center justify-center p-4 relative overflow-hidden">
+                        <div className="relative w-full max-w-md aspect-square bg-white/5 rounded-2xl shadow-2xl overflow-hidden ring-1 ring-white/10 group">
+                             {/* Hint Overlay - Fades out */}
+                             <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20 animate-fade-out-delay">
+                                <div className="bg-black/60 backdrop-blur-md px-4 py-2 rounded-full text-sm font-bold border border-white/10">
+                                    Press & Hold to Save 📸
+                                </div>
+                             </div>
+                            <img
+                                src={viewingImage.url}
+                                alt="Winner's Drawing"
+                                className="w-full h-full object-contain select-none pointer-events-auto"
+                                style={{ WebkitUserSelect: 'none', touchAction: 'none' }} 
+                                // Actually, for 'hold to save', we usually need standard touch behavior on img?
+                                // iOS handles long press on img automatically unless prevented.
+                                // Removing touchAction: none and WebkitUserSelect: none just in case.
+                            />
+                        </div>
+                    </div>
+
+                    {/* Footer Actions */}
+                    <div className="p-6 pb-safe-bottom z-10">
+                        <button
+                            onClick={() => setViewingImage(null)}
+                            className="w-full py-4 bg-white text-black rounded-2xl font-black text-lg shadow-lg active:scale-95 transition-transform"
+                        >
+                            Done
+                        </button>
                     </div>
                 </div>
-            ) : games.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-64 text-center px-4">
-                    <div className="text-6xl mb-4">📊</div>
-                    <h2 className="text-xl font-bold mb-2" style={{ color: 'var(--theme-text)' }}>
-                        No games yet!
-                    </h2>
-                    <p className="opacity-60" style={{ color: 'var(--theme-text)' }}>
-                        Complete a game to see your match history here.
-                    </p>
+            )}
+
+            {/* Loading Overlay */}
+            {isGeneratingImage && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+                    <div className="bg-black/80 p-6 rounded-2xl flex flex-col items-center gap-4 border border-white/10">
+                        <div className="animate-spin rounded-full h-10 w-10 border-4 border-white/20 border-t-white"></div>
+                        <p className="font-bold">Generating Image...</p>
+                    </div>
                 </div>
-            ) : (
-                <div className="flex-1 overflow-y-auto px-4 pb-8 space-y-4">
-
-                    {games.map((game) => {
-                        // Sort players by score for display
-                        const sortedPlayers = [...game.players].sort(
-                            (a, b) => (game.finalScores[b.id] || 0) - (game.finalScores[a.id] || 0)
-                        );
-                        const medals = ['🥇', '🥈', '🥉'];
-
-                        return (
-                            <div
-                                key={game.gameId}
-                                className="rounded-2xl overflow-hidden transition-all"
-                                style={{
-                                    backgroundColor: 'var(--theme-card-bg)',
-                                    border: '2px solid var(--theme-border)'
-                                }}
-                            >
-                                {/* Game header */}
-                                <button
-                                    onClick={() => toggleGame(game.gameId)}
-                                    className="w-full p-4 hover:bg-white/5 transition-all text-left"
-                                >
-                                    <div className="flex items-start gap-4">
-                                        <div className="text-3xl">🎮</div>
-                                        <div className="flex-1">
-                                            <div className="flex items-center justify-between">
-                                                <h3 className="font-bold" style={{ color: 'var(--theme-text)' }}>
-                                                    Game with {game.players.slice(0, 2).map(p => p.name).join(', ')}
-                                                    {game.players.length > 2 && ` +${game.players.length - 2}`}
-                                                </h3>
-                                                <div className="text-xl transition-transform"
-                                                    style={{ transform: expandedGameId === game.gameId ? 'rotate(90deg)' : 'rotate(0deg)' }}>
-                                                    ▶
-                                                </div>
-                                            </div>
-                                            <p className="text-sm opacity-60 mb-2" style={{ color: 'var(--theme-text)' }}>
-                                                {formatTimeAgo(game.completedAt)} • {game.rounds.length} rounds
-                                            </p>
-                                            {/* Final Scores Row */}
-                                            <div className="flex flex-wrap gap-2">
-                                                {sortedPlayers.slice(0, 4).map((player, idx) => (
-                                                    <span
-                                                        key={player.id}
-                                                        className="text-xs px-2 py-1 rounded-full font-bold"
-                                                        style={{
-                                                            backgroundColor: idx === 0 ? 'rgba(255, 215, 0, 0.2)' : 'rgba(255,255,255,0.1)',
-                                                            color: idx === 0 ? '#FFD700' : 'var(--theme-text-secondary)'
-                                                        }}
-                                                    >
-                                                        {medals[idx] || ''} {player.name}: {game.finalScores[player.id] || 0}
-                                                    </span>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </button>
-
-                                {/* Expanded rounds */}
-                                {expandedGameId === game.gameId && (
-                                    <div className="px-4 pb-4 space-y-3 animate-fade-in">
-                                        {(game.rounds || []).map((round, roundIndex) => (
-                                            <div key={roundIndex} className="rounded-xl p-3"
-                                                style={{ backgroundColor: 'rgba(255,255,255,0.05)' }}>
-                                                <h4 className="font-bold mb-2 text-sm" style={{ color: 'var(--theme-text)' }}>
-                                                    Round {round.roundNumber || roundIndex + 1} — Winner: {round.winner?.playerName || 'Unknown'} 🏆
-                                                </h4>
-
-
-
-                                                {/* Drawing thumbnails */}
-                                                <div className="flex gap-2 overflow-x-auto pb-2">
-                                                    {(round.drawings || []).map((drawing, drawingIndex) => (
-
-                                                        <button
-                                                            key={drawingIndex}
-                                                            onClick={() => setSelectedDrawing({ game, round, drawing })}
-                                                            className="flex-shrink-0 rounded-xl overflow-hidden hover:scale-105 transition-all"
-                                                            style={{
-                                                                width: 80,
-                                                                height: 80,
-                                                                border: drawing.playerId === round.winner?.playerId
-                                                                    ? '3px solid gold'
-                                                                    : '2px solid var(--theme-border)'
-                                                            }}
-
-                                                        >
-                                                            <DrawingThumbnail
-                                                                baseImageUrl={round.imageUrl}
-                                                                strokes={drawing.strokes}
-                                                            />
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        );
-                    })}
-                </div>
-
             )}
         </div>
     );
 };
 
-// Component to render a drawing thumbnail
-const DrawingThumbnail: React.FC<{
-    baseImageUrl: string;
-    strokes: any[];
-}> = ({ baseImageUrl, strokes }) => {
-    const canvasRef = React.useRef<HTMLCanvasElement>(null);
-    const [loaded, setLoaded] = useState(false);
+// --- Subcomponents ---
 
-    useEffect(() => {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
+const GameCard: React.FC<{
+    game: GalleryGame;
+    isExpanded: boolean;
+    onToggle: () => void;
+    expandedRoundId: string | null;
+    onToggleRound: (id: string) => void;
+    onViewDrawing: (round: GalleryRound) => void;
+    isGenerating?: boolean; // Optional if not used directly
+}> = ({ game, isExpanded, onToggle, expandedRoundId, onToggleRound, onViewDrawing }) => {
+    // Determine overall winner with safety check
+    const winnerId = game.winner?.playerId;
+    const winner = winnerId ? game.players?.find(p => p.id === winnerId) : null;
+    
+    // Safety check for players
+    const safePlayers = game.players || [];
+    
+    // Sort logic for medal summary
+    const sortedPlayers = [...safePlayers].sort(
+        (a, b) => (game.finalScores?.[b.id] || 0) - (game.finalScores?.[a.id] || 0)
+    );
 
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
+    // Format Date and Time
+    const dateObj = new Date(game.completedAt);
+    const dateStr = dateObj.toLocaleDateString();
+    const timeStr = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
+    // Deduplicate rounds for display if the data is corrupted
+    // We expect clean data from service now, but duplicate keys crash React list
+    // Use a map to ensure unique round numbers for rendering
+    const uniqueRounds = Array.from(new Map((game.rounds || []).map(r => [r.roundNumber, r])).values())
+        .sort((a, b) => a.roundNumber - b.roundNumber);
 
-        img.onload = () => {
-            const size = 80;
-            canvas.width = size;
-            canvas.height = size;
-
-            // Draw base image
-            ctx.drawImage(img, 0, 0, size, size);
-
-            // Draw strokes
-            for (const stroke of strokes) {
-                if (!stroke.points || stroke.points.length === 0) continue;
-
-                ctx.beginPath();
-                ctx.strokeStyle = stroke.isEraser ? '#ffffff' : stroke.color;
-                ctx.lineWidth = (stroke.size || 4) * (size / 600); // Scale line width
-                ctx.lineCap = 'round';
-                ctx.lineJoin = 'round';
-
-                const points = stroke.points.map((p: any) => ({
-                    x: (p.x / 100) * size,
-                    y: (p.y / 100) * size
-                }));
-
-                ctx.moveTo(points[0].x, points[0].y);
-                for (let i = 1; i < points.length; i++) {
-                    ctx.lineTo(points[i].x, points[i].y);
-                }
-                ctx.stroke();
-            }
-
-            setLoaded(true);
-        };
-
-        img.onerror = () => {
-            // Draw placeholder
-            ctx.fillStyle = '#333';
-            ctx.fillRect(0, 0, 80, 80);
-            ctx.fillStyle = '#666';
-            ctx.textAlign = 'center';
-            ctx.fillText('⚠️', 40, 45);
-        };
-
-        img.src = baseImageUrl;
-    }, [baseImageUrl, strokes]);
 
     return (
-        <canvas
-            ref={canvasRef}
-            width={80}
-            height={80}
-            className={`w-full h-full object-cover transition-opacity ${loaded ? 'opacity-100' : 'opacity-50'}`}
-        />
+        <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl overflow-hidden transition-all duration-300">
+            <button
+                onClick={onToggle}
+                className="w-full p-5 text-left active:bg-white/5 transition-colors"
+            >
+                <div className="flex justify-between items-start mb-2">
+                    <div className="flex flex-col">
+                        <span className="text-xs font-bold text-white/40 uppercase tracking-wider mb-1">
+                            {dateStr} • {timeStr}
+                        </span>
+                        <h3 className="font-bold text-lg leading-tight">
+                            Game with {safePlayers.length} Players
+                        </h3>
+                    </div>
+                    {winner && (
+                        <div className="flex flex-col items-end">
+                            <span className="text-xs font-bold text-yellow-400 uppercase tracking-wide">Winner</span>
+                            <span className="font-bold text-white">{winner.name}</span>
+                        </div>
+                    )}
+                </div>
+
+                {/* Score Pills */}
+                <div className="flex flex-wrap gap-2 mt-2">
+                    {sortedPlayers.slice(0, 3).map((p, i) => (
+                        <div key={p.id} className={`text-xs px-2 py-1 rounded-md font-bold ${
+                            i === 0 ? 'bg-yellow-400/20 text-yellow-300 border border-yellow-400/30' : 'bg-white/10 text-white/60'
+                        }`}>
+                            {i === 0 ? '🥇' : i === 1 ? '🥈' : '🥉'} {p.name}
+                        </div>
+                    ))}
+                </div>
+            </button>
+
+            {/* Expanded Rounds */}
+            {isExpanded && (
+                <div className="border-t border-white/10 bg-black/20">
+                    <div className="p-2 space-y-2">
+                        {uniqueRounds.map((round) => {
+                            // Use roundNumber as key to prevent duplicate key error
+                            const roundId = `${game.gameId}_r${round.roundNumber}`;
+                            const isRoundExpanded = expandedRoundId === roundId;
+                            // Safe winner access
+                            const roundWinnerName = round.winner?.playerName || 'Unknown';
+                            
+                            // Safe drawing access
+                            const winnerDrawing = round.drawings?.find(d => d.playerId === round.winner?.playerId);
+                            
+                            return (
+                                <div key={round.roundNumber} className="rounded-2xl overflow-hidden bg-white/5 border border-white/5">
+                                    <button
+                                        onClick={() => onToggleRound(roundId)}
+                                        className="w-full p-4 flex items-center justify-between active:bg-white/5 transition-colors"
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className="flex-shrink-0 w-8 h-8 rounded-full bg-white/10 flex items-center justify-center font-bold text-sm">
+                                                {round.roundNumber}
+                                            </div>
+                                            <div className="flex flex-col items-start">
+                                                <span className="font-bold text-sm">Round {round.roundNumber}</span>
+                                                <span className="text-xs text-white/50">Winner: {roundWinnerName}</span>
+                                            </div>
+                                        </div>
+                                        <span className={`text-white/40 transition-transform duration-300 ${isRoundExpanded ? 'rotate-180' : ''}`}>
+                                            ▼
+                                        </span>
+                                    </button>
+
+                                    {/* Round Winner Reveal */}
+                                    {isRoundExpanded && (
+                                        <div className="p-4 pt-0 animate-slide-down">
+                                            {/* Drawing Container - Clickable */}
+                                            <button 
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    // Always try to view, even if just base image
+                                                    onViewDrawing(round);
+                                                }}
+                                                className="aspect-square w-full relative group rounded-xl overflow-hidden shadow-lg bg-white box-content border-4 border-white active:scale-[0.98] transition-all"
+                                            >
+                                                {winnerDrawing || round.imageUrl ? (
+                                                    <DrawingDisplay
+                                                        imageUrl={round.imageUrl}
+                                                        strokes={winnerDrawing?.strokes || []}
+                                                        block={round.block}
+                                                    />
+                                                ) : (
+                                                    <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400">
+                                                        No image data
+                                                    </div>
+                                                )}
+                                                
+                                                {/* Hint Overlay - Always visible on bottom on mobile, or on hover */}
+                                                <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/60 to-transparent flex justify-center">
+                                                    <span className="bg-white/20 backdrop-blur-md text-white px-3 py-1 rounded-full text-xs font-bold border border-white/20 shadow-sm">
+                                                        Tap to View & Save
+                                                    </span>
+                                                </div>
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
+        </div>
     );
 };
 
-// Component to render full-size drawing preview
-const DrawingPreview: React.FC<{
-    baseImageUrl: string;
-    strokes: any[];
-}> = ({ baseImageUrl, strokes }) => {
-    const canvasRef = React.useRef<HTMLCanvasElement>(null);
+// Canvas Renderer Component
+const DrawingDisplay: React.FC<{
+    imageUrl: string;
+    strokes: DrawingStroke[];
+    block?: BlockInfo;
+}> = ({ imageUrl, strokes, block }) => {
+    const canvasRef = useRef<HTMLCanvasElement>(null);
 
     useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas) return;
-
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
 
+        // Clear previous
+        ctx.clearRect(0,0, canvas.width, canvas.height);
+
+        if (!imageUrl) return; // Guard
+
         const img = new Image();
         img.crossOrigin = 'anonymous';
+        img.src = imageUrl;
 
-        img.onload = () => {
-            const size = 600;
-            canvas.width = size;
-            canvas.height = size;
-
-            // Draw base image
-            ctx.drawImage(img, 0, 0, size, size);
-
-            // Draw strokes
-            for (const stroke of strokes) {
-                if (!stroke.points || stroke.points.length === 0) continue;
-
-                ctx.beginPath();
-                ctx.strokeStyle = stroke.isEraser ? '#ffffff' : stroke.color;
-                ctx.lineWidth = stroke.size || 4;
-                ctx.lineCap = 'round';
-                ctx.lineJoin = 'round';
-
-                const points = stroke.points.map((p: any) => ({
-                    x: (p.x / 100) * size,
-                    y: (p.y / 100) * size
-                }));
-
-                ctx.moveTo(points[0].x, points[0].y);
-                for (let i = 1; i < points.length; i++) {
-                    ctx.lineTo(points[i].x, points[i].y);
-                }
-                ctx.stroke();
-            }
+        // Handle load error
+        img.onerror = () => {
+             console.warn('Failed to load base image for drawing display');
         };
 
-        img.src = baseImageUrl;
-    }, [baseImageUrl, strokes]);
+        img.onload = () => {
+            const size = canvas.width; // Assume square
+            
+            // 1. Draw Base
+            try {
+                ctx.drawImage(img, 0, 0, size, size);
+            } catch (e) {
+                console.warn('Error drawing base image', e);
+            }
 
-    return (
-        <canvas
-            ref={canvasRef}
-            className="w-full aspect-square rounded-2xl shadow-xl"
-            style={{ maxWidth: '100%' }}
-        />
-    );
+             // 2. Draw Block
+             if (block && typeof block.x === 'number') { // Basic validation
+                ctx.fillStyle = '#ffffff';
+                const bx = (block.x / 100) * size;
+                const by = (block.y / 100) * size;
+                const bSize = (block.size / 100) * size;
+
+                if (block.type === 'circle') {
+                    ctx.beginPath();
+                    ctx.arc(bx + bSize / 2, by + bSize / 2, bSize / 2, 0, Math.PI * 2);
+                    ctx.fill();
+                } else {
+                    ctx.fillRect(bx, by, bSize, bSize);
+                }
+            }
+
+            // 3. Draw Strokes
+            if (Array.isArray(strokes)) {
+                for (const stroke of strokes) {
+                    if (!stroke.points || stroke.points.length === 0) continue;
+
+                    ctx.beginPath();
+                    ctx.strokeStyle = stroke.isEraser ? '#ffffff' : stroke.color;
+                    ctx.lineWidth = stroke.size ? (stroke.size / 600) * size * 1.5 : 2; // Scale width roughly
+                    ctx.lineCap = 'round';
+                    ctx.lineJoin = 'round';
+
+                    const points = stroke.points.map(p => ({
+                        x: (p.x / 100) * size,
+                        y: (p.y / 100) * size
+                    }));
+
+                    ctx.moveTo(points[0].x, points[0].y);
+                    for (let i = 1; i < points.length; i++) {
+                        ctx.lineTo(points[i].x, points[i].y);
+                    }
+                    ctx.stroke();
+                }
+            }
+        };
+    }, [imageUrl, strokes, block]);
+
+    return <canvas ref={canvasRef} width={400} height={400} className="w-full h-full object-cover bg-white" />;
 };

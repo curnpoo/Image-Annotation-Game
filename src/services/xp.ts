@@ -133,10 +133,11 @@ export const XPService = {
 
     // XP rewards for different actions (base values before tier bonus)
     rewards: {
-        WIN_ROUND: 25,      // Win a voting round
-        COMPLETE_GAME: 50,  // Finish a complete game
-        CORRECT_VOTE: 10,   // Vote for the winner
-        PARTICIPATE: 5,     // Just participate in a round
-        DAILY_LOGIN: 20     // First login of the day (future feature)
+        WIN_ROUND: 50,      // Win a voting round
+        COMPLETE_GAME: 100, // Finish a complete game
+        CORRECT_VOTE: 15,   // Vote for the winner
+        PARTICIPATE: 10,     // Just participate in a round
+        DAILY_LOGIN: 50,     // First login of the day 
+        DAILY_CHALLENGE: 200 // Complete a daily challenge
     }
 };

@@ -13,6 +13,7 @@ interface ProfileScreenProps {
     onUpdateProfile: (updates: Partial<Player>) => void;
     onEditAvatar: () => void;
     onShowStats?: () => void;
+    onShowGallery: () => void;
 }
 
 type Tab = 'edit' | 'stats';
@@ -21,7 +22,8 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
     player,
     onBack,
     onUpdateProfile,
-    onEditAvatar
+    onEditAvatar,
+    onShowGallery
 }) => {
     const [activeTab, setActiveTab] = useState<Tab>('edit');
     const [name, setName] = useState(player.name);
@@ -400,6 +402,18 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                                 </div>
                             </div>
                         </div>
+
+                        {/* Match History Button */}
+                        <button
+                            onClick={onShowGallery}
+                            className="w-full py-4 rounded-2xl flex items-center justify-center gap-3 shadow-lg hover:scale-[1.02] active:scale-95 transition-all text-white border-2 border-white/20"
+                            style={{ 
+                                background: 'linear-gradient(135deg, var(--theme-bg-secondary), var(--theme-card-bg))',
+                            }}
+                        >
+                            <span className="text-2xl">📚</span>
+                            <span className="font-bold text-lg">View Match History</span>
+                        </button>
 
                         {/* Stats Grid */}
                         <div className="grid grid-cols-2 gap-3">

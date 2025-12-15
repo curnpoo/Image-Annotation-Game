@@ -326,6 +326,7 @@ export const ScreenRouter: React.FC<ScreenRouterProps> = ({
                 onUpdateProfile={onUpdateProfile}
                 onEditAvatar={() => onNavigate('avatar-editor')}
                 onShowStats={() => onNavigate('stats')}
+                onShowGallery={() => onNavigate('gallery')}
             />;
             break;
 

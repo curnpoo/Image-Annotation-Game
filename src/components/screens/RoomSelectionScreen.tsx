@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { StorageService } from '../../services/storage';
-import type { RoomHistoryEntry } from '../../types';
+import type { RoomHistoryEntry, Player } from '../../types';
+import { ProfileStatusCard } from '../common/ProfileStatusCard';
+import { AuthService } from '../../services/auth';
 
 interface RoomSelectionScreenProps {
     playerName: string;
@@ -20,6 +22,29 @@ export const RoomSelectionScreen: React.FC<RoomSelectionScreenProps> = ({
     const [roomCode, setRoomCode] = useState('');
     const [mounted, setMounted] = useState(false);
     const [history, setHistory] = useState<(RoomHistoryEntry & { isActive: boolean })[]>([]);
+    const [currentUser, setCurrentUser] = useState<Player | null>(null);
+
+    useEffect(() => {
+        // Hydrate player data for the profile card
+        const user = AuthService.getCurrentUser();
+        if (user) {
+            setCurrentUser({
+                id: user.id,
+                name: user.username,
+                avatar: user.avatar || '😁',
+                avatarStrokes: user.avatarStrokes,
+                color: user.color || '#000000',
+                backgroundColor: user.backgroundColor || '#ffffff',
+                frame: user.frame || 'none',
+                avatarImageUrl: user.avatarImageUrl,
+                isHost: false,
+                joinedAt: Date.now(),
+                lastSeen: Date.now(),
+                score: 0,
+                cosmetics: user.cosmetics
+            });
+        }
+    }, [playerName]); // Refresh if name changes
 
     useEffect(() => {
         setMounted(true);
@@ -133,11 +158,17 @@ export const RoomSelectionScreen: React.FC<RoomSelectionScreenProps> = ({
                         border: '2px solid var(--theme-border)'
                     }}>
 
-                    <div className="text-center space-y-2">
-                        <div className="text-4xl bounce-scale">👋</div>
-                        <h2 className="text-3xl font-black" style={{ color: 'var(--theme-text)' }}>
-                            Hi, {playerName}!
-                        </h2>
+                    <div className="w-full">
+                        {currentUser ? (
+                            <ProfileStatusCard player={currentUser} />
+                        ) : (
+                            <div className="text-center space-y-2">
+                                <div className="text-4xl bounce-scale">👋</div>
+                                <h2 className="text-3xl font-black" style={{ color: 'var(--theme-text)' }}>
+                                    Hi, {playerName}!
+                                </h2>
+                            </div>
+                        )}
                     </div>
 
                     <div className="space-y-6">

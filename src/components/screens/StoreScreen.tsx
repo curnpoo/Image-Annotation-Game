@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { CurrencyService, formatCurrency } from '../../services/currency';
 import { AuthService } from '../../services/auth';
-import { UNLOCKABLE_BRUSHES, POWERUPS, FONTS } from '../../constants/cosmetics';
+import { UNLOCKABLE_BRUSHES, POWERUPS, FONTS, FRAMES, THEMES } from '../../constants/cosmetics';
 import { vibrate, HapticPatterns } from '../../utils/haptics';
 
 interface StoreScreenProps {
@@ -9,7 +9,7 @@ interface StoreScreenProps {
     onFontChange?: (fontId: string) => void;
 }
 
-type Tab = 'brushes' | 'powerups' | 'fonts';
+type Tab = 'brushes' | 'powerups' | 'fonts' | 'frames' | 'themes';
 
 export const StoreScreen: React.FC<StoreScreenProps> = ({ onBack, onFontChange }) => {
     const [balance, setBalance] = useState(CurrencyService.getCurrency());
@@ -20,15 +20,43 @@ export const StoreScreen: React.FC<StoreScreenProps> = ({ onBack, onFontChange }
     const isOwned = (itemId: string, price: number) =>
         price === 0 || purchasedItems.includes(itemId);
 
+    const isEquipped = (item: any) => {
+        const currentUser = AuthService.getCurrentUser();
+        if (!currentUser) return false;
+
+        if (activeTab === 'fonts') return currentUser.cosmetics?.activeFont === item.id;
+        if (activeTab === 'frames') return currentUser.frame === item.id || (item.id === 'none' && !currentUser.frame);
+        if (activeTab === 'themes') return currentUser.cosmetics?.activeTheme === item.id || (item.id === 'default' && !currentUser.cosmetics?.activeTheme);
+        
+        return false;
+    };
+
     const handleAction = (item: any) => {
         const owned = isOwned(item.id, item.price);
 
-        if (activeTab === 'fonts' && owned) {
-            // Equip Font Logic
+        // Equip Logic (for cosmetic types)
+        if (['fonts', 'frames', 'themes'].includes(activeTab) && owned) {
             const currentUser = AuthService.getCurrentUser();
             if (currentUser) {
-                const newCosmetics = { ...currentUser.cosmetics, activeFont: item.id };
-                AuthService.updateUser(currentUser.id, { cosmetics: newCosmetics });
+                let updates: any = {};
+                let message = `Equipped ${item.name}!`;
+
+                if (activeTab === 'fonts') {
+                    updates = { cosmetics: { ...currentUser.cosmetics, activeFont: item.id } };
+                    onFontChange?.(item.id);
+                    message = `✏️ ${message}`;
+                } else if (activeTab === 'frames') {
+                    updates = { frame: item.id === 'none' ? null : item.id };
+                    message = `🖼️ ${message}`;
+                } else if (activeTab === 'themes') {
+                    updates = { 
+                        backgroundColor: item.value, // Set visual background
+                        cosmetics: { ...currentUser.cosmetics, activeTheme: item.id } // Set logical theme ID
+                    };
+                    message = `🎨 ${message}`;
+                }
+
+                AuthService.updateUser(currentUser.id, updates);
 
                 try {
                     vibrate(HapticPatterns.light);
@@ -36,11 +64,8 @@ export const StoreScreen: React.FC<StoreScreenProps> = ({ onBack, onFontChange }
                     console.error('Haptic feedback failed:', err);
                 }
 
-                setPurchaseMessage(`✏️ Equipped ${item.name}!`);
+                setPurchaseMessage(message);
                 setTimeout(() => setPurchaseMessage(null), 1500);
-
-                // Trigger immediate font update
-                onFontChange?.(item.id);
             }
             return;
         }
@@ -60,15 +85,12 @@ export const StoreScreen: React.FC<StoreScreenProps> = ({ onBack, onFontChange }
         }
     };
 
-    const isEquipped = (itemId: string) => {
-        const currentUser = AuthService.getCurrentUser();
-        return currentUser?.cosmetics?.activeFont === itemId;
-    };
-
     const tabs = [
         { id: 'brushes' as Tab, label: 'BRUSHES', icon: '🖌️', items: UNLOCKABLE_BRUSHES.filter(b => b.price > 0) },
         { id: 'powerups' as Tab, label: 'POWERUPS', icon: '⚡', items: POWERUPS },
-        { id: 'fonts' as Tab, label: 'FONTS', icon: '✏️', items: FONTS }
+        { id: 'fonts' as Tab, label: 'FONTS', icon: '✏️', items: FONTS },
+        { id: 'frames' as Tab, label: 'FRAMES', icon: '🖼️', items: FRAMES },
+        { id: 'themes' as Tab, label: 'THEMES', icon: '🎨', items: THEMES }
     ];
 
     const currentItems = tabs.find(t => t.id === activeTab)?.items || [];
@@ -108,30 +130,33 @@ export const StoreScreen: React.FC<StoreScreenProps> = ({ onBack, onFontChange }
                 </h1>
 
                 {/* Floating Tabs */}
-                <div className="flex p-1 bg-black/40 backdrop-blur-md rounded-2xl border border-white/10 mx-auto max-w-md shadow-inner mb-2">
-                    {tabs.map(tab => (
-                        <button
-                            key={tab.id}
-                            onClick={() => {
-                                vibrate();
-                                setActiveTab(tab.id);
-                            }}
-                            className={`flex-1 py-3 px-2 rounded-xl text-xs font-black transition-all duration-300 flex items-center justify-center gap-2 ${activeTab === tab.id
-                                    ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-500/25 scale-[1.02]'
-                                    : 'text-white/40 hover:text-white/70 hover:bg-white/5'
-                                }`}
-                        >
-                            <span className="text-base">{tab.icon}</span>
-                            <span className="tracking-wider hidden sm:inline">{tab.label}</span>
-                        </button>
-                    ))}
+                {/* Horizontal scroll for tabs on mobile */}
+                <div className="flex overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4">
+                    <div className="flex p-1 bg-black/40 backdrop-blur-md rounded-2xl border border-white/10 shadow-inner min-w-max mx-auto">
+                        {tabs.map(tab => (
+                            <button
+                                key={tab.id}
+                                onClick={() => {
+                                    vibrate();
+                                    setActiveTab(tab.id);
+                                }}
+                                className={`py-3 px-4 rounded-xl text-xs font-black transition-all duration-300 flex items-center justify-center gap-2 ${activeTab === tab.id
+                                        ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-500/25 scale-[1.02]'
+                                        : 'text-white/40 hover:text-white/70 hover:bg-white/5'
+                                    }`}
+                            >
+                                <span className="text-base">{tab.icon}</span>
+                                <span className="tracking-wider">{tab.label}</span>
+                            </button>
+                        ))}
+                    </div>
                 </div>
             </div>
 
             {/* Toast Message */}
             {purchaseMessage && (
-                <div className="absolute top-24 left-1/2 -translate-x-1/2 z-50 animate-bounce-gentle">
-                    <div className="glass-panel px-6 py-3 rounded-full border border-white/20 text-white font-bold shadow-2xl flex items-center gap-3 backdrop-blur-xl bg-black/60">
+                <div className="absolute top-32 left-1/2 -translate-x-1/2 z-50 animate-bounce-gentle w-full flex justify-center pointer-events-none">
+                    <div className="glass-panel px-6 py-3 rounded-full border border-white/20 text-white font-bold shadow-2xl flex items-center gap-3 backdrop-blur-xl bg-black/80">
                         {purchaseMessage}
                     </div>
                 </div>
@@ -142,14 +167,14 @@ export const StoreScreen: React.FC<StoreScreenProps> = ({ onBack, onFontChange }
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-w-2xl mx-auto pt-2">
                     {currentItems.map((item: any) => {
                         const owned = isOwned(item.id, item.price);
-                        const equipped = activeTab === 'fonts' && isEquipped(item.id);
-                        const isFont = activeTab === 'fonts';
+                        const isEquippable = ['fonts', 'frames', 'themes'].includes(activeTab);
+                        const equipped = isEquippable && isEquipped(item);
 
                         return (
                             <button
                                 key={item.id}
                                 onClick={() => handleAction(item)}
-                                disabled={isFont ? false : owned}
+                                disabled={isEquippable ? false : owned}
                                 className={`relative group flex flex-col items-center p-4 rounded-3xl transition-all duration-300 border
                                     ${equipped
                                         ? 'bg-green-500/20 border-green-500/50 shadow-[0_0_30px_rgba(74,222,128,0.2)]'
@@ -159,9 +184,24 @@ export const StoreScreen: React.FC<StoreScreenProps> = ({ onBack, onFontChange }
                                 `}
                             >
                                 {/* Preview */}
-                                <div className={`w-full aspect-square mb-3 rounded-2xl flex items-center justify-center text-5xl bg-black/20 shadow-inner ${isFont ? 'aspect-video' : ''}`}>
-                                    {isFont ? (
+                                <div 
+                                    className={`w-full aspect-square mb-3 rounded-2xl flex items-center justify-center text-5xl shadow-inner relative overflow-hidden
+                                        ${activeTab === 'fonts' ? 'aspect-video bg-black/20' : 'bg-black/20'}
+                                    `}
+                                    style={activeTab === 'themes' ? { background: item.value } : undefined}
+                                >
+                                    {activeTab === 'fonts' ? (
                                         <span style={{ fontFamily: item.fontFamily }} className="text-white text-3xl">Aa</span>
+                                    ) : activeTab === 'frames' ? (
+                                        <div className="relative flex items-center justify-center w-full h-full">
+                                             {/* Avatar placeholder with frame */}
+                                             <div className={`w-16 h-16 rounded-full bg-white/20 ${item.className || ''}`}>
+                                                 <div className="w-full h-full flex items-center justify-center text-2xl">👤</div>
+                                             </div>
+                                        </div>
+                                    ) : activeTab === 'themes' ? (
+                                        // Empty content, background is set
+                                        null
                                     ) : (
                                         <span className="filter drop-shadow-lg">{item.emoji || item.preview || '🎁'}</span>
                                     )}
@@ -171,7 +211,7 @@ export const StoreScreen: React.FC<StoreScreenProps> = ({ onBack, onFontChange }
                                 <div className="text-center w-full mb-3">
                                     <h3
                                         className="font-bold text-white text-sm mb-1 line-clamp-1"
-                                        style={isFont ? { fontFamily: item.fontFamily } : undefined}
+                                        style={activeTab === 'fonts' ? { fontFamily: item.fontFamily } : undefined}
                                     >
                                         {item.name}
                                     </h3>
@@ -184,14 +224,14 @@ export const StoreScreen: React.FC<StoreScreenProps> = ({ onBack, onFontChange }
 
                                 {/* Action Button / Price */}
                                 <div className={`w-full py-2 px-3 rounded-xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1 transition-colors
-                                    ${isFont && owned
+                                    ${isEquippable && owned
                                         ? equipped ? 'bg-green-500 text-white' : 'bg-white/10 text-white group-hover:bg-white/20'
                                         : owned
                                             ? 'bg-white/10 text-white/50 cursor-default'
                                             : (balance >= item.price ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/30' : 'bg-red-500/20 text-red-400')
                                     }
                                 `}>
-                                    {isFont && owned
+                                    {isEquippable && owned
                                         ? equipped ? 'Selected' : 'Equip'
                                         : owned
                                             ? 'Owned'

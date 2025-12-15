@@ -142,11 +142,23 @@ export const StorageService = {
                 });
 
 
+                // Capture drawings for Match History (Gallery)
+                const drawings = room.players.map(p => {
+                    const playerState = room.playerStates[p.id];
+                    return {
+                        playerId: p.id,
+                        playerName: p.name,
+                        playerColor: p.color,
+                        strokes: playerState?.drawing?.strokes || []
+                    };
+                }).filter(d => d.strokes.length > 0);
+
                 const roundResult: RoundResult = {
                     roundNumber: room.roundNumber,
-                    rankings
-                    // OPTIMIZATION: Drawings are NOT saved to history to keep room object small.
-                    // If we need to view old drawings, we can fetch them from drawings/[roomCode]/[round]
+                    imageUrl: room.currentImage?.url || '',
+                    rankings,
+                    drawings,
+                    block: room.block ?? undefined
                 };
 
                 const isFinalRound = room.roundNumber >= room.settings.totalRounds;
@@ -217,7 +229,8 @@ export const StorageService = {
                     roundNumber: r.roundNumber,
                     imageUrl: r.currentImage?.url || '',
                     rankings,
-                    drawings
+                    drawings,
+                    block: r.block ?? undefined
                 };
 
                 const isFinalRound = r.roundNumber >= r.settings.totalRounds;

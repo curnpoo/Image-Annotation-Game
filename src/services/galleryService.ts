@@ -23,20 +23,25 @@ export const GalleryService = {
 
 
 
-        // Build rounds with drawings
-        const rounds: GalleryRound[] = [];
+        // Build rounds with drawings (deduplicated by roundNumber)
+        // Note: Sometimes roundResults might contain duplicates if state was not clean
+        const roundsMap = new Map<number, GalleryRound>();
 
         for (let i = 0; i < (room.roundResults?.length || 0); i++) {
             const result = room.roundResults[i];
+
+            // If we already processed this round number, skip (or overwrite? usually last is best)
+            // But usually duplicates are identical.
+            if (roundsMap.has(result.roundNumber)) continue;
 
             // Get drawings from the round result (captured when round ended)
             const drawings: GalleryDrawing[] = (result.drawings || []).map(d => {
                 const votes = result.rankings.find(r => r.playerId === d.playerId)?.votes || 0;
                 return {
                     playerId: d.playerId,
-                    playerName: d.playerName,
-                    playerColor: d.playerColor,
-                    strokes: d.strokes,
+                    playerName: d.playerName || 'Unknown',
+                    playerColor: d.playerColor || '#000000',
+                    strokes: d.strokes || [],
                     votes
                 };
             });
@@ -45,9 +50,10 @@ export const GalleryService = {
             const sortedRankings = [...(result.rankings || [])].sort((a, b) => b.votes - a.votes);
             const winner = sortedRankings[0] || { playerId: '', playerName: 'Unknown', votes: 0 };
 
-            rounds.push({
+            roundsMap.set(result.roundNumber, {
                 roundNumber: result.roundNumber,
                 imageUrl: result.imageUrl || '',
+                block: result.block,
                 drawings,
                 winner: {
                     playerId: winner.playerId,
@@ -56,6 +62,8 @@ export const GalleryService = {
                 }
             });
         }
+        
+        const rounds = Array.from(roundsMap.values()).sort((a, b) => a.roundNumber - b.roundNumber);
 
 
         // Find overall winner
@@ -117,13 +125,19 @@ export const GalleryService = {
     renderDrawingToDataUrl: async (
         baseImageUrl: string,
         strokes: DrawingStroke[],
-        canvasSize: number = 600
+        options: {
+            canvasSize?: number;
+            block?: { type: 'square' | 'circle'; x: number; y: number; size: number };
+            watermark?: boolean;
+        } = {}
     ): Promise<string> => {
+        const { canvasSize = 600, block, watermark } = options;
+
         return new Promise((resolve, reject) => {
             // Create offscreen canvas
             const canvas = document.createElement('canvas');
             canvas.width = canvasSize;
-            canvas.height = canvasSize;
+            canvas.height = canvasSize; // Square canvas
             const ctx = canvas.getContext('2d');
 
             if (!ctx) {
@@ -136,10 +150,28 @@ export const GalleryService = {
             img.crossOrigin = 'anonymous';
 
             img.onload = () => {
-                // Draw base image
+                // 1. Draw base image
                 ctx.drawImage(img, 0, 0, canvasSize, canvasSize);
 
-                // Replay strokes
+                // 2. Draw Block (if present) - "The White Block"
+                if (block) {
+                    ctx.fillStyle = '#ffffff';
+                    
+                    const bx = (block.x / 100) * canvasSize;
+                    const by = (block.y / 100) * canvasSize;
+                    const bSize = (block.size / 100) * canvasSize; // Usually 50%
+
+                    if (block.type === 'circle') {
+                        ctx.beginPath();
+                        ctx.arc(bx + bSize / 2, by + bSize / 2, bSize / 2, 0, Math.PI * 2);
+                        ctx.fill();
+                    } else {
+                        // Square
+                        ctx.fillRect(bx, by, bSize, bSize);
+                    }
+                }
+
+                // 3. Replay strokes
                 for (const stroke of strokes) {
                     if (!stroke.points || stroke.points.length === 0) continue;
 
@@ -162,8 +194,53 @@ export const GalleryService = {
                     ctx.stroke();
                 }
 
-                // Export as PNG data URL
-                resolve(canvas.toDataURL('image/png'));
+                // 4. Draw Watermark (if requested)
+                if (watermark) {
+                    const watermarkImg = new Image();
+                    watermarkImg.src = '/watermark.png'; // Access from public folder
+                    
+                    watermarkImg.onload = () => {
+                        const wmWidth = canvasSize * 0.3; // 30% width
+                        const wmHeight = (watermarkImg.height / watermarkImg.width) * wmWidth;
+                        const padding = canvasSize * 0.05;
+
+                        ctx.globalAlpha = 0.8;
+                        // Bottom right
+                        ctx.drawImage(
+                            watermarkImg, 
+                            canvasSize - wmWidth - padding, 
+                            canvasSize - wmHeight - padding, 
+                            wmWidth, 
+                            wmHeight
+                        );
+                        
+                        // Text: anogame.xyz
+                        ctx.globalAlpha = 1.0;
+                        ctx.font = `bold ${canvasSize * 0.04}px Inter, sans-serif`;
+                        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+                        ctx.shadowColor = 'rgba(0,0,0,0.5)';
+                        ctx.shadowBlur = 4;
+                        ctx.textAlign = 'right';
+                        ctx.fillText('anogame.xyz', canvasSize - padding, canvasSize - padding - wmHeight - 10);
+                        
+                        resolve(canvas.toDataURL('image/png'));
+                    };
+
+                    watermarkImg.onerror = () => {
+                         // Fallback text if image fails
+                        ctx.globalAlpha = 1.0;
+                        ctx.font = `bold ${canvasSize * 0.05}px sans-serif`;
+                        ctx.fillStyle = '#ffffff';
+                        ctx.shadowColor = 'rgba(0,0,0,0.5)';
+                        ctx.shadowBlur = 4;
+                        ctx.textAlign = 'right';
+                        ctx.fillText('anogame.xyz', canvasSize - 20, canvasSize - 20);
+                        resolve(canvas.toDataURL('image/png'));
+                    };
+                } else {
+                    // Export as PNG data URL
+                    resolve(canvas.toDataURL('image/png'));
+                }
             };
 
             img.onerror = () => {
@@ -227,10 +304,14 @@ export const GalleryService = {
     downloadRenderedDrawing: async (
         baseImageUrl: string,
         strokes: DrawingStroke[],
-        filename: string = 'drawing.png'
+        filename: string = 'drawing.png',
+        options: {
+            block?: { type: 'square' | 'circle'; x: number; y: number; size: number };
+            watermark?: boolean;
+        } = {}
     ): Promise<void> => {
         try {
-            const dataUrl = await GalleryService.renderDrawingToDataUrl(baseImageUrl, strokes);
+            const dataUrl = await GalleryService.renderDrawingToDataUrl(baseImageUrl, strokes, options);
 
             // Convert data URL to blob
             const response = await fetch(dataUrl);

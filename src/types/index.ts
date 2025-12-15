@@ -83,6 +83,7 @@ export interface UserAccount {
     lastUsernameChange?: number; // Timestamp for rate limiting
     lastInviteTimes?: { [userId: string]: number }; // Track invite cooldowns per user
     currentRoomCode?: string; // Code of the room the user is currently in (One Room Policy)
+    challenges?: PlayerChallengeState[]; // Active player challenges
 }
 
 
@@ -99,6 +100,31 @@ export interface PlayerCosmetics {
     activeFont?: string;  // purchased font
     activeStat?: string; // Stat to display on card (level, wins, earnings, etc)
     purchasedItems?: string[]; // Items bought with currency
+}
+
+export type ChallengeType = 'daily' | 'weekly';
+export type ChallengeAction = 'play_game' | 'win_round' | 'vote_correctly' | 'earn_currency' | 'sabotage';
+
+export interface Challenge {
+    id: string;
+    type: ChallengeType;
+    action: ChallengeAction;
+    target: number;
+    reward: {
+        currency: number;
+        xp: number;
+    };
+    description: string;
+    icon: string;
+}
+
+export interface PlayerChallengeState {
+    challengeId: string;
+    progress: number;
+    completed: boolean;
+    claimed: boolean;
+    assignedAt: number; // To check for daily reset
+    expiresAt: number;
 }
 
 export interface Player {
@@ -169,6 +195,7 @@ export interface Vote {
 export interface RoundResult {
     roundNumber: number;
     imageUrl?: string; // Base image for this round
+    block?: BlockInfo; // The white block/mask used in this round
     rankings: {
         playerId: string;
         playerName: string;
@@ -333,6 +360,7 @@ export interface GalleryDrawing {
 export interface GalleryRound {
     roundNumber: number;
     imageUrl: string;           // The base image
+    block?: BlockInfo;          // The white block/mask used in this round
     drawings: GalleryDrawing[]; // All player drawings for this round
     winner: {
         playerId: string;
