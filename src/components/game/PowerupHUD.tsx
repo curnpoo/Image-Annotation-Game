@@ -30,7 +30,7 @@ export const PowerupHUD: React.FC<PowerupHUDProps> = ({
     
     // Get inventory sync
     const [inventory, setInventory] = useState(CurrencyService.getInventory());
-    const [permanent, setPermanent] = useState(CurrencyService.getPurchasedItems()); // For permanent checks if needed
+    const [_permanent, setPermanent] = useState(CurrencyService.getPurchasedItems()); // For permanent checks if needed
 
     // Update inventory on mount/usage
     const refreshInventory = () => {

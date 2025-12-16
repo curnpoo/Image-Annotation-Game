@@ -7,7 +7,7 @@ import { StatsService } from '../../services/stats';
 import { BadgeService } from '../../services/badgeService';
 import { XPService } from '../../services/xp';
 import { POWERUPS } from '../../constants/cosmetics';
-import { AuthService } from '../../services/auth';
+// AuthService removed - not currently used in this component
 
 interface ProfileScreenProps {
     player: Player;
@@ -416,7 +416,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                             
                             <div className="grid grid-cols-3 gap-2">
                                 {POWERUPS.map(p => {
-                                    const owned = isOwned(p.id, p.type);
+                                    const owned = isOwned(p.id, p.type as 'consumable' | 'permanent' | undefined);
                                     const selected = activePowerups.includes(p.id);
                                     const count = inventory[p.id] || 0;
                                     

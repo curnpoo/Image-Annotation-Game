@@ -227,9 +227,6 @@ export const DrawingScreen: React.FC<DrawingScreenProps> = ({
     const sabotageClass = (isSabotaged && sabotageEffect?.type === 'visual_distortion')
         ? "animate-shake-hard"
         : "";
-    const sabotageClass = (isSabotaged && sabotageEffect?.type === 'visual_distortion')
-        ? "animate-shake-hard"
-        : "";
     const containerClass = `${baseContainerClass} ${sabotageClass}`;
 
     // Active Powerup Effects

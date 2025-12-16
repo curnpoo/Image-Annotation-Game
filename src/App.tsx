@@ -35,7 +35,6 @@ import { ScreenRouter } from './components/common/ScreenRouter';
 import { Toast } from './components/common/Toast';
 import { LoadingScreen } from './components/common/LoadingScreen';
 import { TunnelTransition, CasinoTransition, GlobalBlurTransition } from './components/common/ScreenTransition';
-import { MonogramBackground } from './components/common/MonogramBackground';
 import { GlobalBackground } from './components/common/GlobalBackground';
 
 import {
@@ -478,7 +477,7 @@ const App = () => {
 
   const amWaiting = room?.playerStates?.[player?.id || '']?.status === 'waiting' || false;
 
-  const handleEquipCosmetic = (type: 'font' | 'theme' | 'frame', id: string, value?: string) => {
+  const handleEquipCosmetic = (type: 'font' | 'theme' | 'frame', id: string, _value?: string) => {
     if (!player) return;
 
     // Immediate local update for visual responsiveness

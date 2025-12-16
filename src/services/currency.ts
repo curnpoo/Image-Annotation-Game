@@ -6,7 +6,7 @@ import type { UserAccount } from '../types';
 const CURRENCY_KEY = 'player_currency';
 const PURCHASED_ITEMS_KEY = 'player_purchased_items';
 const INVENTORY_KEY = 'player_inventory';
-const PERMANENT_POWERUPS_KEY = 'player_permanent_powerups';
+// PERMANENT_POWERUPS_KEY removed - permanent powerups stored in purchasedItems
 const LOCAL_USER_KEY = 'logged_in_user';
 
 import { XPService } from './xp';
