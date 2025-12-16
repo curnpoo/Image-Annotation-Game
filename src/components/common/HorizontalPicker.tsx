@@ -196,7 +196,7 @@ export const HorizontalPicker: React.FC<HorizontalPickerProps> = ({
                         const distance = Math.abs(index - currentIndex);
                         const scale = isSelected ? 1.2 : Math.max(0.6, 1 - distance * 0.15);
                         const opacity = isSelected ? 1 : Math.max(0.3, 1 - distance * 0.2);
-                        const isDisabled = maxAllowed !== undefined && val > maxAllowed;
+                        const isMaxRestricted = maxAllowed !== undefined && val > maxAllowed;
 
                         return (
                             <div
@@ -207,10 +207,10 @@ export const HorizontalPicker: React.FC<HorizontalPickerProps> = ({
                                     height: '44px',
                                     scrollSnapAlign: 'center',
                                     transform: `scale(${scale})`,
-                                    opacity: isDisabled ? 0.2 : opacity,
+                                    opacity: isMaxRestricted ? 0.2 : opacity,
                                 }}
                                 onClick={() => {
-                                    if (!disabled && !isDisabled) {
+                                    if (!disabled && !isMaxRestricted) {
                                         onChange(val);
                                         vibrate(HapticPatterns.medium);
                                     }
