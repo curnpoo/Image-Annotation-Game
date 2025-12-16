@@ -178,7 +178,7 @@ export const StoreScreen: React.FC<StoreScreenProps> = ({ onBack, onEquip, playe
                     </div>
                 </div>
 
-                <h1 className="text-4xl font-black text-white tracking-tighter drop-shadow-lg mb-4 text-center">
+                <h1 className="text-4xl font-black tracking-tighter drop-shadow-lg mb-4 text-center" style={{ color: 'var(--theme-text)' }}>
                     <span className="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">STORE</span>
                 </h1>
 
@@ -220,8 +220,8 @@ export const StoreScreen: React.FC<StoreScreenProps> = ({ onBack, onEquip, playe
                     {sections.map((section, idx) => (
                         <div key={idx} className="space-y-3">
                             {section.title && (
-                                <div className="flex items-center justify-between sticky top-0 bg-gray-950/80 backdrop-blur-md py-2 z-10 w-full pr-2">
-                                    <h3 className="text-white/50 font-bold uppercase tracking-widest text-xs pl-2">
+                                <div className="flex items-center justify-between sticky top-0 backdrop-blur-md py-2 z-10 w-full pr-2" style={{ background: 'var(--theme-card-bg)' }}>
+                                    <h3 className="font-bold uppercase tracking-widest text-xs pl-2" style={{ color: 'var(--theme-text-secondary)' }}>
                                         {section.title}
                                     </h3>
                                     
@@ -233,8 +233,8 @@ export const StoreScreen: React.FC<StoreScreenProps> = ({ onBack, onEquip, playe
                                 <div className="mb-4 px-2">
                                     <div className="flex items-center justify-between bg-white/5 p-3 rounded-xl border border-white/10">
                                         <div className="flex flex-col">
-                                            <span className="text-white font-bold text-sm">Match Avatar</span>
-                                            <span className="text-white/40 text-[10px]">Sync avatar background to theme</span>
+                                            <span className="font-bold text-sm" style={{ color: 'var(--theme-text)' }}>Match Avatar</span>
+                                            <span className="text-[10px]" style={{ color: 'var(--theme-text-secondary)' }}>Sync avatar background to theme</span>
                                         </div>
                                         <button
                                             onClick={async () => {
@@ -311,16 +311,16 @@ export const StoreScreen: React.FC<StoreScreenProps> = ({ onBack, onEquip, playe
 
                                             {/* Middle: Info */}
                                             <div className="flex-1 text-left min-w-0">
-                                                <div className="flex items-baseline gap-2">
+                                                    <div className="flex items-baseline gap-2">
                                                     <h3 
-                                                        className="font-bold text-white text-base truncate"
-                                                        style={activeTab === 'fonts' ? { fontFamily: item.fontFamily } : undefined}
+                                                        className="font-bold text-base truncate"
+                                                        style={activeTab === 'fonts' ? { fontFamily: item.fontFamily, color: 'var(--theme-text)' } : { color: 'var(--theme-text)' }}
                                                     >
                                                         {item.name}
                                                     </h3>
                                                     {equipped && <span className="text-[10px] text-green-400 font-bold uppercase tracking-wider bg-green-500/20 px-1.5 rounded">Active</span>}
                                                 </div>
-                                                <p className="text-xs text-white/50 line-clamp-1 mt-0.5">
+                                                <p className="text-xs line-clamp-1 mt-0.5" style={{ color: 'var(--theme-text-secondary)' }}>
                                                     {item.description}
                                                 </p>
                                             </div>
@@ -357,7 +357,7 @@ export const StoreScreen: React.FC<StoreScreenProps> = ({ onBack, onEquip, playe
                     {sections.every(s => s.items.length === 0) && (
                         <div className="flex flex-col items-center justify-center py-20 opacity-50">
                             <div className="text-6xl mb-4 grayscale">📭</div>
-                            <p className="text-white font-bold">Coming Soon</p>
+                            <p className="font-bold" style={{ color: 'var(--theme-text)' }}>Coming Soon</p>
                         </div>
                     )}
                 </div>
