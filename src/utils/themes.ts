@@ -87,7 +87,7 @@ export const getThemeVariables = (themeId: string = 'default') => {
     switch (themeId) {
         case 'light':
         case 'premium-light':
-            return { ...baseVariables, '--theme-bg': 'linear-gradient(135deg, #FFF5EB 0%, #FFD1B3 100%)', '--theme-text': '#4A3B32', '--theme-text-secondary': '#8D6E63', '--theme-border': '#E0F2F1', '--theme-accent': '#FFB74D', '--card-border': '1px solid rgba(0,0,0,0.1)' };
+            return { ...baseVariables, '--theme-bg': 'linear-gradient(135deg, #FFF5EB 0%, #FFD1B3 100%)', '--theme-text': '#000000', '--theme-text-secondary': '#4A3B32', '--theme-border': '#E0F2F1', '--theme-accent': '#FFB74D', '--card-border': '1px solid rgba(0,0,0,0.1)' };
         case 'dark':
         case 'premium-dark':
             return { ...baseVariables, '--theme-bg': 'linear-gradient(135deg, #1F1F1F 0%, #2D2D2D 100%)', '--theme-text': '#FFF8E1', '--theme-text-secondary': '#D7CCC8', '--theme-border': '#FFB74D', '--card-border': '2px solid #FFB74D' };

@@ -61,6 +61,8 @@ export const ProfileStatusCard: React.FC<ProfileStatusCardProps> = ({ player, on
                     }}
                 />
             )}
+            {/* Outer wrapper to clip box-shadow glow to rounded corners */}
+            <div className="rounded-[2rem] overflow-hidden">
             <div
                 onClick={() => {
                      onClick?.();
@@ -69,7 +71,7 @@ export const ProfileStatusCard: React.FC<ProfileStatusCardProps> = ({ player, on
                 className="rounded-[2rem] p-3 shadow-xl relative overflow-hidden transition-all hover:scale-[1.01] cursor-pointer group"
                 style={{
                     background: 'var(--theme-glass-bg)',
-                    boxShadow: `0 4px 20px -5px ${tier.color}40`,
+                    boxShadow: `inset 0 0 20px 5px ${tier.color}40`,
                     border: `2px solid ${tier.color}`,
                     borderColor: tier.color
                 }}
@@ -132,9 +134,9 @@ export const ProfileStatusCard: React.FC<ProfileStatusCardProps> = ({ player, on
                                     <span
                                         className="text-[9px] font-bold px-1.5 py-0.5 rounded border opacity-80"
                                         style={{
-                                            backgroundColor: `${tier.color}10`,
-                                            color: tier.color,
-                                            borderColor: `${tier.color}40`
+                                            backgroundColor: `${tier.color}30`,
+                                            color: tier.name === 'Gold' ? '#996515' : tier.color,
+                                            borderColor: `${tier.color}60`
                                         }}
                                     >
                                         {tier.name}
@@ -179,7 +181,7 @@ export const ProfileStatusCard: React.FC<ProfileStatusCardProps> = ({ player, on
                                     )}
                                 </div>
                                 <div className="flex items-center gap-1 leading-none mt-0.5">
-                                    <span className="text-[10px] font-bold text-indigo-200">
+                                    <span className="text-[10px] font-bold" style={{ color: 'var(--theme-text-secondary)' }}>
                                         Challenges
                                     </span>
                                     {!isGuest && (
@@ -209,14 +211,15 @@ export const ProfileStatusCard: React.FC<ProfileStatusCardProps> = ({ player, on
                     <div
                         className="absolute top-0 right-0 rounded-bl-2xl px-3 py-1 text-[10px] font-black border-b border-l shadow-sm backdrop-blur-xl z-20"
                         style={{
-                            backgroundColor: `${tier.color}20`,
-                            color: tier.color,
-                            borderColor: `${tier.color}30`
+                            backgroundColor: `${tier.color}40`,
+                            color: tier.name === 'Gold' ? '#996515' : tier.color,
+                            borderColor: `${tier.color}50`
                         }}
                     >
                         +{Math.round(tier.xpBonus * 100)}% XP
                     </div>
                 )}
+            </div>
             </div>
         </>
     );

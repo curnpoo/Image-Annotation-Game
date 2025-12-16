@@ -233,7 +233,7 @@ export const FriendsPanel: React.FC<FriendsPanelProps> = ({ player: _player, onJ
                 </div>
 
                 <div className="text-center">
-                    <div className="font-black text-white text-2xl tracking-tight">FRIENDS</div>
+                    <div className="font-black text-2xl tracking-tight" style={{ color: 'var(--theme-text)' }}>FRIENDS</div>
                     <div className="text-[10px] font-bold text-green-400/80 uppercase tracking-[0.2em] bg-green-500/10 px-2 py-0.5 rounded-full border border-green-500/20 mt-1">
                         {Object.values(presenceMap).filter(p => p.status === 'online' || p.status === 'playing').length} Online
                     </div>
