@@ -102,6 +102,7 @@ export const InviteFriendsModal: React.FC<InviteFriendsModalProps> = ({
                         <AvatarDisplay
                             strokes={user.avatarStrokes}
                             avatar={user.avatar}
+                            frame={user.frame}
                             color={user.color}
                             backgroundColor={user.backgroundColor}
                             size={48}

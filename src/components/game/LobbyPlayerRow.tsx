@@ -53,6 +53,7 @@ const LobbyPlayerRowBase: React.FC<LobbyPlayerRowProps> = ({
                     <AvatarDisplay
                         strokes={player.avatarStrokes}
                         avatar={player.avatar}
+                        frame={player.frame}
                         color={player.color}
                         backgroundColor={player.backgroundColor || '#ffffff'}
                         size={56}

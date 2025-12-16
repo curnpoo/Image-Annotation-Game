@@ -8,8 +8,8 @@ interface GameSettingsPanelProps {
     isHost: boolean;
 }
 
-const TIMER_OPTIONS = [10, 20, 30, 40, 50, 60];
-const ROUND_OPTIONS = [1, 3, 5, 7];
+const TIMER_OPTIONS = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120];
+const ROUND_OPTIONS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
 export const GameSettingsPanel: React.FC<GameSettingsPanelProps> = ({
     settings,
@@ -45,7 +45,7 @@ export const GameSettingsPanel: React.FC<GameSettingsPanelProps> = ({
                         </div>
                         <HorizontalPicker
                             min={10}
-                            max={60}
+                            max={120}
                             value={settings.timerDuration}
                             onChange={(val) => isHost && onSettingsChange({ timerDuration: val })}
                             disabled={!isHost}
@@ -72,7 +72,7 @@ export const GameSettingsPanel: React.FC<GameSettingsPanelProps> = ({
                         </div>
                         <HorizontalPicker
                             min={1}
-                            max={7}
+                            max={10}
                             value={settings.totalRounds}
                             onChange={(val) => isHost && onSettingsChange({ totalRounds: val })}
                             disabled={!isHost}

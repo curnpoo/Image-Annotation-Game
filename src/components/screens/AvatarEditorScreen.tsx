@@ -128,11 +128,11 @@ export const AvatarEditorScreen: React.FC<AvatarEditorScreenProps> = ({
 
                     {/* Zoomable content wrapper */}
                     <div
-                        className="relative w-full h-full rounded-full overflow-hidden shadow-2xl"
+                        className="relative w-full h-full rounded-3xl overflow-hidden shadow-2xl"
                         style={{ ...contentStyle, background: backgroundColor }} // Changed to background for gradients
                     >
                         {/* Frame Overlay */}
-                        <div className={`absolute inset-0 pointer-events-none z-10 rounded-full ${FRAMES.find(f => f.id === selectedFrame)?.className || ''}`}></div>
+                        <div className={`absolute inset-0 pointer-events-none z-10 rounded-3xl ${FRAMES.find(f => f.id === selectedFrame)?.className || ''}`}></div>
                         
                         <GameCanvas
                             imageUrl=""

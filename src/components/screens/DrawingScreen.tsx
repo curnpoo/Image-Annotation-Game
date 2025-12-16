@@ -350,6 +350,7 @@ export const DrawingScreen: React.FC<DrawingScreenProps> = ({
                                                                 <AvatarDisplay
                                                                     strokes={p.avatarStrokes}
                                                                     avatar={p.avatar}
+                                                                    frame={p.frame}
                                                                     color={p.color}
                                                                     backgroundColor={p.backgroundColor}
                                                                     size={40}
