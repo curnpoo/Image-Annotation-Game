@@ -58,7 +58,26 @@ export const GalleryService = {
             if (roundsMap.has(result.roundNumber)) continue;
 
             // Get drawings from the round result (captured when round ended)
-            const drawings: GalleryDrawing[] = (result.drawings || []).map(d => {
+            // If drawings are empty, try fetching from the separate drawings path
+            let drawingsData = result.drawings || [];
+            
+            if (drawingsData.length === 0) {
+                // Drawings are stored separately at drawings/${roomCode}/${roundNumber}
+                try {
+                    const drawingsRef = ref(database, `drawings/${room.roomCode}/${result.roundNumber}`);
+                    const drawingsSnapshot = await get(drawingsRef);
+                    if (drawingsSnapshot.exists()) {
+                        const fetchedDrawings = drawingsSnapshot.val();
+                        // Convert object to array
+                        drawingsData = Object.values(fetchedDrawings || {});
+                        console.log('[Gallery] Fetched drawings from separate path:', drawingsData.length);
+                    }
+                } catch (e) {
+                    console.warn('[Gallery] Could not fetch drawings from separate path:', e);
+                }
+            }
+            
+            const drawings: GalleryDrawing[] = drawingsData.map((d: any) => {
                 const votes = result.rankings.find(r => r.playerId === d.playerId)?.votes || 0;
                 return {
                     playerId: d.playerId,
@@ -76,7 +95,7 @@ export const GalleryService = {
             roundsMap.set(result.roundNumber, {
                 roundNumber: result.roundNumber,
                 imageUrl: result.imageUrl || '',
-                block: result.block,
+                ...(result.block ? { block: result.block } : {}), // Omit if undefined
                 drawings,
                 winner: {
                     playerId: winner.playerId,
@@ -111,16 +130,21 @@ export const GalleryService = {
 
         // Save ONLY to the current user's gallery
         // Each player's client handles their own saving
+        const fullPath = `${GALLERY_PATH}/${userId}/${gameId}`;
+        console.log('[Gallery] Attempting to write to path:', fullPath);
+        console.log('[Gallery] Game data:', JSON.stringify(galleryGame).slice(0, 500) + '...');
+        
         try {
-            const galleryRef = ref(database, `${GALLERY_PATH}/${userId}/${gameId}`);
+            const galleryRef = ref(database, fullPath);
             await set(galleryRef, galleryGame);
             
             // Prune old games for current user
             await GalleryService.pruneOldGames(userId);
-            console.log('Game saved to gallery successfully');
-        } catch (error) {
-            console.error('Error saving game to gallery:', error);
-            // Don't throw, just log. We don't want to break the UI.
+            console.log('[Gallery] ✅ Game saved successfully to:', fullPath);
+        } catch (error: any) {
+            console.error('[Gallery] ❌ Error saving game to gallery:', error.message || error);
+            // Re-throw so caller knows it failed
+            throw error;
         }
     },
 
@@ -149,7 +173,10 @@ export const GalleryService = {
 
         if (!userId) return [];
 
-        const galleryRef = ref(database, `${GALLERY_PATH}/${userId}`);
+        const fullPath = `${GALLERY_PATH}/${userId}`;
+        console.log('[Gallery] Reading from path:', fullPath);
+        
+        const galleryRef = ref(database, fullPath);
         const snapshot = await get(galleryRef);
 
         if (!snapshot.exists()) return [];

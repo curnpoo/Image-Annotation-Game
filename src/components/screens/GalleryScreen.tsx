@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { GalleryService } from '../../services/galleryService';
 import type { GalleryGame, GalleryRound, BlockInfo, DrawingStroke } from '../../types';
 import { vibrate, HapticPatterns } from '../../utils/haptics';
@@ -29,6 +29,7 @@ export const GalleryScreen: React.FC<GalleryScreenProps> = ({ onBack, showToast,
         try {
             // Pass the session ID to support guest users
             const history = await GalleryService.getPlayerGallery(currentSessionId);
+            console.log('[Gallery] Loaded history:', history);
             setGames(history);
         } catch (error) {
             console.error('Failed to load gallery:', error);
@@ -101,7 +102,18 @@ export const GalleryScreen: React.FC<GalleryScreenProps> = ({ onBack, showToast,
                 >
                     <span className="text-xl">←</span>
                 </button>
-                <h1 className="text-xl font-bold ml-2">Match History <span className="text-white/30 text-xs font-normal">(ID: {currentSessionId ? currentSessionId.slice(0, 6) : '?'})</span></h1>
+                <h1 className="text-xl font-bold ml-2">
+                    Match History 
+                    <span className="text-white/30 text-xs font-normal ml-2">
+                        (ID: {currentSessionId ? currentSessionId.slice(0, 6) : '?'}) • {games.length} Games
+                    </span>
+                </h1>
+                <button 
+                    onClick={loadGallery}
+                    className="ml-auto px-3 py-1 bg-white/10 rounded-full text-xs font-bold active:bg-white/20"
+                >
+                    ↻ Refresh
+                </button>
             </div>
 
             {/* Main Content */}
@@ -344,85 +356,59 @@ const GameCard: React.FC<{
     );
 };
 
-// Canvas Renderer Component
+// Preview Display Component - Using img to avoid CORS issues in development
+// The full canvas rendering with drawings happens in handleViewDrawing (fullscreen mode)
 const DrawingDisplay: React.FC<{
     imageUrl: string;
     strokes: DrawingStroke[];
-    block?: BlockInfo;
+    block?: BlockInfo | null;
 }> = ({ imageUrl, strokes, block }) => {
-    const canvasRef = useRef<HTMLCanvasElement>(null);
+    // Debug: Check what block data we have
+    console.log('[DrawingDisplay] Props:', { 
+        imageUrl: imageUrl?.slice(0, 50), 
+        strokeCount: strokes?.length, 
+        block: block ? { x: block.x, y: block.y, size: block.size, type: block.type } : null 
+    });
+    
+    if (!imageUrl) {
+        return (
+            <div className="w-full h-full flex items-center justify-center bg-gray-200 text-gray-500 text-sm">
+                No image
+            </div>
+        );
+    }
 
-    useEffect(() => {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
-
-        // Clear previous
-        ctx.clearRect(0,0, canvas.width, canvas.height);
-
-        if (!imageUrl) return; // Guard
-
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
-        img.src = imageUrl;
-
-        // Handle load error
-        img.onerror = () => {
-             console.warn('Failed to load base image for drawing display');
-        };
-
-        img.onload = () => {
-            const size = canvas.width; // Assume square
-            
-            // 1. Draw Base
-            try {
-                ctx.drawImage(img, 0, 0, size, size);
-            } catch (e) {
-                console.warn('Error drawing base image', e);
-            }
-
-             // 2. Draw Block
-             if (block && typeof block.x === 'number') { // Basic validation
-                ctx.fillStyle = '#ffffff';
-                const bx = (block.x / 100) * size;
-                const by = (block.y / 100) * size;
-                const bSize = (block.size / 100) * size;
-
-                if (block.type === 'circle') {
-                    ctx.beginPath();
-                    ctx.arc(bx + bSize / 2, by + bSize / 2, bSize / 2, 0, Math.PI * 2);
-                    ctx.fill();
-                } else {
-                    ctx.fillRect(bx, by, bSize, bSize);
-                }
-            }
-
-            // 3. Draw Strokes
-            if (Array.isArray(strokes)) {
-                for (const stroke of strokes) {
-                    if (!stroke.points || stroke.points.length === 0) continue;
-
-                    ctx.beginPath();
-                    ctx.strokeStyle = stroke.isEraser ? '#ffffff' : stroke.color;
-                    ctx.lineWidth = stroke.size ? (stroke.size / 600) * size * 1.5 : 2; // Scale width roughly
-                    ctx.lineCap = 'round';
-                    ctx.lineJoin = 'round';
-
-                    const points = stroke.points.map(p => ({
-                        x: (p.x / 100) * size,
-                        y: (p.y / 100) * size
-                    }));
-
-                    ctx.moveTo(points[0].x, points[0].y);
-                    for (let i = 1; i < points.length; i++) {
-                        ctx.lineTo(points[i].x, points[i].y);
-                    }
-                    ctx.stroke();
-                }
-            }
-        };
-    }, [imageUrl, strokes, block]);
-
-    return <canvas ref={canvasRef} width={400} height={400} className="w-full h-full object-cover bg-white" />;
+    return (
+        <div className="relative w-full h-full bg-white">
+            <img 
+                src={imageUrl}
+                alt="Round preview"
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                    console.warn('[DrawingDisplay] Image failed to load');
+                    (e.target as HTMLImageElement).style.display = 'none';
+                }}
+            />
+            {/* Block overlay indicator */}
+            {block && (
+                <div 
+                    className="absolute bg-white pointer-events-none"
+                    style={{
+                        left: `${block.x}%`,
+                        top: `${block.y}%`,
+                        width: `${block.size}%`,
+                        height: `${block.size}%`,
+                        transform: 'translate(-50%, -50%)',
+                        borderRadius: block.type === 'circle' ? '50%' : '0'
+                    }}
+                />
+            )}
+            {/* Drawing indicator */}
+            {strokes && strokes.length > 0 && (
+                <div className="absolute top-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded-full">
+                    ✏️ {strokes.length} strokes
+                </div>
+            )}
+        </div>
+    );
 };

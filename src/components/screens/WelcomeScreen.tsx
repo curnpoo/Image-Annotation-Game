@@ -16,7 +16,6 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
     onJoin,
     joiningRoomCode
 }) => {
-    const [showInstallModal, setShowInstallModal] = useState(false);
     const [showShareModal, setShowShareModal] = useState(false);
     const [showAboutModal, setShowAboutModal] = useState(false);
 
@@ -96,28 +95,6 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                 </div>
             </div>
 
-            {/* Install App Card - Bottom Section */}
-            {!joiningRoomCode && (
-                <div className="w-full max-w-md px-6 pb-2 z-10">
-                    <button
-                        onClick={() => setShowInstallModal(true)}
-                        className="w-full glass-panel p-4 rounded-2xl flex items-center justify-between group hover:bg-white/40 transition-all cursor-pointer active:scale-95 shadow-sm"
-                    >
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl flex items-center justify-center text-white shadow-md text-xl">
-                                📱
-                            </div>
-                            <div className="text-left">
-                                <div className="font-bold text-white leading-tight">Install App</div>
-                                <div className="text-xs text-white/70 font-medium">Add to Home Screen</div>
-                            </div>
-                        </div>
-                        <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center group-hover:bg-white/40 transition-colors text-white">
-                            ⬇️
-                        </div>
-                    </button>
-                </div>
-            )}
 
             {/* Footer / Copyright */}
             <div className="p-6 text-center z-10 space-y-1 mb-safe">
@@ -131,7 +108,8 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
             </div>
 
             {/* Modals */}
-            {showInstallModal && <InstallPromptModal onClose={() => setShowInstallModal(false)} />}
+            {!joiningRoomCode && <InstallPromptModal />}
+
             <React.Suspense fallback={null}>
                 {showShareModal && <ShareModal onClose={() => setShowShareModal(false)} isOpen={showShareModal} />}
             </React.Suspense>

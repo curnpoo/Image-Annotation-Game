@@ -1,3 +1,4 @@
+import { AuthService } from '../../services/auth';
 import { Suspense, lazy } from 'react';
 import type { Screen, Player, GameRoom, GameSettings, RoomHistoryEntry } from '../../types';
 
@@ -279,9 +280,8 @@ export const ScreenRouter: React.FC<ScreenRouterProps> = ({
             // onProfileComplete in App.tsx checks AuthService
             screenContent = <ProfileSetupScreen
                 onComplete={onProfileComplete}
-                initialName="" // We could pass this if we had it, but App.tsx handles sourcing it. 
-            // Wait, App.tsx passes AuthService.getCurrentUser()?.username.
-            // We might need to pass initialName as prop?
+                initialName={AuthService.getCurrentUser()?.username}
+                onBack={() => onNavigate('welcome')}
             />;
             break;
 
@@ -302,6 +302,7 @@ export const ScreenRouter: React.FC<ScreenRouterProps> = ({
                     playerCount: lastGameDetails.playerCount || 0
                 } : null}
                 onRejoin={onRejoin}
+                onRegister={() => onNavigate('login')}
             />;
             break;
 

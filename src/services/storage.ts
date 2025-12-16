@@ -143,6 +143,10 @@ export const StorageService = {
 
 
                 // Capture drawings for Match History (Gallery)
+                // Drawings are stored in a separate path for performance
+                // They will be fetched by galleryService when saving
+                // For now, we store the drawing data that's still in memory
+                // (playerStates should have had it attached during the round)
                 const drawings = room.players.map(p => {
                     const playerState = room.playerStates[p.id];
                     return {
@@ -153,6 +157,8 @@ export const StorageService = {
                     };
                 }).filter(d => d.strokes.length > 0);
 
+                console.log('[Storage] Capturing round result, room.block:', room.block);
+                
                 const roundResult: RoundResult = {
                     roundNumber: room.roundNumber,
                     imageUrl: room.currentImage?.url || '',
@@ -225,6 +231,8 @@ export const StorageService = {
                     };
                 }).filter(d => d.strokes.length > 0);
 
+                console.log('[Storage] forceAdvanceRound - capturing round result, r.block:', r.block);
+                
                 const roundResult: RoundResult = {
                     roundNumber: r.roundNumber,
                     imageUrl: r.currentImage?.url || '',
@@ -1066,7 +1074,8 @@ export const StorageService = {
                     roundNumber: r.roundNumber,
                     imageUrl: r.currentImage?.url || '',
                     rankings,
-                    drawings
+                    drawings,
+                    block: r.block ?? undefined // Capture block for Match History
                 };
 
                 const isFinalRound = r.roundNumber >= r.settings.totalRounds;

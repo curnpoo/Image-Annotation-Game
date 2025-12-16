@@ -12,9 +12,10 @@ import { FRAMES, THEMES } from '../../constants/cosmetics';
 interface ProfileSetupScreenProps {
     onComplete: (player: Omit<Player, 'id' | 'joinedAt' | 'lastSeen'>) => void;
     initialName?: string;
+    onBack?: () => void;
 }
 
-export const ProfileSetupScreen: React.FC<ProfileSetupScreenProps> = ({ onComplete, initialName = '' }) => {
+export const ProfileSetupScreen: React.FC<ProfileSetupScreenProps> = ({ onComplete, initialName = '', onBack }) => {
     const [name, setName] = useState(initialName || ''); // Ensure string
     const [strokes, setStrokes] = useState<DrawingStroke[]>([]);
     
@@ -110,7 +111,20 @@ export const ProfileSetupScreen: React.FC<ProfileSetupScreenProps> = ({ onComple
             <div className="z-10 w-full max-w-md h-full flex flex-col p-4 animate-slide-up">
                 
                 {/* Header Section */}
-                <div className="text-center mb-4 shrink-0">
+                <div className="relative text-center mb-4 shrink-0 flex items-center justify-center">
+                    {onBack && (
+                        <button
+                            onClick={() => {
+                                vibrate(HapticPatterns.light);
+                                onBack();
+                            }}
+                            className="absolute left-0 p-2 rounded-full glass-panel hover:bg-white/10 active:scale-95 transition-all text-white"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+                            </svg>
+                        </button>
+                    )}
                     <h1 className="text-3xl font-black text-white drop-shadow-md rainbow-text">
                         Create Profile
                     </h1>

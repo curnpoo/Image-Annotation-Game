@@ -120,11 +120,13 @@ export const FinalResultsScreen: React.FC<FinalResultsScreenProps> = ({
             console.log('[FinalResults] Attempting to save to gallery...');
             setSaveStatus('saving');
             
-            // Prevent spamming save on re-renders, but allow retry if page refreshed
-            // We use a separate key for gallery to decouple from rewards
-            const galleryKey = `saved_gallery_${room.roomCode}`;
+            // CRITICAL: Include round count in key so "Play Again" games still save
+            // Old key was just roomCode, which blocked saves for replays
+            const roundCount = room.roundResults?.length || 0;
+            const galleryKey = `saved_gallery_${room.roomCode}_r${roundCount}`;
+            
             if (sessionStorage.getItem(galleryKey)) {
-                console.log('[FinalResults] Game already saved in this session (skipped).');
+                console.log('[FinalResults] Game already saved in this session (skipped).', { galleryKey });
                 setSaveStatus('success');
                 return;
             }
@@ -132,7 +134,7 @@ export const FinalResultsScreen: React.FC<FinalResultsScreenProps> = ({
             try {
                 await GalleryService.saveGameToGallery(room, currentPlayerId);
                 sessionStorage.setItem(galleryKey, 'true');
-                console.log('[FinalResults] Game saved to gallery successfully, marking session.');
+                console.log('[FinalResults] Game saved to gallery successfully, marking session.', { galleryKey });
                 setSaveStatus('success');
             } catch (err: any) {
                 console.error('[FinalResults] Failed to save game to gallery:', err);
@@ -153,9 +155,11 @@ export const FinalResultsScreen: React.FC<FinalResultsScreenProps> = ({
     const handleRetrySave = async () => {
         setSaveStatus('saving');
         setSaveError('');
+        const roundCount = room.roundResults?.length || 0;
+        const galleryKey = `saved_gallery_${room.roomCode}_r${roundCount}`;
         try {
             await GalleryService.saveGameToGallery(room, currentPlayerId);
-            sessionStorage.setItem(`saved_gallery_${room.roomCode}`, 'true');
+            sessionStorage.setItem(galleryKey, 'true');
             setSaveStatus('success');
             showToast('Saved to gallery!', 'success');
         } catch (err: any) {
@@ -392,15 +396,7 @@ export const FinalResultsScreen: React.FC<FinalResultsScreenProps> = ({
                 </div>
             </div>
 
-            <div className="flex gap-4 w-full max-w-sm z-10 pt-4 pb-safe-bottom">
-                <button
-                    onClick={handleGoHome}
-                    className="flex-1 py-4 px-6 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-2xl border border-white/20 text-white font-bold text-lg transition-all active:scale-95"
-                >
-                    Home
-                </button>
-                <div className="flex-1" /> {/* Spacer or Play Again button spot */}
-            </div>
+
 
             {/* Play Again Button */}
             {isHost ? (

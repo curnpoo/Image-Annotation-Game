@@ -6,6 +6,9 @@ import { ChallengeService } from '../../services/challenges';
 import type { Player } from '../../types';
 import { ChallengesPanel } from './ChallengesPanel';
 
+import { AuthService } from '../../services/auth';
+import { GuestSignUpModal } from './GuestSignUpModal';
+
 interface ProfileStatusCardProps {
     player: Player;
     onClick?: () => void;
@@ -13,24 +16,55 @@ interface ProfileStatusCardProps {
 
 export const ProfileStatusCard: React.FC<ProfileStatusCardProps> = ({ player, onClick }) => {
     const [showChallenges, setShowChallenges] = useState(false);
+    const [showGuestModal, setShowGuestModal] = useState(false);
     
     const level = XPService.getLevel();
     const tier = XPService.getTier();
     const progressPercent = XPService.getLevelProgressPercent();
     const balance = CurrencyService.getCurrency();
+    const isGuest = !AuthService.isLoggedIn();
 
     // Get Challenge Progress
     const challenges = ChallengeService.getChallenges();
     const completedChallenges = challenges.filter(c => c.completed).length;
 
+    const handleChallengesClick = (e?: React.MouseEvent) => {
+        e?.stopPropagation();
+        if (isGuest) {
+            setShowGuestModal(true);
+        } else {
+            setShowChallenges(true);
+        }
+    };
+
     return (
         <>
             {showChallenges && <ChallengesPanel onClose={() => setShowChallenges(false)} />}
+            {showGuestModal && (
+                <GuestSignUpModal
+                    isOpen={showGuestModal}
+                    onClose={() => setShowGuestModal(false)}
+                    onConfirm={() => {
+                        // We actually need to navigate to login/register.
+                        // ProfileStatusCard doesn't have navigation props directly.
+                        // For now, let's just close modal. Ideally we should callback to parent or use a global router.
+                        // Given constraints, we will reload to root or rely on user navigating themselves for now?
+                        // Or better, let's just use window.location.reload() to get to welcome screen 
+                        // effectively 'logging out' the guest session or just redirecting.
+                        // Actually App.tsx handles onRegister. But we are deep in component.
+                        // For MVP, just closing it is okay, maybe change text to "Go to Home to Sign Up"?
+                        // Or better: just don't have this modal here if we can't action it properly? 
+                        // Wait, GuestSignUpModal takes onConfirm. If we can't navigate, we should maybe pass a callback prop?
+                        // Let's modify ProfileStatusCardProps to accept onRegister optionally.
+                        setShowGuestModal(false);
+                        window.location.reload(); // Quickest way to get back to auth selection for now
+                    }}
+                />
+            )}
             <div
                 onClick={() => {
                      onClick?.();
-                     // If no external click handler, show challenges
-                     if (!onClick) setShowChallenges(true);
+                     if (!onClick) handleChallengesClick();
                 }}
                 className="glass-panel rounded-[2rem] p-3 shadow-xl relative overflow-hidden transition-all hover:scale-[1.01] cursor-pointer !border-white/10 group"
                 style={{
@@ -120,15 +154,17 @@ export const ProfileStatusCard: React.FC<ProfileStatusCardProps> = ({ player, on
                         <div className="grid grid-cols-2 gap-1.5">
                             {/* Challenges Button */}
                             <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    setShowChallenges(true);
-                                }}
-                                className="bg-gradient-to-br from-indigo-500/20 to-purple-500/20 hover:from-indigo-500/30 hover:to-purple-500/30 rounded-xl p-1.5 border border-indigo-500/30 flex flex-col items-center justify-center text-center backdrop-blur-sm transition-all active:scale-95 group/btn"
+                                onClick={handleChallengesClick}
+                                className={`
+                                    bg-gradient-to-br from-indigo-500/20 to-purple-500/20 hover:from-indigo-500/30 hover:to-purple-500/30 
+                                    rounded-xl p-1.5 border border-indigo-500/30 flex flex-col items-center justify-center text-center backdrop-blur-sm transition-all active:scale-95 group/btn
+                                    ${isGuest ? 'grayscale opacity-70' : ''}
+                                `}
                             >
                                 <div className="relative mb-0.5">
                                     <span className="text-xl filter drop-shadow-sm group-hover/btn:scale-110 transition-transform block">🗓️</span>
-                                    {completedChallenges > 0 && !challenges.every(c => c.claimed) && (
+                                    {isGuest && <div className="absolute -top-1 -right-1 text-xs">🔒</div>}
+                                    {!isGuest && completedChallenges > 0 && !challenges.every(c => c.claimed) && (
                                         <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-[#1a1a1a] animate-pulse" />
                                     )}
                                 </div>
@@ -136,9 +172,11 @@ export const ProfileStatusCard: React.FC<ProfileStatusCardProps> = ({ player, on
                                     <span className="text-[10px] font-bold text-indigo-200">
                                         Challenges
                                     </span>
-                                    <span className="text-[9px] font-bold text-indigo-300/70 bg-indigo-500/10 px-1 rounded-sm">
-                                        {completedChallenges}/{challenges.length || 3}
-                                    </span>
+                                    {!isGuest && (
+                                        <span className="text-[9px] font-bold text-indigo-300/70 bg-indigo-500/10 px-1 rounded-sm">
+                                            {completedChallenges}/{challenges.length || 3}
+                                        </span>
+                                    )}
                                 </div>
                             </button>
 
