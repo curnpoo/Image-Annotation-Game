@@ -17,24 +17,60 @@ export class ErrorBoundary extends Component<Props, State> {
     };
 
     public static getDerivedStateFromError(error: Error): State {
+        const errorMessage = error.message || '';
+        
+        // Stale Cache / MIME Type Error Handling
+        // This happens when the service worker serves old HTML instead of JS after a deployment
+        const isMimeTypeError = errorMessage.includes('MIME type') || 
+                                errorMessage.includes('text/html') ||
+                                errorMessage.includes('is not valid JavaScript');
+        
         // Chunk Load Error Handling (Lazy Loading)
-        if (error.message.includes('Failed to fetch dynamically imported module') || error.message.includes('Importing a module script failed')) {
-            // Check if we already tried reloading
-            const hasReloaded = sessionStorage.getItem('chunk_reload');
+        const isChunkLoadError = errorMessage.includes('Failed to fetch dynamically imported module') || 
+                                 errorMessage.includes('Importing a module script failed') ||
+                                 errorMessage.includes('Loading chunk') ||
+                                 errorMessage.includes('Loading module');
+        
+        if (isMimeTypeError || isChunkLoadError) {
+            // Check if we already tried reloading for this type of error
+            const reloadKey = isMimeTypeError ? 'mime_reload' : 'chunk_reload';
+            const hasReloaded = sessionStorage.getItem(reloadKey);
+            
             if (!hasReloaded) {
-                sessionStorage.setItem('chunk_reload', 'true');
+                sessionStorage.setItem(reloadKey, 'true');
+                
+                // For MIME type errors, also clear the service worker cache to force fresh assets
+                if (isMimeTypeError && 'caches' in window) {
+                    caches.keys().then(names => {
+                        names.forEach(name => caches.delete(name));
+                    }).finally(() => {
+                        window.location.reload();
+                    });
+                    return { hasError: false, error: null };
+                }
+                
                 window.location.reload();
                 return { hasError: false, error: null };
             }
         }
+        
         return { hasError: true, error };
     }
 
     public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-        // Clear reload flag if it was a different error or success
-        if (!error.message.includes('Failed to fetch')) {
-             sessionStorage.removeItem('chunk_reload');
+        const errorMessage = error.message || '';
+        
+        // Clear reload flags if it was a different error type (successful reload fixed the issue)
+        const isCacheError = errorMessage.includes('MIME type') || 
+                            errorMessage.includes('text/html') ||
+                            errorMessage.includes('Failed to fetch dynamically imported module') ||
+                            errorMessage.includes('Importing a module script failed');
+        
+        if (!isCacheError) {
+            sessionStorage.removeItem('chunk_reload');
+            sessionStorage.removeItem('mime_reload');
         }
+        
         console.error('Uncaught error:', error, errorInfo);
     }
 
